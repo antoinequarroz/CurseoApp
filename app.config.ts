@@ -17,7 +17,7 @@ const config: ExpoConfig = {
   userInterfaceStyle: 'automatic', // Supporte light + dark automatiquement
   ios: {
     bundleIdentifier: IS_PROD ? 'ch.courseo.app' : `ch.courseo.app.${APP_ENV}`,
-    buildNumber: '5',
+    buildNumber: '6',
     supportsTablet: false, // MVP telephone uniquement
     requireFullScreen: true,
     infoPlist: {
