@@ -5,7 +5,7 @@ import { Image } from 'expo-image';
 import { useTheme } from '@/lib/theme-context';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { Heading, BodySm, Caption, Price } from '@/components/ui/Typography';
+import { TitreRecetteCard, DescriptionRecetteCard, Caption, Price } from '@/components/ui/Typography';
 import { formatPrix, formatTemps } from '@/lib/format';
 import type { Recette } from '@/types';
 
@@ -40,8 +40,8 @@ export function RecetteCard({ recette, variant = 'default' }: { recette: Recette
         </View>
       </View>
       <View style={{ padding: variant === 'hero' ? 20 : 16, gap: 8 }}>
-        <Heading numberOfLines={2}>{recette.titre}</Heading>
-        <BodySm numberOfLines={3}>{recette.description}</BodySm>
+        <TitreRecetteCard>{recette.titre}</TitreRecetteCard>
+        <DescriptionRecetteCard>{recette.description}</DescriptionRecetteCard>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12 }}>
           <Price>{formatPrix(recette.cout_estime)}</Price>
           <Caption>{recette.portions} portions</Caption>

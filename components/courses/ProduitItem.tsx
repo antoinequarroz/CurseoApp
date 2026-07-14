@@ -5,7 +5,7 @@ import { Check } from 'lucide-react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useTheme } from '@/lib/theme-context';
 import { useHaptics } from '@/hooks/useHaptics';
-import { Body, Caption } from '@/components/ui/Typography';
+import { NomProduitCourse, Caption } from '@/components/ui/Typography';
 import { formatQuantite } from '@/lib/format';
 import type { ItemCourse } from '@/types';
 
@@ -57,7 +57,7 @@ export function ProduitItem({ item, onToggle }: { item: ItemCourse; onToggle: ()
       </View>
 
       <Animated.View style={[{ flex: 1 }, texteStyle]}>
-        <Body numberOfLines={1}>{item.produit}</Body>
+        <NomProduitCourse>{item.produit}</NomProduitCourse>
         <Caption>{formatQuantite(item.quantite, item.unite)}</Caption>
       </Animated.View>
     </Pressable>

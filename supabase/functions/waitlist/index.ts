@@ -2,6 +2,7 @@
 import { serve } from 'https://deno.land/std/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { z } from 'https://deno.land/x/zod/mod.ts';
+import { SECURITY_HEADERS } from '../_shared/security-headers.ts';
 
 const WaitlistSchema = z.object({
   email: z.string().email(),
@@ -10,12 +11,25 @@ const WaitlistSchema = z.object({
 });
 
 serve(async (req) => {
-  const parsed = WaitlistSchema.safeParse(await req.json());
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return new Response(JSON.stringify({ error: 'Requete invalide' }), {
+      status: 400,
+      headers: SECURITY_HEADERS,
+    });
+  }
+
+  const parsed = WaitlistSchema.safeParse(body);
   if (!parsed.success) {
-    return new Response(JSON.stringify({ error: 'Email invalide' }), { status: 400 });
+    return new Response(JSON.stringify({ error: 'Requete invalide', details: parsed.error.flatten() }), {
+      status: 400,
+      headers: SECURITY_HEADERS,
+    });
   }
   if (parsed.data.honeypot) {
-    return new Response(JSON.stringify({ ok: true })); // Silencieux pour les bots
+    return new Response(JSON.stringify({ ok: true }), { headers: SECURITY_HEADERS }); // Silencieux pour les bots
   }
 
   const supabase = createClient(
@@ -28,10 +42,13 @@ serve(async (req) => {
     .insert({ email: parsed.data.email, source: parsed.data.source ?? 'landing' });
 
   if (error && error.code !== '23505') {
-    return new Response(JSON.stringify({ error: 'Erreur serveur' }), { status: 500 });
+    return new Response(JSON.stringify({ error: 'Erreur serveur' }), {
+      status: 500,
+      headers: SECURITY_HEADERS,
+    });
   }
 
   return new Response(JSON.stringify({ ok: true }), {
-    headers: { 'Content-Type': 'application/json' },
+    headers: SECURITY_HEADERS,
   });
 });

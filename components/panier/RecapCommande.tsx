@@ -6,7 +6,6 @@ import React, { useEffect } from 'react';
 import { View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
-import { useTheme } from '@/lib/theme-context';
 import { Button } from '@/components/ui/Button';
 import { useHaptics } from '@/hooks/useHaptics';
 import { formatPrix, formatEconomies } from '@/lib/format';
@@ -14,7 +13,6 @@ import { PanierEnseigneCard } from './PanierEnseigneCard';
 import type { RecapCommande as RecapCommandeType } from '@/types';
 
 export function RecapCommande({ recap, onValider }: { recap: RecapCommandeType; onValider: () => void }) {
-  const { isDark } = useTheme();
   const haptics = useHaptics();
   const scale = useSharedValue(1);
 
@@ -26,8 +24,9 @@ export function RecapCommande({ recap, onValider }: { recap: RecapCommandeType; 
 
   return (
     <View style={{ gap: 16 }}>
+      {/* Degrade fixe (independant du theme) — les deux teintes garantissent >=4.5:1 avec le texte blanc. */}
       <LinearGradient
-        colors={isDark ? ['#1B4332', '#2D6A4F'] : ['#2D6A4F', '#52B788']}
+        colors={['#1B4332', '#2D6A4F']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={{ borderRadius: 20, padding: 24, gap: 4 }}
@@ -35,7 +34,7 @@ export function RecapCommande({ recap, onValider }: { recap: RecapCommandeType; 
         <Animated.Text
           style={[
             pulseStyle,
-            { fontFamily: 'DMMono_700Bold', fontSize: 40, color: '#FFFFFF' },
+            { fontFamily: 'DMMono_500Medium', fontSize: 40, lineHeight: 46, color: '#FFFFFF' },
           ]}
         >
           {formatEconomies(recap.economies)}

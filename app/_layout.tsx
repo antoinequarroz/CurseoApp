@@ -24,13 +24,17 @@ import { ThemeProvider } from '@/lib/theme-context';
 import { queryClient } from '@/lib/queryClient';
 import { supabase } from '@/lib/supabase';
 import { useProfilStore } from '@/stores/profilStore';
+import { useWhatsNew } from '@/lib/whatsNew';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { SessionGuard } from '@/components/SessionGuard';
+import { WhatsNewModal } from '@/components/ui/WhatsNewModal';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [appReady, setAppReady] = useState(false);
+  const profil = useProfilStore((state) => state.profil);
+  const { shouldShow: shouldShowWhatsNew, currentRelease, markAsSeen } = useWhatsNew();
   const [fontsLoaded] = useDMSansFonts({
     DMSans_400Regular,
     DMSans_500Medium,
@@ -81,6 +85,11 @@ export default function RootLayout() {
                     <Stack.Screen name="(tabs)" />
                     <Stack.Screen name="recette/[id]" options={{ presentation: 'modal', headerShown: true, title: 'Recette' }} />
                   </Stack>
+                  <WhatsNewModal
+                    visible={Boolean(profil) && shouldShowWhatsNew}
+                    release={currentRelease}
+                    onClose={() => void markAsSeen()}
+                  />
                 </SessionGuard>
               </ErrorBoundary>
             </ThemeProvider>

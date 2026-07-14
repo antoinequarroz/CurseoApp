@@ -1,16 +1,19 @@
 /** Detail recette — deep-linkable via courseo://recette/[id] (partage social). */
-import React from 'react';
-import { ScrollView, View } from 'react-native';
+import React, { useState } from 'react';
+import { Pressable, ScrollView, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams } from 'expo-router';
+import { Flag } from 'lucide-react-native';
 import { useTheme } from '@/lib/theme-context';
 import { RECETTES_MOCK } from '@/lib/mocks/recettes.mock';
 import { DisplayLG, Heading, Body, BodySm, Price, Data } from '@/components/ui/Typography';
 import { formatCalories, formatPrix, formatTemps } from '@/lib/format';
+import { SignalerRecetteModal } from '@/components/recettes/SignalerRecetteModal';
 
 export default function DetailRecette() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
+  const [signalementVisible, setSignalementVisible] = useState(false);
   const recette = RECETTES_MOCK.find((r) => r.id === id);
 
   if (!recette) {
@@ -42,7 +45,24 @@ export default function DetailRecette() {
         {recette.etapes.map((etape, i) => (
           <BodySm key={i}>{i + 1}. {etape}</BodySm>
         ))}
+
+        <Pressable
+          onPress={() => setSignalementVisible(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Signaler cette recette"
+          hitSlop={8}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'center', marginTop: 16, padding: 8 }}
+        >
+          <Flag size={14} color={colors.textMuted} />
+          <BodySm>Signaler cette recette</BodySm>
+        </Pressable>
       </View>
+
+      <SignalerRecetteModal
+        visible={signalementVisible}
+        onClose={() => setSignalementVisible(false)}
+        recetteId={recette.id}
+      />
     </ScrollView>
   );
 }

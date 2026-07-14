@@ -24,8 +24,11 @@ export function Button({ label, onPress, variant = 'primary', disabled, loading,
 
   const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
+  // primaryDark garantit >=4.5:1 avec le texte blanc dans les deux themes (colors.primary
+  // s'eclaircit en dark mode pour rester lisible sur fond sombre ailleurs, mais devient
+  // trop clair comme fond de bouton sous du texte blanc).
   const bg =
-    variant === 'primary' ? colors.primary : variant === 'secondary' ? colors.bgSecondary : 'transparent';
+    variant === 'primary' ? colors.primaryDark : variant === 'secondary' ? colors.bgSecondary : 'transparent';
   const textColor = variant === 'primary' ? '#FFFFFF' : colors.primary;
 
   return (

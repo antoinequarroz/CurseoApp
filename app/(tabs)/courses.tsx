@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SlidersHorizontal, ShoppingBasket } from 'lucide-react-native';
 import { useTheme } from '@/lib/theme-context';
 import { useHaptics } from '@/hooks/useHaptics';
+import { useCoursesSync } from '@/hooks/useCoursesSync';
 import { useCoursesStore } from '@/stores/coursesStore';
 import { usePanierStore } from '@/stores/panierStore';
 import { useProfilStore } from '@/stores/profilStore';
@@ -13,19 +14,21 @@ import { ListeCourses } from '@/components/courses/ListeCourses';
 import { RecapCommande } from '@/components/panier/RecapCommande';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { SkeletonListeCourses } from '@/components/ui/Skeleton';
 import { PaywallModal } from '@/components/ui/PaywallModal';
 import { Screen, ScreenScroll } from '@/components/ui/Screen';
 import { DisplayLG, Heading, BodySm, Subheading } from '@/components/ui/Typography';
 import { toast } from '@/lib/toast';
 import { analytics } from '@/lib/analytics';
+import { t } from '@/lib/i18n';
 import type { ModeOptimisation, NiveauAbonnement } from '@/types';
 
 const MODES: { id: ModeOptimisation; label: string }[] = [
-  { id: 'prix_minimum', label: 'Prix minimum' },
-  { id: 'equilibre', label: 'Équilibré' },
-  { id: 'premium', label: 'Premium' },
-  { id: 'bio', label: 'Bio' },
-  { id: 'sante', label: 'Santé' },
+  { id: 'prix_minimum', label: t('courses.mode_prix_minimum') },
+  { id: 'equilibre', label: t('courses.mode_equilibre') },
+  { id: 'premium', label: t('courses.mode_premium') },
+  { id: 'bio', label: t('courses.mode_bio') },
+  { id: 'sante', label: t('courses.mode_sante') },
 ];
 
 export default function Courses() {
@@ -35,6 +38,13 @@ export default function Courses() {
   const { mode, recap, setMode, calculer } = usePanierStore();
   const profil = useProfilStore((s) => s.profil);
   const [paywallVisible, setPaywallVisible] = useState(false);
+  const [hydrated, setHydrated] = useState(useCoursesStore.persist.hasHydrated());
+  useCoursesSync();
+
+  useEffect(() => {
+    if (hydrated) return;
+    return useCoursesStore.persist.onFinishHydration(() => setHydrated(true));
+  }, [hydrated]);
 
   useEffect(() => {
     if (items.length > 0) calculer(items);
@@ -53,13 +63,22 @@ export default function Courses() {
     toast.economies(recap.economies);
   };
 
+  if (!hydrated) {
+    return (
+      <ScreenScroll contentContainerStyle={{ gap: 22 }}>
+        <DisplayLG>{t('tabs.courses')}</DisplayLG>
+        <SkeletonListeCourses />
+      </ScreenScroll>
+    );
+  }
+
   if (items.length === 0) {
     return (
       <Screen style={{ justifyContent: 'center' }}>
         <EmptyState
           illustration="courses"
-          titre="Rien dans ta liste"
-          sousTitre="Planifie ta semaine pour générer ta liste automatiquement."
+          titre={t('courses.empty_titre')}
+          sousTitre={t('courses.empty_soustitre')}
         />
       </Screen>
     );
@@ -70,12 +89,12 @@ export default function Courses() {
       <OfflineBanner />
       <ScreenScroll contentContainerStyle={{ gap: 22 }}>
         <View>
-          <DisplayLG>Courses</DisplayLG>
-          <BodySm>Ta liste organisée par rayon, prête pour le magasin.</BodySm>
+          <DisplayLG>{t('tabs.courses')}</DisplayLG>
+          <BodySm>{t('courses.sous_titre')}</BodySm>
         </View>
 
         <LinearGradient
-          colors={[colors.primaryDark, colors.primary]}
+          colors={[colors.primaryDark, '#357A5A']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={{ borderRadius: 28, padding: 20, gap: 14 }}
@@ -84,9 +103,9 @@ export default function Courses() {
             <ShoppingBasket size={24} color="#FFFFFF" />
           </View>
           <View>
-            <Heading style={{ color: '#FFFFFF' }}>{items.length} article(s) à vérifier</Heading>
+            <Heading style={{ color: '#FFFFFF' }}>{t('courses.articles_a_verifier', { count: items.length })}</Heading>
             <BodySm style={{ color: 'rgba(255,255,255,0.78)' }}>
-              Coche au fur et à mesure. Courseo garde le panier lisible par rayon.
+              {t('courses.hero_message')}
             </BodySm>
           </View>
         </LinearGradient>
@@ -94,7 +113,7 @@ export default function Courses() {
         <View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <SlidersHorizontal size={18} color={colors.primary} />
-            <Subheading>Mode d&apos;optimisation</Subheading>
+            <Subheading>{t('courses.mode_optimisation')}</Subheading>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
             {MODES.map((m) => (

@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/Button';
 import { DisplayLG, BodySm } from '@/components/ui/Typography';
 import { EmailSchema, MotDePasseSchema } from '@/lib/validation';
 import { toast } from '@/lib/toast';
+import { t } from '@/lib/i18n';
 
 export default function Connexion() {
   const { colors } = useTheme();
@@ -37,7 +38,7 @@ export default function Connexion() {
       if (error) throw error;
       router.replace('/(tabs)');
     } catch {
-      toast.erreur('Connexion Apple annulée ou impossible');
+      toast.erreur(t('connexion.erreur_apple'));
     }
   };
 
@@ -45,14 +46,14 @@ export default function Connexion() {
     const emailValide = EmailSchema.safeParse(email);
     const motDePasseValide = MotDePasseSchema.safeParse(motDePasse);
     if (!emailValide.success || !motDePasseValide.success) {
-      toast.erreur('Vérifie ton email et ton mot de passe (8 caractères minimum)');
+      toast.erreur(t('connexion.erreur_validation'));
       return;
     }
     setChargement(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password: motDePasse });
     setChargement(false);
     if (error) {
-      toast.erreur('Email ou mot de passe incorrect');
+      toast.erreur(t('connexion.erreur_identifiants'));
       return;
     }
     router.replace('/(tabs)');
@@ -61,7 +62,7 @@ export default function Connexion() {
   return (
     <KeyboardView>
       <View style={{ flex: 1, padding: 20, justifyContent: 'center', gap: 20, backgroundColor: colors.bg }}>
-        <DisplayLG>Bienvenue sur Courseo</DisplayLG>
+        <DisplayLG>{t('onboarding.bienvenue_titre')}</DisplayLG>
 
         {Platform.OS === 'ios' && (
           <AppleAuthentication.AppleAuthenticationButton
@@ -77,16 +78,16 @@ export default function Connexion() {
           />
         )}
 
-        <BodySm>Ou connecte-toi avec ton email</BodySm>
+        <BodySm>{t('connexion.ou_email')}</BodySm>
 
         <TextInput
           value={email}
           onChangeText={setEmail}
-          placeholder="Email"
+          placeholder={t('connexion.email_placeholder')}
           placeholderTextColor={colors.textMuted}
           autoCapitalize="none"
           keyboardType="email-address"
-          accessibilityLabel="Adresse email"
+          accessibilityLabel={t('connexion.email_label')}
           style={{
             backgroundColor: colors.bgCard,
             borderWidth: 1,
@@ -99,10 +100,10 @@ export default function Connexion() {
         <TextInput
           value={motDePasse}
           onChangeText={setMotDePasse}
-          placeholder="Mot de passe"
+          placeholder={t('connexion.mdp_placeholder')}
           placeholderTextColor={colors.textMuted}
           secureTextEntry
-          accessibilityLabel="Mot de passe"
+          accessibilityLabel={t('connexion.mdp_label')}
           style={{
             backgroundColor: colors.bgCard,
             borderWidth: 1,
@@ -113,7 +114,7 @@ export default function Connexion() {
           }}
         />
 
-        <Button label="Se connecter" onPress={seConnecterEmail} loading={chargement} />
+        <Button label={t('connexion.se_connecter')} onPress={seConnecterEmail} loading={chargement} />
       </View>
     </KeyboardView>
   );

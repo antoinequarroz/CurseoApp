@@ -4,9 +4,11 @@ import { Modal, Pressable, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTheme } from '@/lib/theme-context';
 import { useHaptics } from '@/hooks/useHaptics';
+import { useResponsive } from '@/hooks/useResponsive';
 import { useRecettes } from '@/hooks/useRecettes';
 import { useProfilStore } from '@/stores/profilStore';
 import { usePlanningStore } from '@/stores/planningStore';
+import { RECETTES_MOCK } from '@/lib/mocks/recettes.mock';
 import { SwipeRecette } from '@/components/recettes/SwipeRecette';
 import { RecetteCard } from '@/components/recettes/RecetteCard';
 import { PlanningHebdo } from '@/components/planning/PlanningHebdo';
@@ -14,8 +16,9 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonRecetteCard } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/Button';
 import { Screen, ScreenScroll } from '@/components/ui/Screen';
-import { DisplayLG, Subheading, Caption } from '@/components/ui/Typography';
+import { DisplayLG, Subheading, Caption, BodySm } from '@/components/ui/Typography';
 import { analytics } from '@/lib/analytics';
+import { t } from '@/lib/i18n';
 import type { JourSemaine, Recette } from '@/types';
 
 type SousOnglet = 'recettes' | 'planning' | 'communaute';
@@ -23,9 +26,9 @@ type SousOnglet = 'recettes' | 'planning' | 'communaute';
 function SegmentedControl({ valeur, onChange }: { valeur: SousOnglet; onChange: (v: SousOnglet) => void }) {
   const { colors } = useTheme();
   const options: { id: SousOnglet; label: string }[] = [
-    { id: 'recettes', label: 'Recettes' },
-    { id: 'planning', label: 'Planning' },
-    { id: 'communaute', label: 'Communauté' },
+    { id: 'recettes', label: t('planning.onglet_recettes') },
+    { id: 'planning', label: t('planning.onglet_planning') },
+    { id: 'communaute', label: t('planning.onglet_communaute') },
   ];
 
   return (
@@ -53,6 +56,7 @@ function SegmentedControl({ valeur, onChange }: { valeur: SousOnglet; onChange: 
 
 export default function Planifier() {
   const haptics = useHaptics();
+  const { paddingHorizontal } = useResponsive();
   const profil = useProfilStore((s) => s.profil);
   const { planning, assignerRecette } = usePlanningStore();
   const [sousOnglet, setSousOnglet] = useState<SousOnglet>('recettes');
@@ -63,6 +67,7 @@ export default function Planifier() {
   const { data, isLoading, fetchNextPage, hasNextPage } = useRecettes({ regime: profil?.regime });
   const recettes = useMemo(() => data?.pages.flat() ?? [], [data]);
   const recetteActuelle = recettes[indexCourant];
+  const recettesCommunaute = useMemo(() => RECETTES_MOCK.filter((r) => r.est_communautaire), []);
 
   const genererSemaineIA = () => {
     void haptics.success();
@@ -76,16 +81,16 @@ export default function Planifier() {
 
   return (
     <Screen padded={false} bottomInset={false}>
-      <View style={{ paddingHorizontal: 20, gap: 14 }}>
+      <View style={{ paddingHorizontal, gap: 14 }}>
         <View>
-          <Caption>Menus de la semaine</Caption>
-          <DisplayLG>Planifier</DisplayLG>
+          <Caption>{t('planning.caption')}</Caption>
+          <DisplayLG>{t('tabs.planifier')}</DisplayLG>
         </View>
         <SegmentedControl valeur={sousOnglet} onChange={setSousOnglet} />
       </View>
 
       {sousOnglet === 'recettes' && (
-        <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 96, justifyContent: 'center' }}>
+        <View style={{ flex: 1, paddingHorizontal, paddingTop: 16, paddingBottom: 96, justifyContent: 'center' }}>
           {isLoading ? (
             <SkeletonRecetteCard />
           ) : recetteActuelle ? (
@@ -102,9 +107,9 @@ export default function Planifier() {
           ) : (
             <EmptyState
               illustration="recettes"
-              titre="Tu as vu toutes les recettes"
-              sousTitre="Passe au planning pour organiser tes favoris."
-              ctaLabel="Voir mon planning"
+              titre={t('planning.empty_recettes_titre')}
+              sousTitre={t('planning.empty_recettes_soustitre')}
+              ctaLabel={t('planning.voir_planning')}
               onCta={() => setSousOnglet('planning')}
             />
           )}
@@ -113,26 +118,42 @@ export default function Planifier() {
 
       {sousOnglet === 'planning' && (
         <ScreenScroll style={{ flex: 1 }} contentContainerStyle={{ gap: 16 }} padded>
-          <Button label="Générer la semaine avec l'IA" onPress={genererSemaineIA} />
+          <Button label={t('planning.generer_semaine_ia')} onPress={genererSemaineIA} />
           <PlanningHebdo planning={planning} onPressSlot={(jour, moment) => setSlotChoix({ jour, moment })} />
         </ScreenScroll>
       )}
 
       {sousOnglet === 'communaute' && (
-        <View style={{ flex: 1 }}>
-          <EmptyState
-            illustration="recherche"
-            titre="Communauté bientôt disponible"
-            sousTitre="Les recettes partagées par d'autres foyers arrivent prochainement."
-          />
-        </View>
+        <ScreenScroll style={{ flex: 1 }} contentContainerStyle={{ gap: 16 }} padded>
+          {recettesCommunaute.length === 0 ? (
+            <EmptyState
+              illustration="recherche"
+              titre={t('planning.empty_communaute_titre')}
+              sousTitre={t('planning.empty_communaute_soustitre')}
+            />
+          ) : (
+            <>
+              <BodySm>{t('planning.communaute_intro', { count: recettesCommunaute.length })}</BodySm>
+              {recettesCommunaute.map((r) => (
+                <Pressable
+                  key={r.id}
+                  onPress={() => router.push(`/recette/${r.id}`)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('planning.assigner_label', { titre: r.titre })}
+                >
+                  <RecetteCard recette={r} />
+                </Pressable>
+              ))}
+            </>
+          )}
+        </ScreenScroll>
       )}
 
       <Modal visible={!!slotChoix} animationType="slide" onRequestClose={() => setSlotChoix(null)}>
         <ScreenScroll contentContainerStyle={{ gap: 12 }} tabBar={false}>
-          <DisplayLG>Choisir une recette</DisplayLG>
+          <DisplayLG>{t('planning.choisir_recette')}</DisplayLG>
           {recettesAimees.length === 0 ? (
-            <EmptyState illustration="favoris" titre="Pas encore de favoris" sousTitre="Swipe vers la droite sur les recettes que tu aimes." />
+            <EmptyState illustration="favoris" titre={t('planning.empty_favoris_titre')} sousTitre={t('planning.empty_favoris_soustitre')} />
           ) : (
             recettesAimees.map((r) => (
               <Pressable
@@ -142,13 +163,13 @@ export default function Planifier() {
                   setSlotChoix(null);
                 }}
                 accessibilityRole="button"
-                accessibilityLabel={`Assigner ${r.titre}`}
+                accessibilityLabel={t('planning.assigner_label', { titre: r.titre })}
               >
                 <RecetteCard recette={r} />
               </Pressable>
             ))
           )}
-          <Button label="Fermer" variant="secondary" onPress={() => setSlotChoix(null)} />
+          <Button label={t('commun.fermer')} variant="secondary" onPress={() => setSlotChoix(null)} />
         </ScreenScroll>
       </Modal>
     </Screen>

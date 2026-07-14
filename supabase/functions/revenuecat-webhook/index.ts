@@ -2,12 +2,16 @@
 // https://xxx.supabase.co/functions/v1/revenuecat-webhook
 import { serve } from 'https://deno.land/std/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { comparaisonTempsConstant } from '../_shared/crypto.ts';
 
 const WEBHOOK_SECRET = Deno.env.get('REVENUECAT_WEBHOOK_SECRET');
 
 serve(async (req) => {
-  const authHeader = req.headers.get('Authorization');
-  if (authHeader !== `Bearer ${WEBHOOK_SECRET}`) {
+  const authHeader = req.headers.get('Authorization') ?? '';
+  // RevenueCat V1 authentifie ses webhooks via un Authorization: Bearer <secret>
+  // statique (pas de HMAC de payload) — cf. https://www.revenuecat.com/docs/webhooks
+  // On compare donc ce secret en temps constant pour eviter une timing attack.
+  if (!WEBHOOK_SECRET || !comparaisonTempsConstant(authHeader, `Bearer ${WEBHOOK_SECRET}`)) {
     return new Response('Non autorise', { status: 401 });
   }
 
@@ -36,6 +40,20 @@ serve(async (req) => {
       break;
     case 'BILLING_ISSUE':
       // Grace period Apple de 16 jours — notifier l'utilisateur, ne pas downgrade.
+      // Pas de service email transactionnel dans le repo (grep resend/sendgrid/email
+      // sur supabase/functions/ ne remonte rien) : on ne l'invente pas ici.
+      // A la place on insere une notification en base, affichee dans l'app au
+      // prochain lancement (voir table `notifications` dans supabase/schema.sql).
+      // TODO(email): brancher un envoi Resend (ou equivalent) sur INSERT dans
+      // `notifications` de type 'billing_issue', pour relancer l'utilisateur
+      // meme s'il ne rouvre pas l'app pendant la grace period.
+      await supabase.from('notifications').insert({
+        profil_id: userId,
+        type: 'billing_issue',
+        titre: 'Probleme de paiement',
+        message:
+          "Ton dernier paiement a echoue. Mets a jour ton moyen de paiement pour garder ton acces avant la fin de la periode de grace.",
+      });
       break;
   }
 

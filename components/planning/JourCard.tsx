@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, View } from 'react-native';
 import { Card } from '@/components/ui/Card';
-import { Subheading, BodySm, Caption } from '@/components/ui/Typography';
+import { Subheading, TitreRecettePlanning, Caption } from '@/components/ui/Typography';
 import { useTheme } from '@/lib/theme-context';
 import type { JourSemaine, RepasJour } from '@/types';
 
@@ -40,9 +40,9 @@ function Slot({ label, titre, onPress }: { label: string; titre?: string; onPres
       }}
     >
       <Caption>{label}</Caption>
-      <BodySm numberOfLines={1} style={{ color: titre ? colors.textPrimary : colors.textMuted }}>
+      <TitreRecettePlanning style={{ color: titre ? colors.textPrimary : colors.textMuted }}>
         {titre ?? 'Ajouter'}
-      </BodySm>
+      </TitreRecettePlanning>
     </Pressable>
   );
 }

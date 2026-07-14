@@ -17,29 +17,30 @@ import { analytics } from '@/lib/analytics';
 import { KeyboardView } from '@/components/ui/KeyboardView';
 import { Button } from '@/components/ui/Button';
 import { Screen } from '@/components/ui/Screen';
-import { DisplayXL, Body, BodySm, Caption, Price } from '@/components/ui/Typography';
+import { DisplayXL, Body, BodySm, Caption, PriceXL } from '@/components/ui/Typography';
 import { formatPrix } from '@/lib/format';
+import { t } from '@/lib/i18n';
 import type { Enseigne, Objectif, Regime } from '@/types';
 
 const TOTAL_ETAPES = 5;
 const REGIMES: { id: Regime; label: string }[] = [
-  { id: 'vegetarien', label: 'Végétarien' },
-  { id: 'vegan', label: 'Vegan' },
-  { id: 'halal', label: 'Halal' },
-  { id: 'sans_gluten', label: 'Sans gluten' },
-  { id: 'sans_lactose', label: 'Sans lactose' },
+  { id: 'vegetarien', label: t('onboarding.regime_vegetarien') },
+  { id: 'vegan', label: t('onboarding.regime_vegan') },
+  { id: 'halal', label: t('onboarding.regime_halal') },
+  { id: 'sans_gluten', label: t('onboarding.regime_sans_gluten') },
+  { id: 'sans_lactose', label: t('onboarding.regime_sans_lactose') },
 ];
 const OBJECTIFS: { id: Objectif; label: string }[] = [
-  { id: 'perdre_poids', label: 'Perdre du poids' },
-  { id: 'prise_masse', label: 'Prise de masse' },
-  { id: 'manger_sain', label: 'Manger sainement' },
-  { id: 'rapide', label: 'Repas rapides' },
+  { id: 'perdre_poids', label: t('onboarding.objectif_perdre_poids') },
+  { id: 'prise_masse', label: t('onboarding.objectif_prise_masse') },
+  { id: 'manger_sain', label: t('onboarding.objectif_manger_sain') },
+  { id: 'rapide', label: t('onboarding.objectif_rapide') },
 ];
 const ENSEIGNES: { id: Enseigne; label: string }[] = [
-  { id: 'coop', label: 'Coop' },
-  { id: 'migros', label: 'Migros' },
-  { id: 'lidl', label: 'Lidl' },
-  { id: 'aldi', label: 'Aldi' },
+  { id: 'coop', label: t('onboarding.enseigne_coop') },
+  { id: 'migros', label: t('onboarding.enseigne_migros') },
+  { id: 'lidl', label: t('onboarding.enseigne_lidl') },
+  { id: 'aldi', label: t('onboarding.enseigne_aldi') },
 ];
 
 function Chip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
@@ -156,14 +157,14 @@ export default function Onboarding() {
         >
           {etapeActuelle === 1 && (
             <View style={{ gap: 16 }}>
-              <DisplayXL>Bienvenue sur Courseo</DisplayXL>
-              <BodySm>Ton copilote repas et courses pour la Suisse</BodySm>
+              <DisplayXL>{t('onboarding.bienvenue_titre')}</DisplayXL>
+              <BodySm>{t('onboarding.bienvenue_sous_titre')}</BodySm>
               <TextInput
                 value={donneesPartielles.prenom ?? ''}
                 onChangeText={(v) => mettreAJourDonnees({ prenom: v })}
-                placeholder="Nom du foyer / ton prénom"
+                placeholder={t('onboarding.nom_placeholder')}
                 placeholderTextColor={colors.textMuted}
-                accessibilityLabel="Nom du foyer"
+                accessibilityLabel={t('onboarding.nom_foyer_label')}
                 style={{ backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 14, color: colors.textPrimary }}
               />
               <Pressable
@@ -173,15 +174,15 @@ export default function Onboarding() {
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
               >
                 <View style={{ width: 20, height: 20, borderRadius: 4, borderWidth: 2, borderColor: colors.primary, backgroundColor: cgvuAcceptees ? colors.primary : 'transparent' }} />
-                <Caption>J&apos;accepte les CGVU de Courseo</Caption>
+                <Caption>{t('onboarding.cgvu_accept')}</Caption>
               </Pressable>
             </View>
           )}
 
           {etapeActuelle === 2 && (
             <View style={{ gap: 16 }}>
-              <DisplayXL>Qui mange à la maison ?</DisplayXL>
-              <Body>Nombre de personnes : {donneesPartielles.nb_personnes ?? 1}</Body>
+              <DisplayXL>{t('onboarding.composition_titre')}</DisplayXL>
+              <Body>{t('onboarding.nb_personnes', { count: donneesPartielles.nb_personnes ?? 1 })}</Body>
               <Slider
                 minimumValue={1}
                 maximumValue={10}
@@ -189,9 +190,9 @@ export default function Onboarding() {
                 value={donneesPartielles.nb_personnes ?? 1}
                 onValueChange={(v) => mettreAJourDonnees({ nb_personnes: Math.round(v) })}
                 minimumTrackTintColor={colors.primary}
-                accessibilityLabel="Nombre de personnes dans le foyer"
+                accessibilityLabel={t('onboarding.nb_personnes_label')}
               />
-              <Body>Dont enfants : {donneesPartielles.nb_enfants ?? 0}</Body>
+              <Body>{t('onboarding.nb_enfants', { count: donneesPartielles.nb_enfants ?? 0 })}</Body>
               <Slider
                 minimumValue={0}
                 maximumValue={8}
@@ -199,15 +200,15 @@ export default function Onboarding() {
                 value={donneesPartielles.nb_enfants ?? 0}
                 onValueChange={(v) => mettreAJourDonnees({ nb_enfants: Math.round(v) })}
                 minimumTrackTintColor={colors.primary}
-                accessibilityLabel="Nombre d'enfants"
+                accessibilityLabel={t('onboarding.nb_enfants_label')}
               />
             </View>
           )}
 
           {etapeActuelle === 3 && (
             <View style={{ gap: 16 }}>
-              <DisplayXL>Budget hebdomadaire</DisplayXL>
-              <Price style={{ fontSize: 32 }}>{formatPrix(donneesPartielles.budget_hebdo ?? 150)}</Price>
+              <DisplayXL>{t('onboarding.budget_titre_court')}</DisplayXL>
+              <PriceXL>{formatPrix(donneesPartielles.budget_hebdo ?? 150)}</PriceXL>
               <Slider
                 minimumValue={50}
                 maximumValue={500}
@@ -215,15 +216,15 @@ export default function Onboarding() {
                 value={donneesPartielles.budget_hebdo ?? 150}
                 onValueChange={(v) => mettreAJourDonnees({ budget_hebdo: v })}
                 minimumTrackTintColor={colors.primary}
-                accessibilityLabel="Budget hebdomadaire en francs suisses"
-                accessibilityHint="Glisse pour ajuster ton budget entre 50 et 500 francs"
+                accessibilityLabel={t('onboarding.budget_label')}
+                accessibilityHint={t('onboarding.budget_hint')}
               />
             </View>
           )}
 
           {etapeActuelle === 4 && (
             <View style={{ gap: 16 }}>
-              <DisplayXL>Régimes et allergies</DisplayXL>
+              <DisplayXL>{t('onboarding.regime_titre')}</DisplayXL>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
                 {REGIMES.map((r) => (
                   <Chip key={r.id} label={r.label} selected={(donneesPartielles.regime ?? []).includes(r.id)} onPress={() => toggleRegime(r.id)} />
@@ -234,13 +235,13 @@ export default function Onboarding() {
 
           {etapeActuelle === 5 && (
             <View style={{ gap: 16 }}>
-              <DisplayXL>Objectifs et enseignes</DisplayXL>
+              <DisplayXL>{t('onboarding.objectifs_titre_court')}</DisplayXL>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
                 {OBJECTIFS.map((o) => (
                   <Chip key={o.id} label={o.label} selected={(donneesPartielles.objectifs ?? []).includes(o.id)} onPress={() => toggleObjectif(o.id)} />
                 ))}
               </View>
-              <Body>Tes enseignes préférées</Body>
+              <Body>{t('onboarding.enseignes_preferees')}</Body>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
                 {ENSEIGNES.map((e) => (
                   <Chip key={e.id} label={e.label} selected={(donneesPartielles.enseignes_favorites ?? []).includes(e.id)} onPress={() => toggleEnseigne(e.id)} />
@@ -251,10 +252,10 @@ export default function Onboarding() {
         </Animated.ScrollView>
 
         <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
-          {etapeActuelle > 1 && <Button label="Précédent" variant="secondary" onPress={precedent} />}
+          {etapeActuelle > 1 && <Button label={t('commun.precedent')} variant="secondary" onPress={precedent} />}
           <View style={{ flex: 1 }}>
             <Button
-              label={etapeActuelle === TOTAL_ETAPES ? 'Terminer' : 'Suivant'}
+              label={etapeActuelle === TOTAL_ETAPES ? t('commun.terminer') : t('commun.suivant')}
               onPress={suivant}
               disabled={etapeActuelle === 1 && !cgvuAcceptees}
             />

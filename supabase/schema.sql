@@ -164,6 +164,19 @@ create table waitlist (
 );
 
 -- =========================================================================
+-- Notifications in-app (ex. relance BILLING_ISSUE depuis le webhook RevenueCat)
+-- =========================================================================
+create table notifications (
+  id uuid primary key default gen_random_uuid(),
+  profil_id uuid references profils(id) on delete cascade,
+  type text not null check (type in ('billing_issue','planning','budget','promo','bilan','autre')),
+  titre text not null,
+  message text not null,
+  lue boolean default false,
+  created_at timestamptz default now()
+);
+
+-- =========================================================================
 -- Index de performance
 -- =========================================================================
 create index idx_planning_profil on planning_repas(profil_id);
@@ -178,6 +191,7 @@ create index idx_recettes_communautaires on recettes(est_communautaire) where es
 create index idx_recettes_regime on recettes using gin(regime);
 create index idx_recettes_allergenes on recettes using gin(allergenes);
 create index idx_rate_limits on rate_limits(user_id, endpoint, window_start);
+create index idx_notifications_profil on notifications(profil_id, created_at desc);
 
 -- =========================================================================
 -- Row Level Security
@@ -199,6 +213,9 @@ create policy "favoris_own" on favoris using (auth.uid() = profil_id);
 
 alter table commandes enable row level security;
 create policy "commandes_own" on commandes using (auth.uid() = profil_id);
+
+alter table notifications enable row level security;
+create policy "notifications_own" on notifications using (auth.uid() = profil_id);
 
 alter table recettes enable row level security;
 create policy "recettes_read" on recettes for select using (true);

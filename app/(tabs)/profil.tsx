@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/Button';
 import { ScreenScroll } from '@/components/ui/Screen';
 import { DisplayLG, Heading, Body, BodySm, Caption } from '@/components/ui/Typography';
 import { toast } from '@/lib/toast';
+import { t } from '@/lib/i18n';
 
 function LigneNotification({ label, valeur, onChange }: { label: string; valeur: boolean; onChange: (v: boolean) => void }) {
   const { colors } = useTheme();
@@ -53,7 +54,7 @@ export default function Profil() {
   const supprimerCompte = async () => {
     const { data: session } = await supabase.auth.getSession();
     if (!session.session) {
-      toast.erreur('Session introuvable');
+      toast.erreur(t('profil.erreur_session'));
       return;
     }
     await supabase.functions.invoke('delete-account', { body: { userId: session.session.user.id } });
@@ -63,16 +64,16 @@ export default function Profil() {
   };
 
   const apparenceOptions: { id: ApparencePreference; label: string }[] = [
-    { id: 'auto', label: 'Auto' },
-    { id: 'clair', label: 'Clair' },
-    { id: 'sombre', label: 'Sombre' },
+    { id: 'auto', label: t('profil.apparence_auto') },
+    { id: 'clair', label: t('profil.apparence_clair') },
+    { id: 'sombre', label: t('profil.apparence_sombre') },
   ];
 
   return (
     <ScreenScroll contentContainerStyle={{ gap: 22 }}>
       <View>
-        <Caption>Paramètres</Caption>
-        <DisplayLG>Profil</DisplayLG>
+        <Caption>{t('profil.parametres')}</Caption>
+        <DisplayLG>{t('tabs.profil')}</DisplayLG>
       </View>
 
       <Card style={{ padding: 20, gap: 14, borderRadius: 28, borderTopLeftRadius: 28 }}>
@@ -81,14 +82,14 @@ export default function Profil() {
             <UserRound size={22} color={colors.primary} />
           </View>
           <View>
-            <Heading>Informations du foyer</Heading>
-            <Caption>Nom, taille du foyer et préférences</Caption>
+            <Heading>{t('profil.infos_foyer')}</Heading>
+            <Caption>{t('profil.infos_foyer_desc')}</Caption>
           </View>
         </View>
         <TextInput
           value={profilAffiche.prenom}
           onChangeText={(v) => mettreAJourPreferences({ prenom: v })}
-          accessibilityLabel="Prénom"
+          accessibilityLabel={t('profil.prenom_label')}
           style={{
             color: colors.textPrimary,
             borderWidth: 1,
@@ -98,7 +99,7 @@ export default function Profil() {
             paddingVertical: 10,
           }}
         />
-        <BodySm>{profilAffiche.nb_personnes} personne(s), dont {profilAffiche.nb_enfants} enfant(s)</BodySm>
+        <BodySm>{t('profil.personnes_enfants', { nb_personnes: profilAffiche.nb_personnes, nb_enfants: profilAffiche.nb_enfants })}</BodySm>
       </Card>
 
       <Card style={{ padding: 20, gap: 12, borderRadius: 28, borderTopLeftRadius: 28 }}>
@@ -106,7 +107,7 @@ export default function Profil() {
           <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}>
             <Crown size={22} color={colors.primary} />
           </View>
-          <Heading>Abonnement</Heading>
+          <Heading>{t('profil.abonnement')}</Heading>
         </View>
         {PALIERS_ABONNEMENT.map((p) => (
           <View key={p.id} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 }}>
@@ -121,9 +122,9 @@ export default function Profil() {
           <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}>
             <Palette size={22} color={colors.primary} />
           </View>
-          <Heading>Apparence</Heading>
+          <Heading>{t('profil.apparence')}</Heading>
         </View>
-        <Caption>Suit les préférences système ou force un thème.</Caption>
+        <Caption>{t('profil.apparence_desc')}</Caption>
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
           {apparenceOptions.map((o) => (
             <Pressable
@@ -150,12 +151,12 @@ export default function Profil() {
           <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}>
             <Bell size={22} color={colors.primary} />
           </View>
-          <Heading>Notifications</Heading>
+          <Heading>{t('profil.notifications')}</Heading>
         </View>
-        <LigneNotification label="Rappel planning" valeur={profilAffiche.notifications_planning} onChange={(v) => mettreAJourPreferences({ notifications_planning: v })} />
-        <LigneNotification label="Alertes budget" valeur={profilAffiche.notifications_budget} onChange={(v) => mettreAJourPreferences({ notifications_budget: v })} />
-        <LigneNotification label="Promotions" valeur={profilAffiche.notifications_promos} onChange={(v) => mettreAJourPreferences({ notifications_promos: v })} />
-        <LigneNotification label="Bilan hebdomadaire" valeur={profilAffiche.notifications_bilan} onChange={(v) => mettreAJourPreferences({ notifications_bilan: v })} />
+        <LigneNotification label={t('profil.notif_planning')} valeur={profilAffiche.notifications_planning} onChange={(v) => mettreAJourPreferences({ notifications_planning: v })} />
+        <LigneNotification label={t('profil.notif_budget')} valeur={profilAffiche.notifications_budget} onChange={(v) => mettreAJourPreferences({ notifications_budget: v })} />
+        <LigneNotification label={t('profil.notif_promos')} valeur={profilAffiche.notifications_promos} onChange={(v) => mettreAJourPreferences({ notifications_promos: v })} />
+        <LigneNotification label={t('profil.notif_bilan')} valeur={profilAffiche.notifications_bilan} onChange={(v) => mettreAJourPreferences({ notifications_bilan: v })} />
       </Card>
 
       <Card style={{ padding: 20, gap: 8, borderRadius: 28, borderTopLeftRadius: 28 }}>
@@ -164,31 +165,31 @@ export default function Profil() {
             <Home size={22} color={colors.primary} />
           </View>
           <View>
-            <Heading>Préférences du foyer</Heading>
-            <Caption>{profilAffiche.enseignes_favorites.length || 0} enseigne(s) favorite(s)</Caption>
+            <Heading>{t('profil.preferences_foyer')}</Heading>
+            <Caption>{t('profil.enseignes_favorites', { count: profilAffiche.enseignes_favorites.length || 0 })}</Caption>
           </View>
         </View>
-        <BodySm>Les préférences détaillées seront enrichies dans la prochaine passe UX.</BodySm>
+        <BodySm>{t('profil.preferences_message')}</BodySm>
       </Card>
 
       {!confirmationSuppression ? (
-        <Pressable onPress={() => setConfirmationSuppression(true)} accessibilityRole="button" accessibilityLabel="Supprimer mon compte">
-          <BodySm style={{ color: colors.error, textAlign: 'center' }}>Supprimer mon compte</BodySm>
+        <Pressable onPress={() => setConfirmationSuppression(true)} accessibilityRole="button" accessibilityLabel={t('profil.supprimer_compte')}>
+          <BodySm style={{ color: colors.error, textAlign: 'center' }}>{t('profil.supprimer_compte')}</BodySm>
         </Pressable>
       ) : (
         <Card style={{ padding: 18, gap: 12, borderColor: colors.error }}>
           <ShieldAlert size={22} color={colors.error} />
-          <Body>Cette action est irréversible. Confirme en saisissant ton email.</Body>
+          <Body>{t('profil.suppression_confirmation')}</Body>
           <TextInput
             value={emailSaisi}
             onChangeText={setEmailSaisi}
-            placeholder="Ton email"
+            placeholder={t('profil.email_placeholder')}
             placeholderTextColor={colors.textMuted}
             autoCapitalize="none"
-            accessibilityLabel="Confirme ton email pour supprimer le compte"
+            accessibilityLabel={t('profil.email_confirmation_label')}
             style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 12, color: colors.textPrimary }}
           />
-          <Button label="Confirmer la suppression" variant="secondary" onPress={supprimerCompte} disabled={!emailSaisi} />
+          <Button label={t('profil.confirmer_suppression')} variant="secondary" onPress={supprimerCompte} disabled={!emailSaisi} />
         </Card>
       )}
     </ScreenScroll>

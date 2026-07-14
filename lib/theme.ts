@@ -11,7 +11,7 @@ export const lightTheme = {
   bgElevated: '#FFFFFF',
   textPrimary: '#1C1C1E',
   textSecondary: '#6B7280',
-  textMuted: '#9CA3AF',
+  textMuted: '#5D6B80',
   primary: '#2D6A4F',
   primaryLight: '#52B788',
   primaryDark: '#1B4332',
@@ -22,10 +22,16 @@ export const lightTheme = {
   savingsColor: '#52B788',
   success: '#52B788',
   warning: '#F59E0B',
-  error: '#EF4444',
+  error: '#DC2626',
   swipeLike: '#D1FAE5',
   swipePass: '#FEE2E2',
   overlay: 'rgba(0,0,0,0)',
+  /** Couleurs dediees aux chips/badges pastel — contraste AA garanti sur leur fond associe (voir Badge.tsx). */
+  warningBg: '#FEF3C7',
+  chipTextSuccess: '#146641',
+  chipTextWarning: '#92400E',
+  chipTextError: '#B91C1C',
+  chipTextNeutral: '#55606E',
 };
 
 export const darkTheme = {
@@ -35,7 +41,7 @@ export const darkTheme = {
   bgElevated: '#263530',
   textPrimary: '#F0F7F4',
   textSecondary: '#9DB8AE',
-  textMuted: '#5C7A70',
+  textMuted: '#82A199',
   primary: '#52B788',
   primaryLight: '#74C69D',
   primaryDark: '#2D6A4F',
@@ -50,6 +56,12 @@ export const darkTheme = {
   swipeLike: '#1A3328',
   swipePass: '#2D1515',
   overlay: 'rgba(0,0,0,0.15)',
+  /** Couleurs dediees aux chips/badges pastel — contraste AA garanti sur leur fond associe (voir Badge.tsx). */
+  warningBg: '#3D2E0A',
+  chipTextSuccess: '#74C69D',
+  chipTextWarning: '#FCD34D',
+  chipTextError: '#F87171',
+  chipTextNeutral: '#9DB8AE',
 };
 
 export type Theme = typeof lightTheme;

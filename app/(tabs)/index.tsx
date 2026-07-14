@@ -12,10 +12,11 @@ import { useCoursesStore } from '@/stores/coursesStore';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { ScreenScroll } from '@/components/ui/Screen';
-import { DisplayLG, Heading, Body, BodySm, Price, Savings, Caption } from '@/components/ui/Typography';
+import { DisplayLG, Heading, Body, BodySm, PriceXL, SavingsXL, Caption } from '@/components/ui/Typography';
 import { formatPrix } from '@/lib/format';
 import { dates } from '@/lib/dates';
 import { analytics } from '@/lib/analytics';
+import { t } from '@/lib/i18n';
 
 function StatCard({
   icon,
@@ -68,8 +69,8 @@ export default function Accueil() {
     <ScreenScroll contentContainerStyle={{ gap: 24 }}>
       <View style={{ gap: 8 }}>
         <Caption style={{ textTransform: 'capitalize' }}>{jourAujourdhui}</Caption>
-        <DisplayLG>Bonjour {profil?.prenom ?? 'toi'}</DisplayLG>
-        <BodySm>Prépare ta semaine sans te prendre la tête.</BodySm>
+        <DisplayLG>{t('accueil.bonjour', { prenom: profil?.prenom ?? t('accueil.toi') })}</DisplayLG>
+        <BodySm>{t('accueil.sous_titre')}</BodySm>
       </View>
 
       <Card style={{ borderRadius: 30, borderTopLeftRadius: 30, overflow: 'hidden' }}>
@@ -88,9 +89,9 @@ export default function Accueil() {
           <View style={{ position: 'absolute', left: 18, right: 18, bottom: 18, gap: 6 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Sparkles size={18} color="#FFFFFF" />
-              <Caption style={{ color: 'rgba(255,255,255,0.86)' }}>Assistant courses intelligent</Caption>
+              <Caption style={{ color: 'rgba(255,255,255,0.86)' }}>{t('accueil.hero_badge')}</Caption>
             </View>
-            <Heading style={{ color: '#FFFFFF' }}>Planifie, compare, économise.</Heading>
+            <Heading style={{ color: '#FFFFFF' }}>{t('accueil.hero_titre')}</Heading>
           </View>
         </View>
       </Card>
@@ -98,13 +99,13 @@ export default function Accueil() {
       <View style={{ flexDirection: 'row', gap: 12 }}>
         <StatCard
           icon={<CalendarDays size={18} color="#FFFFFF" />}
-          label="Repas planifiés"
+          label={t('accueil.repas_planifies')}
           value={`${repasPlanifies}/14`}
           tone="primary"
         />
         <StatCard
           icon={<ShoppingBasket size={18} color={colors.textPrimary} />}
-          label="Articles"
+          label={t('accueil.articles')}
           value={`${items.length}`}
         />
       </View>
@@ -112,31 +113,31 @@ export default function Accueil() {
       <Card style={{ padding: 20, gap: 14, borderRadius: 24, borderTopLeftRadius: 24 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <ChefHat size={22} color={colors.primary} />
-          <Heading>Prochains repas</Heading>
+          <Heading>{t('accueil.prochains_repas')}</Heading>
         </View>
         <View style={{ gap: 8 }}>
-          <Body>Midi : {planning.lundi.midi?.titre ?? 'Non planifié'}</Body>
-          <Body>Soir : {planning.lundi.soir?.titre ?? 'Non planifié'}</Body>
+          <Body>{t('accueil.midi', { titre: planning.lundi.midi?.titre ?? t('accueil.non_planifie') })}</Body>
+          <Body>{t('accueil.soir', { titre: planning.lundi.soir?.titre ?? t('accueil.non_planifie') })}</Body>
         </View>
       </Card>
 
       <Card style={{ padding: 20, gap: 12, borderRadius: 24, borderTopLeftRadius: 24 }}>
-        <Heading>Budget restant cette semaine</Heading>
-        <Price style={{ fontSize: 32 }}>{formatPrix(budgetRestant)}</Price>
+        <Heading>{t('accueil.budget_restant')}</Heading>
+        <PriceXL>{formatPrix(budgetRestant)}</PriceXL>
         <View style={{ height: 9, borderRadius: 999, backgroundColor: colors.bgSecondary, overflow: 'hidden' }}>
           <View style={{ width: '0%', height: '100%', backgroundColor: colors.primary }} />
         </View>
-        <BodySm>Ton budget est prêt. Génère une liste pour commencer à le suivre.</BodySm>
+        <BodySm>{t('accueil.budget_message')}</BodySm>
       </Card>
 
       <Card style={{ padding: 20, gap: 8, borderRadius: 24, borderTopLeftRadius: 24 }}>
-        <Heading>Économies réalisées ce mois</Heading>
-        <Savings style={{ fontSize: 28 }}>{formatPrix(0)}</Savings>
-        <BodySm>Les économies apparaîtront après ta première liste comparée.</BodySm>
+        <Heading>{t('accueil.economies_titre')}</Heading>
+        <SavingsXL>{formatPrix(0)}</SavingsXL>
+        <BodySm>{t('accueil.economies_message')}</BodySm>
       </Card>
 
       <Button
-        label="Générer mes courses"
+        label={t('accueil.generer_courses')}
         onPress={() => {
           if (profil) genererDepuisPlanning(planning, profil);
           analytics.shoppingListGenerated(useCoursesStore.getState().items.length);
