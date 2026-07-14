@@ -68,6 +68,7 @@ const config: ExpoConfig = {
         color: '#2D6A4F',
       },
     ],
+    '@sentry/react-native',
   ],
   extra: {
     supabaseUrl: process.env.SUPABASE_URL,
