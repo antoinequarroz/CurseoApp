@@ -10,22 +10,27 @@ import { secureStorage } from './secureStorage';
 const extra = Constants.expoConfig?.extra ?? {};
 const supabaseUrl = (extra.supabaseUrl as string | undefined) ?? '';
 const supabaseAnonKey = (extra.supabaseAnonKey as string | undefined) ?? '';
+const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
-if (!supabaseUrl || !supabaseAnonKey) {
+if (!isSupabaseConfigured) {
   // On ne throw pas : permet de lancer l'app en mode demo/mocks sans backend configure.
   console.warn(
     '[supabase] SUPABASE_URL / SUPABASE_ANON_KEY manquants — verifie ton .env (voir .env.example).',
   );
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    storage: secureStorage,
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: false,
+export const supabase = createClient(
+  isSupabaseConfigured ? supabaseUrl : 'https://placeholder.supabase.co',
+  isSupabaseConfigured ? supabaseAnonKey : 'placeholder-anon-key',
+  {
+    auth: {
+      storage: secureStorage,
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: false,
+    },
   },
-});
+);
 
 export function isSupabaseError(error: unknown): error is { code: string; message: string } {
   return (

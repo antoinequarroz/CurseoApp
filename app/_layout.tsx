@@ -44,14 +44,18 @@ export default function RootLayout() {
   useEffect(() => {
     async function prepare() {
       if (!fontsLoaded) return;
-      const { data } = await supabase.auth.getSession();
-      if (data.session?.user) {
-        const { data: profil } = await supabase
-          .from('profils')
-          .select('*')
-          .eq('id', data.session.user.id)
-          .single();
-        if (profil) useProfilStore.getState().setProfil(profil);
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (data.session?.user) {
+          const { data: profil } = await supabase
+            .from('profils')
+            .select('*')
+            .eq('id', data.session.user.id)
+            .single();
+          if (profil) useProfilStore.getState().setProfil(profil);
+        }
+      } catch (error) {
+        console.warn('[startup] Initialisation session/profil ignoree.', error);
       }
       setAppReady(true);
     }
