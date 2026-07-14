@@ -1,6 +1,8 @@
 /** Courses — liste générée, mode d'optimisation, récapitulatif panier. */
 import React, { useEffect, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { SlidersHorizontal, ShoppingBasket } from 'lucide-react-native';
 import { useTheme } from '@/lib/theme-context';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useCoursesStore } from '@/stores/coursesStore';
@@ -13,7 +15,7 @@ import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PaywallModal } from '@/components/ui/PaywallModal';
 import { Screen, ScreenScroll } from '@/components/ui/Screen';
-import { DisplayLG, Subheading } from '@/components/ui/Typography';
+import { DisplayLG, Heading, BodySm, Subheading } from '@/components/ui/Typography';
 import { toast } from '@/lib/toast';
 import { analytics } from '@/lib/analytics';
 import type { ModeOptimisation, NiveauAbonnement } from '@/types';
@@ -66,11 +68,34 @@ export default function Courses() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <OfflineBanner />
-      <ScreenScroll contentContainerStyle={{ gap: 20 }}>
-        <DisplayLG>Courses</DisplayLG>
+      <ScreenScroll contentContainerStyle={{ gap: 22 }}>
+        <View>
+          <DisplayLG>Courses</DisplayLG>
+          <BodySm>Ta liste organisée par rayon, prête pour le magasin.</BodySm>
+        </View>
+
+        <LinearGradient
+          colors={[colors.primaryDark, colors.primary]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{ borderRadius: 28, padding: 20, gap: 14 }}
+        >
+          <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: 'rgba(255,255,255,0.16)', alignItems: 'center', justifyContent: 'center' }}>
+            <ShoppingBasket size={24} color="#FFFFFF" />
+          </View>
+          <View>
+            <Heading style={{ color: '#FFFFFF' }}>{items.length} article(s) à vérifier</Heading>
+            <BodySm style={{ color: 'rgba(255,255,255,0.78)' }}>
+              Coche au fur et à mesure. Courseo garde le panier lisible par rayon.
+            </BodySm>
+          </View>
+        </LinearGradient>
 
         <View>
-          <Subheading>Mode d&apos;optimisation</Subheading>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <SlidersHorizontal size={18} color={colors.primary} />
+            <Subheading>Mode d&apos;optimisation</Subheading>
+          </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
             {MODES.map((m) => (
               <Pressable

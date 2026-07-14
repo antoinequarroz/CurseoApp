@@ -106,7 +106,7 @@ export function SwipeRecette({ recette, profilId, onSwiped, onTapDetail }: Swipe
   }));
 
   return (
-    <View style={{ gap: 18 }}>
+    <View style={{ gap: 14 }}>
       <GestureDetector gesture={gesture}>
         <Animated.View style={cardStyle}>
           <Pressable onPress={onTapDetail} accessibilityRole="button" accessibilityLabel={`Voir le détail de ${recette.titre}`}>
@@ -125,12 +125,25 @@ export function SwipeRecette({ recette, profilId, onSwiped, onTapDetail }: Swipe
         </Animated.View>
       </GestureDetector>
 
-      <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 18 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 20 }}>
         <Pressable
           onPress={() => declencherSwipe(false)}
           accessibilityRole="button"
           accessibilityLabel="Je passe cette recette"
-          style={{ width: 58, height: 58, borderRadius: 29, backgroundColor: colors.swipePass, alignItems: 'center', justifyContent: 'center' }}
+          style={{
+            width: 62,
+            height: 62,
+            borderRadius: 31,
+            backgroundColor: colors.bgCard,
+            borderWidth: 1,
+            borderColor: colors.border,
+            alignItems: 'center',
+            justifyContent: 'center',
+            shadowColor: '#000',
+            shadowOpacity: 0.1,
+            shadowRadius: 12,
+            shadowOffset: { width: 0, height: 6 },
+          }}
         >
           <X size={26} color={colors.error} />
         </Pressable>
@@ -138,7 +151,14 @@ export function SwipeRecette({ recette, profilId, onSwiped, onTapDetail }: Swipe
           onPress={onTapDetail}
           accessibilityRole="button"
           accessibilityLabel="Voir le détail de la recette"
-          style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}
+          style={{
+            width: 52,
+            height: 52,
+            borderRadius: 26,
+            backgroundColor: colors.bgSecondary,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
         >
           <Info size={22} color={colors.textPrimary} />
         </Pressable>
@@ -146,9 +166,20 @@ export function SwipeRecette({ recette, profilId, onSwiped, onTapDetail }: Swipe
           onPress={() => declencherSwipe(true)}
           accessibilityRole="button"
           accessibilityLabel="J'aime cette recette"
-          style={{ width: 58, height: 58, borderRadius: 29, backgroundColor: colors.swipeLike, alignItems: 'center', justifyContent: 'center' }}
+          style={{
+            width: 62,
+            height: 62,
+            borderRadius: 31,
+            backgroundColor: colors.primary,
+            alignItems: 'center',
+            justifyContent: 'center',
+            shadowColor: colors.primary,
+            shadowOpacity: 0.26,
+            shadowRadius: 14,
+            shadowOffset: { width: 0, height: 8 },
+          }}
         >
-          <Heart size={26} color={colors.success} />
+          <Heart size={26} color="#FFFFFF" fill="#FFFFFF" />
         </Pressable>
       </View>
     </View>

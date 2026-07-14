@@ -85,7 +85,7 @@ export default function Planifier() {
       </View>
 
       {sousOnglet === 'recettes' && (
-        <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: 18, justifyContent: 'center' }}>
+        <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 96, justifyContent: 'center' }}>
           {isLoading ? (
             <SkeletonRecetteCard />
           ) : recetteActuelle ? (

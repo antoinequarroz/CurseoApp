@@ -17,7 +17,7 @@ const COULEUR_DIFFICULTE: Record<Recette['difficulte'], 'success' | 'warning' | 
 
 export function RecetteCard({ recette, variant = 'default' }: { recette: Recette; variant?: 'default' | 'hero' }) {
   const { colors, isDark } = useTheme();
-  const imageHeight = variant === 'hero' ? 330 : 200;
+  const imageHeight = variant === 'hero' ? 260 : 200;
 
   return (
     <Card style={variant === 'hero' ? { borderRadius: 28, borderTopLeftRadius: 28 } : undefined}>

@@ -2,7 +2,8 @@
 import React from 'react';
 import { View } from 'react-native';
 import { ORDRE_RAYONS, type ItemCourse } from '@/types';
-import { Heading } from '@/components/ui/Typography';
+import { Card } from '@/components/ui/Card';
+import { Heading, Caption } from '@/components/ui/Typography';
 import { ProduitItem } from './ProduitItem';
 
 interface ListeCoursesProps {
@@ -17,14 +18,17 @@ export function ListeCourses({ items, onToggle }: ListeCoursesProps) {
   })).filter((g) => g.items.length > 0);
 
   return (
-    <View style={{ gap: 20 }}>
+    <View style={{ gap: 14 }}>
       {groupes.map((groupe) => (
-        <View key={groupe.rayon} style={{ gap: 4 }}>
-          <Heading>{groupe.rayon}</Heading>
+        <Card key={groupe.rayon} style={{ padding: 14, gap: 10, borderRadius: 22, borderTopLeftRadius: 22 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <Heading>{groupe.rayon}</Heading>
+            <Caption>{groupe.items.length} article(s)</Caption>
+          </View>
           {groupe.items.map((item) => (
             <ProduitItem key={item.id} item={item} onToggle={() => onToggle(item.id)} />
           ))}
-        </View>
+        </Card>
       ))}
     </View>
   );

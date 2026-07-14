@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Pressable, Switch, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
+import { Bell, Crown, Home, Palette, ShieldAlert, UserRound } from 'lucide-react-native';
 import { useTheme, type ApparencePreference } from '@/lib/theme-context';
 import { useProfilStore } from '@/stores/profilStore';
 import { useOnboardingStore } from '@/stores/onboardingStore';
@@ -68,14 +69,22 @@ export default function Profil() {
   ];
 
   return (
-    <ScreenScroll contentContainerStyle={{ gap: 20 }}>
+    <ScreenScroll contentContainerStyle={{ gap: 22 }}>
       <View>
         <Caption>Paramètres</Caption>
         <DisplayLG>Profil</DisplayLG>
       </View>
 
-      <Card style={{ padding: 18, gap: 10 }}>
-        <Heading>Informations du foyer</Heading>
+      <Card style={{ padding: 20, gap: 14, borderRadius: 28, borderTopLeftRadius: 28 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}>
+            <UserRound size={22} color={colors.primary} />
+          </View>
+          <View>
+            <Heading>Informations du foyer</Heading>
+            <Caption>Nom, taille du foyer et préférences</Caption>
+          </View>
+        </View>
         <TextInput
           value={profilAffiche.prenom}
           onChangeText={(v) => mettreAJourPreferences({ prenom: v })}
@@ -92,8 +101,13 @@ export default function Profil() {
         <BodySm>{profilAffiche.nb_personnes} personne(s), dont {profilAffiche.nb_enfants} enfant(s)</BodySm>
       </Card>
 
-      <Card style={{ padding: 18, gap: 12 }}>
-        <Heading>Abonnement</Heading>
+      <Card style={{ padding: 20, gap: 12, borderRadius: 28, borderTopLeftRadius: 28 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}>
+            <Crown size={22} color={colors.primary} />
+          </View>
+          <Heading>Abonnement</Heading>
+        </View>
         {PALIERS_ABONNEMENT.map((p) => (
           <View key={p.id} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 }}>
             <Body style={{ fontWeight: profilAffiche.abonnement === p.id ? '700' : '400' }}>{p.nom}</Body>
@@ -102,8 +116,13 @@ export default function Profil() {
         ))}
       </Card>
 
-      <Card style={{ padding: 18, gap: 8 }}>
-        <Heading>Apparence</Heading>
+      <Card style={{ padding: 20, gap: 10, borderRadius: 28, borderTopLeftRadius: 28 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}>
+            <Palette size={22} color={colors.primary} />
+          </View>
+          <Heading>Apparence</Heading>
+        </View>
         <Caption>Suit les préférences système ou force un thème.</Caption>
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
           {apparenceOptions.map((o) => (
@@ -126,12 +145,30 @@ export default function Profil() {
         </View>
       </Card>
 
-      <Card style={{ padding: 18 }}>
-        <Heading>Notifications</Heading>
+      <Card style={{ padding: 20, borderRadius: 28, borderTopLeftRadius: 28 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+          <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}>
+            <Bell size={22} color={colors.primary} />
+          </View>
+          <Heading>Notifications</Heading>
+        </View>
         <LigneNotification label="Rappel planning" valeur={profilAffiche.notifications_planning} onChange={(v) => mettreAJourPreferences({ notifications_planning: v })} />
         <LigneNotification label="Alertes budget" valeur={profilAffiche.notifications_budget} onChange={(v) => mettreAJourPreferences({ notifications_budget: v })} />
         <LigneNotification label="Promotions" valeur={profilAffiche.notifications_promos} onChange={(v) => mettreAJourPreferences({ notifications_promos: v })} />
         <LigneNotification label="Bilan hebdomadaire" valeur={profilAffiche.notifications_bilan} onChange={(v) => mettreAJourPreferences({ notifications_bilan: v })} />
+      </Card>
+
+      <Card style={{ padding: 20, gap: 8, borderRadius: 28, borderTopLeftRadius: 28 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}>
+            <Home size={22} color={colors.primary} />
+          </View>
+          <View>
+            <Heading>Préférences du foyer</Heading>
+            <Caption>{profilAffiche.enseignes_favorites.length || 0} enseigne(s) favorite(s)</Caption>
+          </View>
+        </View>
+        <BodySm>Les préférences détaillées seront enrichies dans la prochaine passe UX.</BodySm>
       </Card>
 
       {!confirmationSuppression ? (
@@ -140,6 +177,7 @@ export default function Profil() {
         </Pressable>
       ) : (
         <Card style={{ padding: 18, gap: 12, borderColor: colors.error }}>
+          <ShieldAlert size={22} color={colors.error} />
           <Body>Cette action est irréversible. Confirme en saisissant ton email.</Body>
           <TextInput
             value={emailSaisi}

@@ -1,4 +1,4 @@
-/** Item de liste de courses — checkbox avec animation de barre progressive (500ms) puis opacite 40%. */
+/** Item de liste de courses — ligne moderne avec checkbox tactile. */
 import React, { useEffect } from 'react';
 import { Pressable, View } from 'react-native';
 import { Check } from 'lucide-react-native';
@@ -12,15 +12,12 @@ import type { ItemCourse } from '@/types';
 export function ProduitItem({ item, onToggle }: { item: ItemCourse; onToggle: () => void }) {
   const { colors } = useTheme();
   const haptics = useHaptics();
-  const progresLigne = useSharedValue(item.coche ? 1 : 0);
-  const opaciteTexte = useSharedValue(item.coche ? 0.4 : 1);
+  const opaciteTexte = useSharedValue(item.coche ? 0.48 : 1);
 
   useEffect(() => {
-    progresLigne.value = withTiming(item.coche ? 1 : 0, { duration: 500 });
-    opaciteTexte.value = withTiming(item.coche ? 0.4 : 1, { duration: 500 });
-  }, [item.coche, progresLigne, opaciteTexte]);
+    opaciteTexte.value = withTiming(item.coche ? 0.48 : 1, { duration: 220 });
+  }, [item.coche, opaciteTexte]);
 
-  const ligneStyle = useAnimatedStyle(() => ({ width: `${progresLigne.value * 100}%` }));
   const texteStyle = useAnimatedStyle(() => ({ opacity: opaciteTexte.value }));
 
   return (
@@ -32,36 +29,37 @@ export function ProduitItem({ item, onToggle }: { item: ItemCourse; onToggle: ()
       accessibilityRole="checkbox"
       accessibilityState={{ checked: item.coche }}
       accessibilityLabel={`${item.produit}, ${formatQuantite(item.quantite, item.unite)}`}
-      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 }}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        paddingVertical: 12,
+        paddingHorizontal: 12,
+        borderRadius: 16,
+        backgroundColor: item.coche ? colors.bgSecondary : colors.bgCard,
+        borderWidth: 1,
+        borderColor: item.coche ? colors.bgSecondary : colors.border,
+      }}
     >
       <View
         style={{
-          width: 24,
-          height: 24,
-          borderRadius: 6,
+          width: 30,
+          height: 30,
+          borderRadius: 15,
           borderWidth: 2,
           borderColor: item.coche ? colors.primary : colors.border,
-          backgroundColor: item.coche ? colors.primary : 'transparent',
+          backgroundColor: item.coche ? colors.primary : colors.bgSecondary,
           alignItems: 'center',
           justifyContent: 'center',
         }}
       >
-        {item.coche && <Check size={16} color="#FFFFFF" />}
+        {item.coche && <Check size={17} color="#FFFFFF" strokeWidth={3} />}
       </View>
 
-      <View style={{ flex: 1 }}>
-        <Animated.View style={texteStyle}>
-          <View>
-            <Body numberOfLines={1}>{item.produit}</Body>
-            <View style={{ position: 'relative' }}>
-              <Animated.View
-                style={[{ position: 'absolute', height: 1, backgroundColor: colors.textMuted, top: '50%' }, ligneStyle]}
-              />
-            </View>
-          </View>
-        </Animated.View>
+      <Animated.View style={[{ flex: 1 }, texteStyle]}>
+        <Body numberOfLines={1}>{item.produit}</Body>
         <Caption>{formatQuantite(item.quantite, item.unite)}</Caption>
-      </View>
+      </Animated.View>
     </Pressable>
   );
 }
