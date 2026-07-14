@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Courseo — Vos repas. Vos courses. Au meilleur prix.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #2D6A4F;
+      --primary-light: #52B788;
+      --accent: #E8F5A3;
+      --bg: #FAFAF7;
+      --bg-secondary: #F2F0E8;
+      --text-primary: #1C1C1E;
+      --text-secondary: #6B7280;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text-primary); }
+    h1, h2 { font-family: 'DM Sans', sans-serif; font-weight: 700; }
+    .hero { padding: 80px 20px; text-align: center; max-width: 640px; margin: 0 auto; }
+    .hero h1 { font-size: 40px; margin-bottom: 16px; color: var(--primary); }
+    .hero p { font-size: 18px; color: var(--text-secondary); margin-bottom: 32px; }
+    form { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    input[type="email"] { padding: 14px 20px; border-radius: 9999px; border: 1px solid #E5E7EB; min-width: 260px; font-size: 15px; }
+    button { padding: 14px 28px; border-radius: 9999px; border: none; background: var(--primary); color: white; font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 15px; cursor: pointer; }
+    .honeypot { position: absolute; left: -9999px; }
+    .piliers { display: flex; gap: 24px; max-width: 900px; margin: 60px auto; padding: 0 20px; flex-wrap: wrap; justify-content: center; }
+    .pilier { background: white; border-radius: 20px; padding: 24px; max-width: 260px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+    .pilier h2 { font-size: 18px; margin-bottom: 8px; color: var(--primary); }
+    .pilier p { font-size: 14px; color: var(--text-secondary); }
+    .compteur { text-align: center; padding: 40px 20px; color: var(--text-secondary); }
+    footer { text-align: center; padding: 40px 20px; color: var(--text-secondary); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <section class="hero">
+    <h1>Vos repas. Vos courses. Au meilleur prix.</h1>
+    <p>Courseo planifie vos repas, génère votre liste de courses et compare les prix chez Coop, Migros, Lidl et Aldi. Automatiquement.</p>
+    <form id="waitlist-form">
+      <input type="email" name="email" placeholder="ton@email.ch" required />
+      <input type="text" name="honeypot" class="honeypot" tabindex="-1" autocomplete="off" />
+      <button type="submit">Je veux être parmi les premiers</button>
+    </form>
+  </section>
+
+  <section class="piliers">
+    <div class="pilier">
+      <h2>Planifiez en 2 minutes</h2>
+      <p>Swipe de recettes, planning généré automatiquement.</p>
+    </div>
+    <div class="pilier">
+      <h2>Économisez chaque semaine</h2>
+      <p>Comparateur de prix multi-enseignes suisses.</p>
+    </div>
+    <div class="pilier">
+      <h2>Zéro stress</h2>
+      <p>Liste de courses générée automatiquement, organisée par rayon.</p>
+    </div>
+  </section>
+
+  <div class="compteur" id="compteur">Rejoins les premières personnes qui attendent Courseo</div>
+
+  <footer>
+    Bientôt disponible sur App Store et Google Play<br />
+    <a href="/privacy">Politique de confidentialité</a> — © Courseo 2025
+  </footer>
+
+  <script>
+    // Endpoint : Edge Function Supabase supabase/functions/waitlist
+    const WAITLIST_ENDPOINT = 'https://<project-ref>.supabase.co/functions/v1/waitlist';
+    document.getElementById('waitlist-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const email = form.email.value;
+      const honeypot = form.honeypot.value;
+      const res = await fetch(WAITLIST_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, honeypot, source: 'landing' }),
+      });
+      if (res.ok) {
+        form.innerHTML = '<p>Merci ! Tu es sur la liste 🎉</p>';
+      }
+    });
+  </script>
+</body>
+</html>

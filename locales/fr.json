@@ -1,0 +1,40 @@
+{
+  "commun": {
+    "annuler": "Annuler",
+    "confirmer": "Confirmer",
+    "suivant": "Suivant",
+    "precedent": "Précédent",
+    "terminer": "Terminer",
+    "chargement": "Chargement…",
+    "reessayer": "Réessayer"
+  },
+  "onboarding": {
+    "bienvenue_titre": "Bienvenue sur Courseo",
+    "bienvenue_sous_titre": "Ton copilote repas et courses pour la Suisse",
+    "nom_foyer": "Quel est le nom de ton foyer ?",
+    "composition_titre": "Qui mange à la maison ?",
+    "budget_titre": "Quel est ton budget hebdomadaire ?",
+    "regime_titre": "Régimes et allergies",
+    "objectifs_titre": "Tes objectifs et enseignes préférées"
+  },
+  "accueil": {
+    "salutation": "Bonjour {{prenom}}, voici ta semaine",
+    "generer_courses": "Générer mes courses"
+  },
+  "tabs": {
+    "accueil": "Accueil",
+    "planifier": "Planifier",
+    "courses": "Courses",
+    "economies": "Économies",
+    "profil": "Profil"
+  },
+  "courses": {
+    "meilleur_prix": "Meilleur prix",
+    "valider": "Valider mes courses",
+    "mode_optimisation": "Mode d'optimisation"
+  },
+  "profil": {
+    "supprimer_compte": "Supprimer mon compte",
+    "apparence": "Apparence"
+  }
+}
