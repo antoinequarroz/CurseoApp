@@ -16,6 +16,7 @@ import { supabase } from '@/lib/supabase';
 import { analytics } from '@/lib/analytics';
 import { KeyboardView } from '@/components/ui/KeyboardView';
 import { Button } from '@/components/ui/Button';
+import { Screen } from '@/components/ui/Screen';
 import { DisplayXL, Body, BodySm, Caption, Price } from '@/components/ui/Typography';
 import { formatPrix } from '@/lib/format';
 import type { Enseigne, Objectif, Regime } from '@/types';
@@ -129,9 +130,9 @@ export default function Onboarding() {
 
   return (
     <KeyboardView>
-      <View style={{ flex: 1, backgroundColor: colors.bg, padding: 20 }}>
+      <Screen style={{ gap: 16 }}>
         {/* Progress bar */}
-        <View style={{ flexDirection: 'row', gap: 6, marginBottom: 24, marginTop: 12 }}>
+        <View style={{ flexDirection: 'row', gap: 6, marginBottom: 12 }}>
           {Array.from({ length: TOTAL_ETAPES }).map((_, i) => (
             <View
               key={i}
@@ -145,7 +146,14 @@ export default function Onboarding() {
           ))}
         </View>
 
-        <Animated.View key={etapeActuelle} entering={SlideInRight.duration(250)} exiting={SlideOutLeft.duration(250)} style={{ flex: 1, gap: 16 }}>
+        <Animated.ScrollView
+          key={etapeActuelle}
+          entering={SlideInRight.duration(250)}
+          exiting={SlideOutLeft.duration(250)}
+          style={{ flex: 1 }}
+          contentContainerStyle={{ gap: 16, paddingBottom: 20 }}
+          showsVerticalScrollIndicator={false}
+        >
           {etapeActuelle === 1 && (
             <View style={{ gap: 16 }}>
               <DisplayXL>Bienvenue sur Courseo</DisplayXL>
@@ -240,7 +248,7 @@ export default function Onboarding() {
               </View>
             </View>
           )}
-        </Animated.View>
+        </Animated.ScrollView>
 
         <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
           {etapeActuelle > 1 && <Button label="Précédent" variant="secondary" onPress={precedent} />}
@@ -252,7 +260,7 @@ export default function Onboarding() {
             />
           </View>
         </View>
-      </View>
+      </Screen>
     </KeyboardView>
   );
 }

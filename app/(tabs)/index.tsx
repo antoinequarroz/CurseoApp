@@ -1,6 +1,6 @@
-/** Accueil — resume de la semaine, budget restant, economies du mois, promotions, CTA principal. */
+/** Accueil — résumé de la semaine, budget restant, économies du mois, promotions, CTA principal. */
 import React from 'react';
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 import { router } from 'expo-router';
 import { useTheme } from '@/lib/theme-context';
 import { useProfilStore } from '@/stores/profilStore';
@@ -8,6 +8,7 @@ import { usePlanningStore } from '@/stores/planningStore';
 import { useCoursesStore } from '@/stores/coursesStore';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { ScreenScroll } from '@/components/ui/Screen';
 import { DisplayLG, Heading, Body, BodySm, Price, Savings, Caption } from '@/components/ui/Typography';
 import { formatPrix } from '@/lib/format';
 import { dates } from '@/lib/dates';
@@ -17,44 +18,57 @@ export default function Accueil() {
   const { colors } = useTheme();
   const profil = useProfilStore((s) => s.profil);
   const planning = usePlanningStore((s) => s.planning);
+  const items = useCoursesStore((s) => s.items);
   const genererDepuisPlanning = useCoursesStore((s) => s.genererDepuisPlanning);
 
   const jourAujourdhui = dates.formatJour(dates.maintenant());
   const budgetHebdo = profil?.budget_hebdo ?? 150;
-  const depenseEstimee = 62; // MVP : calcul simplifie, a affiner avec l'historique des commandes
+  const depenseEstimee = 0;
+  const aCommence = items.length > 0;
   const budgetRestant = Math.max(0, budgetHebdo - depenseEstimee);
   const progression = Math.min(1, depenseEstimee / budgetHebdo);
 
   return (
-    <ScrollView style={{ backgroundColor: colors.bg }} contentContainerStyle={{ padding: 20, gap: 20, paddingBottom: 100 }}>
+    <ScreenScroll contentContainerStyle={{ gap: 20 }}>
       <View>
-        <DisplayLG>Bonjour {profil?.prenom ?? 'toi'}, voici ta semaine</DisplayLG>
         <Caption style={{ textTransform: 'capitalize' }}>{jourAujourdhui}</Caption>
+        <DisplayLG>Bonjour {profil?.prenom ?? 'toi'}, voici ta semaine</DisplayLG>
       </View>
 
-      <Card style={{ padding: 16, gap: 8 }}>
+      <Card style={{ padding: 18, gap: 10 }}>
         <Heading>Prochains repas</Heading>
         <Body>Midi : {planning.lundi.midi?.titre ?? 'Non planifié'}</Body>
         <Body>Soir : {planning.lundi.soir?.titre ?? 'Non planifié'}</Body>
       </Card>
 
-      <Card style={{ padding: 16, gap: 10 }}>
+      <Card style={{ padding: 18, gap: 12 }}>
         <Heading>Budget restant cette semaine</Heading>
         <Price>{formatPrix(budgetRestant)}</Price>
-        <View style={{ height: 8, borderRadius: 4, backgroundColor: colors.bgSecondary, overflow: 'hidden' }}>
-          <View style={{ width: `${progression * 100}%`, height: '100%', backgroundColor: progression > 0.8 ? colors.warning : colors.primary }} />
+        <View style={{ height: 9, borderRadius: 999, backgroundColor: colors.bgSecondary, overflow: 'hidden' }}>
+          <View
+            style={{
+              width: `${progression * 100}%`,
+              height: '100%',
+              backgroundColor: progression > 0.8 ? colors.warning : colors.primary,
+            }}
+          />
         </View>
-        <BodySm>{formatPrix(depenseEstimee)} dépensés sur {formatPrix(budgetHebdo)}</BodySm>
+        <BodySm>
+          {aCommence
+            ? `${formatPrix(depenseEstimee)} prévus sur ${formatPrix(budgetHebdo)}`
+            : 'Ton budget est prêt. Génère une liste pour commencer à le suivre.'}
+        </BodySm>
       </Card>
 
-      <Card style={{ padding: 16, gap: 6 }}>
+      <Card style={{ padding: 18, gap: 8 }}>
         <Heading>Économies réalisées ce mois</Heading>
-        <Savings>{formatPrix(38.4)}</Savings>
+        <Savings>{formatPrix(0)}</Savings>
+        <BodySm>Les économies apparaîtront après ta première liste comparée.</BodySm>
       </Card>
 
-      <Card style={{ padding: 16, gap: 6 }}>
+      <Card style={{ padding: 18, gap: 8 }}>
         <Heading>Promotions du moment</Heading>
-        <BodySm>-20% sur les pâtes chez Lidl cette semaine</BodySm>
+        <BodySm>Les promotions personnalisées arriveront quand tes enseignes favorites seront connectées.</BodySm>
       </Card>
 
       <Button
@@ -65,6 +79,6 @@ export default function Accueil() {
           router.push('/(tabs)/courses');
         }}
       />
-    </ScrollView>
+    </ScreenScroll>
   );
 }

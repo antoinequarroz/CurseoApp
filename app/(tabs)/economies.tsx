@@ -1,12 +1,13 @@
-/** Economies — budget consomme (donut), economies cumulees, enseigne la plus avantageuse, historique. */
+/** Économies — budget consommé, économies cumulées, enseigne la plus avantageuse, historique. */
 import React, { useEffect, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { useTheme } from '@/lib/theme-context';
 import { useProfilStore } from '@/stores/profilStore';
 import { supabase } from '@/lib/supabase';
 import { Card } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Screen, ScreenScroll } from '@/components/ui/Screen';
 import { DisplayLG, Heading, Body, BodySm, Savings, Caption, Price } from '@/components/ui/Typography';
 import { formatPrix } from '@/lib/format';
 import { dates } from '@/lib/dates';
@@ -38,54 +39,59 @@ function DonutBudget({ progression }: { progression: number }) {
 }
 
 export default function Economies() {
-  const { colors } = useTheme();
   const profil = useProfilStore((s) => s.profil);
   const [commandes, setCommandes] = useState<Commande[]>([]);
 
   useEffect(() => {
     if (!profil) return;
-    supabase
-      .from('commandes')
-      .select('*')
-      .eq('profil_id', profil.id)
-      .order('created_at', { ascending: false })
-      .limit(5)
-      .then(({ data }) => setCommandes((data as Commande[] | null) ?? []));
+    void (async () => {
+      try {
+        const { data } = await supabase
+          .from('commandes')
+          .select('*')
+          .eq('profil_id', profil.id)
+          .order('created_at', { ascending: false })
+          .limit(5);
+        setCommandes((data as Commande[] | null) ?? []);
+      } catch {
+        setCommandes([]);
+      }
+    })();
   }, [profil]);
 
   const economiesCumulees = commandes.reduce((total, c) => total + c.economies, 0);
-  const budgetConsomme = 62;
+  const budgetConsomme = commandes.reduce((total, c) => total + c.montant_total, 0);
   const budgetHebdo = profil?.budget_hebdo ?? 150;
 
   if (commandes.length === 0) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.bg, justifyContent: 'center', paddingTop: 60 }}>
+      <Screen style={{ justifyContent: 'center' }}>
         <EmptyState
           illustration="economies"
           titre="Tes économies apparaîtront ici"
-          sousTitre="Commence par valider ta première liste de courses."
+          sousTitre="Commence par générer puis valider ta première liste de courses."
         />
-      </View>
+      </Screen>
     );
   }
 
   return (
-    <ScrollView style={{ backgroundColor: colors.bg, paddingTop: 60 }} contentContainerStyle={{ padding: 20, gap: 20, paddingBottom: 100 }}>
+    <ScreenScroll contentContainerStyle={{ gap: 20 }}>
       <DisplayLG>Économies</DisplayLG>
 
-      <Card style={{ padding: 16, alignItems: 'center', gap: 12 }}>
+      <Card style={{ padding: 18, alignItems: 'center', gap: 12 }}>
         <DonutBudget progression={Math.min(1, budgetConsomme / budgetHebdo)} />
-        <Body>{formatPrix(budgetConsomme)} consommés sur {formatPrix(budgetHebdo)}</Body>
+        <Body>{formatPrix(budgetConsomme)} suivis sur {formatPrix(budgetHebdo)}</Body>
       </Card>
 
-      <Card style={{ padding: 16, gap: 6 }}>
+      <Card style={{ padding: 18, gap: 6 }}>
         <Heading>Économies cumulées</Heading>
         <Savings style={{ fontSize: 32 }}>{formatPrix(economiesCumulees)}</Savings>
       </Card>
 
-      <Card style={{ padding: 16, gap: 6 }}>
-        <Heading>Enseigne la plus avantageuse ce mois</Heading>
-        <Body>Lidl</Body>
+      <Card style={{ padding: 18, gap: 6 }}>
+        <Heading>Enseigne la plus avantageuse</Heading>
+        <Body>Disponible après plusieurs comparaisons.</Body>
       </Card>
 
       <View style={{ gap: 10 }}>
@@ -103,6 +109,6 @@ export default function Economies() {
           </Card>
         ))}
       </View>
-    </ScrollView>
+    </ScreenScroll>
   );
 }

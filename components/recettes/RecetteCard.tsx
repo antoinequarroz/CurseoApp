@@ -1,11 +1,11 @@
-/** Card recette (utilisee dans le swipe et les listes) — image, badges difficulte/temps, prix. */
+/** Card recette — image, badges difficulté/temps, prix. */
 import React from 'react';
 import { View } from 'react-native';
 import { Image } from 'expo-image';
 import { useTheme } from '@/lib/theme-context';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { Heading, BodySm, Price } from '@/components/ui/Typography';
+import { Heading, BodySm, Caption, Price } from '@/components/ui/Typography';
 import { formatPrix, formatTemps } from '@/lib/format';
 import type { Recette } from '@/types';
 
@@ -15,34 +15,37 @@ const COULEUR_DIFFICULTE: Record<Recette['difficulte'], 'success' | 'warning' | 
   difficile: 'error',
 };
 
-export function RecetteCard({ recette }: { recette: Recette }) {
-  const { isDark } = useTheme();
+export function RecetteCard({ recette, variant = 'default' }: { recette: Recette; variant?: 'default' | 'hero' }) {
+  const { colors, isDark } = useTheme();
+  const imageHeight = variant === 'hero' ? 330 : 200;
 
   return (
-    <Card>
-      <View style={{ height: 200 }}>
+    <Card style={variant === 'hero' ? { borderRadius: 28, borderTopLeftRadius: 28 } : undefined}>
+      <View style={{ height: imageHeight, backgroundColor: colors.bgSecondary }}>
         <Image
-          source={{ uri: recette.image_url }}
+          source={{ uri: `${recette.image_url}?auto=format&fit=crop&w=1000&q=80` }}
           placeholder={recette.blurhash}
           contentFit="cover"
-          transition={200}
+          transition={120}
+          cachePolicy="memory-disk"
           style={{ width: '100%', height: '100%' }}
           accessibilityLabel={`Photo de ${recette.titre}`}
         />
-        {isDark && (
-          <View style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.15)' }} />
-        )}
-        <View style={{ position: 'absolute', bottom: 8, left: 8 }}>
+        <View style={{ position: 'absolute', inset: 0, backgroundColor: isDark ? 'rgba(0,0,0,0.28)' : 'rgba(0,0,0,0.16)' }} />
+        <View style={{ position: 'absolute', bottom: 12, left: 12 }}>
           <Badge label={recette.difficulte} variant={COULEUR_DIFFICULTE[recette.difficulte]} />
         </View>
-        <View style={{ position: 'absolute', bottom: 8, right: 8 }}>
+        <View style={{ position: 'absolute', bottom: 12, right: 12 }}>
           <Badge label={formatTemps(recette.temps_preparation)} variant="neutral" />
         </View>
       </View>
-      <View style={{ padding: 16, gap: 6 }}>
+      <View style={{ padding: variant === 'hero' ? 20 : 16, gap: 8 }}>
         <Heading numberOfLines={2}>{recette.titre}</Heading>
         <BodySm numberOfLines={3}>{recette.description}</BodySm>
-        <Price>{formatPrix(recette.cout_estime)}</Price>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12 }}>
+          <Price>{formatPrix(recette.cout_estime)}</Price>
+          <Caption>{recette.portions} portions</Caption>
+        </View>
       </View>
     </Card>
   );

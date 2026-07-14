@@ -1,6 +1,6 @@
-/** Profil — infos foyer, abonnement, enseignes favorites, notifications, apparence, suppression de compte. */
+/** Profil — infos foyer, abonnement, notifications, apparence, suppression de compte. */
 import React, { useState } from 'react';
-import { Pressable, ScrollView, Switch, TextInput, View } from 'react-native';
+import { Pressable, Switch, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTheme, type ApparencePreference } from '@/lib/theme-context';
 import { useProfilStore } from '@/stores/profilStore';
@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { PALIERS_ABONNEMENT } from '@/lib/revenuecat';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { ScreenScroll } from '@/components/ui/Screen';
 import { DisplayLG, Heading, Body, BodySm, Caption } from '@/components/ui/Typography';
 import { toast } from '@/lib/toast';
 
@@ -28,7 +29,25 @@ export default function Profil() {
   const [confirmationSuppression, setConfirmationSuppression] = useState(false);
   const [emailSaisi, setEmailSaisi] = useState('');
 
-  if (!profil) return null;
+  const profilAffiche = profil ?? {
+    id: 'demo-user',
+    prenom: 'Ton foyer',
+    nb_personnes: 1,
+    nb_enfants: 0,
+    budget_hebdo: 150,
+    regime: [],
+    allergies: [],
+    objectifs: [],
+    enseignes_favorites: [],
+    abonnement: 'gratuit' as const,
+    notifications_activees: true,
+    notifications_planning: true,
+    notifications_budget: true,
+    notifications_promos: false,
+    notifications_bilan: true,
+    apparence: 'auto' as const,
+    cgvu_version_acceptee: null,
+  };
 
   const supprimerCompte = async () => {
     const { data: session } = await supabase.auth.getSession();
@@ -43,39 +62,49 @@ export default function Profil() {
   };
 
   const apparenceOptions: { id: ApparencePreference; label: string }[] = [
-    { id: 'auto', label: 'Automatique' },
+    { id: 'auto', label: 'Auto' },
     { id: 'clair', label: 'Clair' },
     { id: 'sombre', label: 'Sombre' },
   ];
 
   return (
-    <ScrollView style={{ backgroundColor: colors.bg, paddingTop: 60 }} contentContainerStyle={{ padding: 20, gap: 20, paddingBottom: 100 }}>
-      <DisplayLG>Profil</DisplayLG>
+    <ScreenScroll contentContainerStyle={{ gap: 20 }}>
+      <View>
+        <Caption>Paramètres</Caption>
+        <DisplayLG>Profil</DisplayLG>
+      </View>
 
-      <Card style={{ padding: 16, gap: 8 }}>
+      <Card style={{ padding: 18, gap: 10 }}>
         <Heading>Informations du foyer</Heading>
         <TextInput
-          value={profil.prenom}
+          value={profilAffiche.prenom}
           onChangeText={(v) => mettreAJourPreferences({ prenom: v })}
           accessibilityLabel="Prénom"
-          style={{ color: colors.textPrimary, borderBottomWidth: 1, borderColor: colors.border, paddingVertical: 6 }}
+          style={{
+            color: colors.textPrimary,
+            borderWidth: 1,
+            borderColor: colors.border,
+            borderRadius: 12,
+            paddingHorizontal: 12,
+            paddingVertical: 10,
+          }}
         />
-        <BodySm>{profil.nb_personnes} personne(s), dont {profil.nb_enfants} enfant(s)</BodySm>
+        <BodySm>{profilAffiche.nb_personnes} personne(s), dont {profilAffiche.nb_enfants} enfant(s)</BodySm>
       </Card>
 
-      <Card style={{ padding: 16, gap: 12 }}>
+      <Card style={{ padding: 18, gap: 12 }}>
         <Heading>Abonnement</Heading>
         {PALIERS_ABONNEMENT.map((p) => (
           <View key={p.id} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 }}>
-            <Body style={{ fontWeight: profil.abonnement === p.id ? '700' : '400' }}>{p.nom}</Body>
+            <Body style={{ fontWeight: profilAffiche.abonnement === p.id ? '700' : '400' }}>{p.nom}</Body>
             <Caption>{p.prix}</Caption>
           </View>
         ))}
       </Card>
 
-      <Card style={{ padding: 16, gap: 4 }}>
+      <Card style={{ padding: 18, gap: 8 }}>
         <Heading>Apparence</Heading>
-        <Caption>Suit les préférences système / Clair / Sombre</Caption>
+        <Caption>Suit les préférences système ou force un thème.</Caption>
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
           {apparenceOptions.map((o) => (
             <Pressable
@@ -85,8 +114,8 @@ export default function Profil() {
               accessibilityState={{ selected: preference === o.id }}
               style={{
                 flex: 1,
-                paddingVertical: 10,
-                borderRadius: 10,
+                paddingVertical: 12,
+                borderRadius: 14,
                 alignItems: 'center',
                 backgroundColor: preference === o.id ? colors.primary : colors.bgSecondary,
               }}
@@ -97,12 +126,12 @@ export default function Profil() {
         </View>
       </Card>
 
-      <Card style={{ padding: 16 }}>
+      <Card style={{ padding: 18 }}>
         <Heading>Notifications</Heading>
-        <LigneNotification label="Rappel planning" valeur={profil.notifications_planning} onChange={(v) => mettreAJourPreferences({ notifications_planning: v })} />
-        <LigneNotification label="Alertes budget" valeur={profil.notifications_budget} onChange={(v) => mettreAJourPreferences({ notifications_budget: v })} />
-        <LigneNotification label="Promotions" valeur={profil.notifications_promos} onChange={(v) => mettreAJourPreferences({ notifications_promos: v })} />
-        <LigneNotification label="Bilan hebdomadaire" valeur={profil.notifications_bilan} onChange={(v) => mettreAJourPreferences({ notifications_bilan: v })} />
+        <LigneNotification label="Rappel planning" valeur={profilAffiche.notifications_planning} onChange={(v) => mettreAJourPreferences({ notifications_planning: v })} />
+        <LigneNotification label="Alertes budget" valeur={profilAffiche.notifications_budget} onChange={(v) => mettreAJourPreferences({ notifications_budget: v })} />
+        <LigneNotification label="Promotions" valeur={profilAffiche.notifications_promos} onChange={(v) => mettreAJourPreferences({ notifications_promos: v })} />
+        <LigneNotification label="Bilan hebdomadaire" valeur={profilAffiche.notifications_bilan} onChange={(v) => mettreAJourPreferences({ notifications_bilan: v })} />
       </Card>
 
       {!confirmationSuppression ? (
@@ -110,7 +139,7 @@ export default function Profil() {
           <BodySm style={{ color: colors.error, textAlign: 'center' }}>Supprimer mon compte</BodySm>
         </Pressable>
       ) : (
-        <Card style={{ padding: 16, gap: 12, borderColor: colors.error }}>
+        <Card style={{ padding: 18, gap: 12, borderColor: colors.error }}>
           <Body>Cette action est irréversible. Confirme en saisissant ton email.</Body>
           <TextInput
             value={emailSaisi}
@@ -119,11 +148,11 @@ export default function Profil() {
             placeholderTextColor={colors.textMuted}
             autoCapitalize="none"
             accessibilityLabel="Confirme ton email pour supprimer le compte"
-            style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 12, color: colors.textPrimary }}
+            style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 12, color: colors.textPrimary }}
           />
           <Button label="Confirmer la suppression" variant="secondary" onPress={supprimerCompte} disabled={!emailSaisi} />
         </Card>
       )}
-    </ScrollView>
+    </ScreenScroll>
   );
 }

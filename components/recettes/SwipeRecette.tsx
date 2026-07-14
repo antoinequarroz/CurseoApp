@@ -1,9 +1,4 @@
-/**
- * Composant cle de l'app. Swipe droite = J'aime, swipe gauche = Je passe.
- * La card change progressivement de fond vers swipeLike/swipePass pendant
- * le geste, avec une icone qui apparait en opacite progressive.
- * Boutons alternatifs (coeur/X) fournis pour l'accessibilite (VoiceOver/TalkBack).
- */
+/** Swipe droite = j'aime, swipe gauche = je passe. */
 import React, { useState } from 'react';
 import { Dimensions, Pressable, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -15,7 +10,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-import { Heart, X } from 'lucide-react-native';
+import { Heart, Info, X } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme-context';
 import { useHaptics } from '@/hooks/useHaptics';
@@ -43,7 +38,14 @@ export function SwipeRecette({ recette, profilId, onSwiped, onTapDetail }: Swipe
   const enregistrerSwipe = async (aime: boolean) => {
     void haptics[aime ? 'success' : 'error']();
     analytics[aime ? 'recipeSwipedLike' : 'recipeSwipedPass'](recette.id);
-    await supabase.from('swipes').upsert({ profil_id: profilId, recette_id: recette.id, aime });
+    try {
+      await supabase.from('swipes').upsert({ profil_id: profilId, recette_id: recette.id, aime });
+    } catch {
+      // Le mode demo/TestFlight sans Supabase configure ne doit pas bloquer le swipe.
+    }
+    translateX.value = 0;
+    translateY.value = 0;
+    setSwipeEnCours(false);
     onSwiped(aime);
   };
 
@@ -56,6 +58,9 @@ export function SwipeRecette({ recette, profilId, onSwiped, onTapDetail }: Swipe
   };
 
   const gesture = Gesture.Pan()
+    .onBegin(() => {
+      runOnJS(setSwipeEnCours)(true);
+    })
     .onUpdate((e) => {
       translateX.value = e.translationX;
       translateY.value = e.translationY * 0.2;
@@ -69,11 +74,12 @@ export function SwipeRecette({ recette, profilId, onSwiped, onTapDetail }: Swipe
       } else {
         translateX.value = withSpring(0);
         translateY.value = withSpring(0);
+        runOnJS(setSwipeEnCours)(false);
       }
     });
 
   const cardStyle = useAnimatedStyle(() => {
-    const rotate = interpolate(translateX.value, [-SCREEN_WIDTH, 0, SCREEN_WIDTH], [-12, 0, 12]);
+    const rotate = interpolate(translateX.value, [-SCREEN_WIDTH, 0, SCREEN_WIDTH], [-10, 0, 10]);
     return {
       transform: [
         { translateX: translateX.value },
@@ -94,47 +100,53 @@ export function SwipeRecette({ recette, profilId, onSwiped, onTapDetail }: Swipe
   const heartOpacity = useAnimatedStyle(() => ({
     opacity: interpolate(translateX.value, [0, SWIPE_THRESHOLD], [0, 1], 'clamp'),
   }));
+
   const xOpacity = useAnimatedStyle(() => ({
     opacity: interpolate(translateX.value, [-SWIPE_THRESHOLD, 0], [1, 0], 'clamp'),
   }));
 
   return (
-    <View>
+    <View style={{ gap: 18 }}>
       <GestureDetector gesture={gesture}>
         <Animated.View style={cardStyle}>
           <Pressable onPress={onTapDetail} accessibilityRole="button" accessibilityLabel={`Voir le détail de ${recette.titre}`}>
             <Animated.View
               pointerEvents="none"
-              style={[{ position: 'absolute', inset: 0, borderRadius: 16, zIndex: 2 }, overlayStyle]}
+              style={[{ position: 'absolute', inset: 0, borderRadius: 28, zIndex: 2 }, overlayStyle]}
             />
             <Animated.View style={[{ position: 'absolute', top: 24, right: 24, zIndex: 3 }, heartOpacity]}>
-              <Heart size={48} color={colors.success} fill={colors.success} />
+              <Heart size={54} color={colors.success} fill={colors.success} />
             </Animated.View>
             <Animated.View style={[{ position: 'absolute', top: 24, left: 24, zIndex: 3 }, xOpacity]}>
-              <X size={48} color={colors.error} />
+              <X size={54} color={colors.error} />
             </Animated.View>
-            <RecetteCard recette={recette} />
+            <RecetteCard recette={recette} variant="hero" />
           </Pressable>
         </Animated.View>
       </GestureDetector>
 
-      {/* Boutons alternatifs — accessibilite pour les utilisateurs qui ne peuvent pas swiper */}
-      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 32, marginTop: 20 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 18 }}>
         <Pressable
           onPress={() => declencherSwipe(false)}
           accessibilityRole="button"
           accessibilityLabel="Je passe cette recette"
-          accessibilityHint="Équivalent à un swipe vers la gauche"
-          style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: colors.swipePass, alignItems: 'center', justifyContent: 'center' }}
+          style={{ width: 58, height: 58, borderRadius: 29, backgroundColor: colors.swipePass, alignItems: 'center', justifyContent: 'center' }}
         >
           <X size={26} color={colors.error} />
+        </Pressable>
+        <Pressable
+          onPress={onTapDetail}
+          accessibilityRole="button"
+          accessibilityLabel="Voir le détail de la recette"
+          style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}
+        >
+          <Info size={22} color={colors.textPrimary} />
         </Pressable>
         <Pressable
           onPress={() => declencherSwipe(true)}
           accessibilityRole="button"
           accessibilityLabel="J'aime cette recette"
-          accessibilityHint="Équivalent à un swipe vers la droite"
-          style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: colors.swipeLike, alignItems: 'center', justifyContent: 'center' }}
+          style={{ width: 58, height: 58, borderRadius: 29, backgroundColor: colors.swipeLike, alignItems: 'center', justifyContent: 'center' }}
         >
           <Heart size={26} color={colors.success} />
         </Pressable>

@@ -1,4 +1,4 @@
-/** Courses — liste generee, comparateur de prix, mode d'optimisation, recapitulatif panier. */
+/** Courses — liste générée, mode d'optimisation, récapitulatif panier. */
 import React, { useEffect, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { useTheme } from '@/lib/theme-context';
@@ -12,6 +12,7 @@ import { RecapCommande } from '@/components/panier/RecapCommande';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PaywallModal } from '@/components/ui/PaywallModal';
+import { Screen, ScreenScroll } from '@/components/ui/Screen';
 import { DisplayLG, Subheading } from '@/components/ui/Typography';
 import { toast } from '@/lib/toast';
 import { analytics } from '@/lib/analytics';
@@ -52,25 +53,25 @@ export default function Courses() {
 
   if (items.length === 0) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.bg, justifyContent: 'center', paddingTop: 60 }}>
+      <Screen style={{ justifyContent: 'center' }}>
         <EmptyState
           illustration="courses"
           titre="Rien dans ta liste"
           sousTitre="Planifie ta semaine pour générer ta liste automatiquement."
         />
-      </View>
+      </Screen>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg, paddingTop: 60 }}>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <OfflineBanner />
-      <ScrollView contentContainerStyle={{ padding: 20, gap: 20, paddingBottom: 100 }}>
+      <ScreenScroll contentContainerStyle={{ gap: 20 }}>
         <DisplayLG>Courses</DisplayLG>
 
         <View>
           <Subheading>Mode d&apos;optimisation</Subheading>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
             {MODES.map((m) => (
               <Pressable
                 key={m.id}
@@ -81,7 +82,7 @@ export default function Courses() {
                 accessibilityRole="button"
                 accessibilityState={{ selected: mode === m.id }}
                 style={{
-                  paddingVertical: 8,
+                  paddingVertical: 10,
                   paddingHorizontal: 16,
                   borderRadius: 9999,
                   backgroundColor: mode === m.id ? colors.primary : colors.bgSecondary,
@@ -96,15 +97,8 @@ export default function Courses() {
 
         <ListeCourses items={items} onToggle={toggleCoche} />
 
-        {recap && (
-          <RecapCommande
-            recap={recap}
-            onValider={() => {
-              void validerCommande();
-            }}
-          />
-        )}
-      </ScrollView>
+        {recap && <RecapCommande recap={recap} onValider={() => void validerCommande()} />}
+      </ScreenScroll>
 
       <PaywallModal
         visible={paywallVisible}

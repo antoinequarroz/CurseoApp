@@ -3,6 +3,7 @@ import React from 'react';
 import { Pressable, type PressableProps } from 'react-native';
 import { Tabs } from 'expo-router';
 import { BlurView } from 'expo-blur';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Home, Calendar, ShoppingCart, TrendingDown, User } from 'lucide-react-native';
 import { useTheme } from '@/lib/theme-context';
 import { useHaptics } from '@/hooks/useHaptics';
@@ -12,6 +13,7 @@ import { ICON_SIZE } from '@/lib/icons';
 export default function TabsLayout() {
   const { colors, isDark } = useTheme();
   const haptics = useHaptics();
+  const insets = useSafeAreaInsets();
   const nbItemsCourses = useCoursesStore((s) => s.items.filter((i) => !i.coche).length);
 
   return (
@@ -20,8 +22,25 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
-        tabBarLabelStyle: { fontFamily: 'DMSans_500Medium', fontSize: 11 },
-        tabBarStyle: { backgroundColor: 'transparent', borderTopColor: colors.border, borderTopWidth: 1, position: 'absolute' },
+        tabBarLabelStyle: { fontFamily: 'DMSans_500Medium', fontSize: 11, marginTop: 2 },
+        tabBarItemStyle: { paddingTop: 8 },
+        tabBarStyle: {
+          position: 'absolute',
+          left: 14,
+          right: 14,
+          bottom: Math.max(insets.bottom, 10),
+          height: 66,
+          borderRadius: 26,
+          borderTopWidth: 0,
+          borderWidth: 1,
+          borderColor: colors.border,
+          overflow: 'hidden',
+          backgroundColor: 'transparent',
+          shadowColor: '#000',
+          shadowOpacity: isDark ? 0 : 0.14,
+          shadowRadius: 18,
+          shadowOffset: { width: 0, height: 8 },
+        },
         tabBarBackground: () => (
           <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={{ flex: 1 }} />
         ),
