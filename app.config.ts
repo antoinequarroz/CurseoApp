@@ -7,6 +7,7 @@ const IS_DEV = APP_ENV === 'development';
 const IS_PROD = APP_ENV === 'production';
 
 const config: ExpoConfig = {
+  owner: 'antoinequarr',
   name: IS_DEV ? 'Courseo (Dev)' : IS_PROD ? 'Courseo' : 'Courseo (Staging)',
   slug: 'courseo',
   version: '1.0.0',
@@ -19,6 +20,7 @@ const config: ExpoConfig = {
     supportsTablet: false, // MVP telephone uniquement
     requireFullScreen: true,
     infoPlist: {
+      ITSAppUsesNonExemptEncryption: false,
       NSUserNotificationsUsageDescription:
         'Courseo vous envoie des rappels de planification et des alertes de promotions.',
       CFBundleLocalizations: ['fr', 'de', 'it'],
@@ -76,7 +78,7 @@ const config: ExpoConfig = {
     appEnv: APP_ENV,
     router: {},
     eas: {
-      projectId: process.env.EAS_PROJECT_ID,
+      projectId: process.env.EAS_PROJECT_ID ?? '85498c7a-95c6-440d-84a7-7d72e038d5c2',
     },
   },
 };
