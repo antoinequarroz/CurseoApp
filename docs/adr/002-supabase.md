@@ -12,7 +12,7 @@ Supabase (Postgres géré, Auth, Storage, Edge Functions, RLS) plutôt que Fireb
 
 ## Conséquences
 
-- Le modèle de données de Courseo est fortement relationnel (profils ↔ plannings ↔ listes ↔ commandes) — Postgres est un meilleur fit que Firestore
+- Le modèle de données de Coursia est fortement relationnel (profils ↔ plannings ↔ listes ↔ commandes) — Postgres est un meilleur fit que Firestore
 - Row Level Security au niveau base de données plutôt que règles applicatives dupliquées
 - Edge Functions (Deno) permettent de proxy les appels OpenAI sans exposer la clé API cliente
 - Contrepartie : écosystème d'extensions un peu moins mature que Firebase sur mobile (compensé par le SDK JS officiel)

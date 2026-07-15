@@ -1,5 +1,5 @@
 /**
- * Card generique Courseo — signature visuelle "l'etiquette de marche" :
+ * Card generique Coursia — signature visuelle "l'etiquette de marche" :
  * le coin superieur gauche est decoupe en diagonale via un triangle SVG
  * qui recouvre le coin, evoquant une etiquette de marche sans etre litteral.
  */

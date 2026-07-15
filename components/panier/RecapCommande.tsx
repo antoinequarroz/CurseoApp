@@ -27,7 +27,7 @@ export function RecapCommande({ recap, onValider }: { recap: RecapCommandeType; 
     <View style={{ gap: 16 }}>
       {/* Degrade fixe (independant du theme) — les deux teintes garantissent >=4.5:1 avec le texte blanc. */}
       <LinearGradient
-        colors={['#1B4332', '#2D6A4F']}
+        colors={['#1B3A2E', '#3E6B52']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={{ borderRadius: 20, padding: 24, gap: 4 }}

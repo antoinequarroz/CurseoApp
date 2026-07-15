@@ -24,12 +24,18 @@ export function PaywallModal({ visible, onClose, onChoisir, featureOrigine }: Pa
   const { colors } = useTheme();
   const haptics = useHaptics();
   const [palierSelectionne, setPalierSelectionne] = React.useState<NiveauAbonnement>(PALIER_DEFAUT);
+  // Reinitialise la selection a chaque reouverture — ajustement pendant le
+  // rendu (pattern recommande par React) plutot qu'un setState dans un effet.
+  const [visiblePrecedent, setVisiblePrecedent] = React.useState(visible);
+  if (visible !== visiblePrecedent) {
+    setVisiblePrecedent(visible);
+    if (visible) setPalierSelectionne(PALIER_DEFAUT);
+  }
 
   React.useEffect(() => {
     if (visible) {
       void haptics.medium();
       analytics.paywallShown(featureOrigine ?? 'inconnue');
-      setPalierSelectionne(PALIER_DEFAUT);
     }
   }, [visible, featureOrigine, haptics]);
 

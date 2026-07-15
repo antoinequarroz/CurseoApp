@@ -1,7 +1,9 @@
 /** @type {import('tailwindcss').Config} */
-// Courseo design system — palette definie dans le brief produit.
+// Coursia design system — palette "vert foret / sauge / corail / creme" (rebranding).
 // darkMode: 'class' car le basculement est pilote par ThemeContext (lib/theme.ts),
 // pas uniquement par la media query systeme (l'utilisateur peut forcer clair/sombre).
+// Source de verite reelle : lib/theme.ts (consomme via useTheme()) — ces tokens
+// Tailwind sont surtout documentaires, aucun composant n'utilise bg-primary etc.
 module.exports = {
   content: ['./app/**/*.{js,jsx,ts,tsx}', './components/**/*.{js,jsx,ts,tsx}'],
   presets: [require('nativewind/preset')],
@@ -10,30 +12,30 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#2D6A4F',
-          light: '#52B788',
-          dark: '#1B4332',
+          DEFAULT: '#3E6B52',
+          light: '#7FA087',
+          dark: '#1B3A2E',
         },
         accent: {
-          DEFAULT: '#E8F5A3',
-          dark: '#C9E52A',
+          DEFAULT: '#F3C7A6',
+          dark: '#DD7C4E',
         },
         background: {
-          DEFAULT: '#FAFAF7',
-          secondary: '#F2F0E8',
+          DEFAULT: '#FAF6EC',
+          secondary: '#F0E7D6',
           card: '#FFFFFF',
         },
         text: {
-          primary: '#1C1C1E',
-          secondary: '#6B7280',
-          muted: '#9CA3AF',
+          primary: '#1C1E1B',
+          secondary: '#5B6B60',
+          muted: '#55654A',
         },
         status: {
-          success: '#52B788',
+          success: '#3E6B52',
           warning: '#F59E0B',
-          error: '#EF4444',
-          'swipe-like': '#D1FAE5',
-          'swipe-pass': '#FEE2E2',
+          error: '#D42020',
+          'swipe-like': '#DCE9DA',
+          'swipe-pass': '#FBE0D2',
         },
         enseigne: {
           coop: '#E2001A',
@@ -43,38 +45,40 @@ module.exports = {
         },
         dark: {
           primary: {
-            DEFAULT: '#52B788',
-            light: '#74C69D',
-            dark: '#2D6A4F',
+            DEFAULT: '#7FA087',
+            light: '#9DBE9F',
+            dark: '#3E6B52',
           },
           accent: {
-            DEFAULT: '#C9E52A',
+            DEFAULT: '#EFA173',
           },
           background: {
-            DEFAULT: '#0F1412',
-            secondary: '#1A2420',
-            card: '#1F2E29',
-            elevated: '#263530',
+            DEFAULT: '#101E17',
+            secondary: '#182A20',
+            card: '#1F3428',
+            elevated: '#274030',
           },
           text: {
-            primary: '#F0F7F4',
-            secondary: '#9DB8AE',
-            muted: '#5C7A70',
+            primary: '#F3EFE2',
+            secondary: '#A8C2AC',
+            muted: '#87A38C',
           },
           status: {
-            success: '#74C69D',
+            success: '#9DBE9F',
             warning: '#FCD34D',
             error: '#F87171',
-            'swipe-like': '#1A3328',
-            'swipe-pass': '#2D1515',
+            'swipe-like': '#203526',
+            'swipe-pass': '#3A2820',
           },
-          border: '#2A3D37',
+          border: '#2C4535',
         },
       },
       fontFamily: {
-        'dm-sans': ['DMSans_400Regular'],
-        'dm-sans-medium': ['DMSans_500Medium'],
-        'dm-sans-bold': ['DMSans_700Bold'],
+        // Quicksand (ronde/douce) pour les titres — nom de classe neutre pour
+        // ne pas coupler le design system a un choix de police precis.
+        heading: ['Quicksand_400Regular'],
+        'heading-medium': ['Quicksand_500Medium'],
+        'heading-bold': ['Quicksand_700Bold'],
         inter: ['Inter_400Regular'],
         'inter-medium': ['Inter_500Medium'],
         'dm-mono': ['DMMono_400Regular'],

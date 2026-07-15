@@ -1,5 +1,5 @@
 /**
- * Types partages de l'application Courseo.
+ * Types partages de l'application Coursia.
  * Toute donnee metier transitant entre lib/, stores/, hooks/ et app/ doit
  * etre typee ici — zero `any` toilere dans le reste du code.
  */

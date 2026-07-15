@@ -107,7 +107,7 @@ export default function Courses() {
         </View>
 
         <LinearGradient
-          colors={[colors.primaryDark, '#357A5A']}
+          colors={[colors.primaryDark, '#457458']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={{ borderRadius: 28, padding: 20, gap: 14 }}

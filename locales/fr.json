@@ -10,12 +10,12 @@
     "fermer": "Fermer"
   },
   "onboarding": {
-    "bienvenue_titre": "Bienvenue sur Courseo",
+    "bienvenue_titre": "Bienvenue sur Coursia",
     "bienvenue_sous_titre": "Ton copilote repas et courses pour la Suisse",
     "nom_foyer": "Quel est le nom de ton foyer ?",
     "nom_foyer_label": "Nom du foyer",
     "nom_placeholder": "Nom du foyer / ton prénom",
-    "cgvu_accept": "J'accepte les CGVU de Courseo",
+    "cgvu_accept": "J'accepte les CGVU de Coursia",
     "composition_titre": "Qui mange à la maison ?",
     "nb_personnes": "Nombre de personnes : {{count}}",
     "nb_personnes_label": "Nombre de personnes dans le foyer",
@@ -62,7 +62,15 @@
     "economies_titre": "Économies cumulées",
     "economies_message": "Les économies apparaîtront après ta première liste comparée.",
     "economies_message_suivi": "Cumulées depuis ta première commande validée.",
-    "generer_courses": "Générer mes courses"
+    "generer_courses": "Générer mes courses",
+    "bonjour_emoji": "Bonjour 👋",
+    "question_semaine": "Qu'est-ce qu'on mange cette semaine ?",
+    "ma_semaine": "Ma semaine",
+    "modifier": "Modifier",
+    "voir_plan_semaine": "Voir le plan de la semaine",
+    "jour_planifie": "{{jour}} : {{statut}}",
+    "planifie": "repas planifié",
+    "inspirations_titre": "Inspirations pour vous"
   },
   "tabs": {
     "accueil": "Accueil",
@@ -82,7 +90,7 @@
     "generer_semaine_ia": "Générer la semaine avec l'IA",
     "empty_communaute_titre": "Aucune recette communautaire",
     "empty_communaute_soustitre": "Les recettes partagées par d'autres foyers apparaîtront ici.",
-    "communaute_intro": "{{count}} recette(s) partagée(s) par d'autres foyers Courseo.",
+    "communaute_intro": "{{count}} recette(s) partagée(s) par d'autres foyers Coursia.",
     "choisir_recette": "Choisir une recette",
     "empty_favoris_titre": "Pas encore de favoris",
     "empty_favoris_soustitre": "Swipe vers la droite sur les recettes que tu aimes.",
@@ -113,7 +121,7 @@
     "empty_soustitre": "Planifie ta semaine pour générer ta liste automatiquement.",
     "sous_titre": "Ta liste organisée par rayon, prête pour le magasin.",
     "articles_a_verifier": "{{count}} article(s) à vérifier",
-    "hero_message": "Coche au fur et à mesure. Courseo garde le panier lisible par rayon.",
+    "hero_message": "Coche au fur et à mesure. Coursia garde le panier lisible par rayon.",
     "erreur_validation": "Impossible de valider ta commande, réessaie dans un instant"
   },
   "economies": {
@@ -170,7 +178,7 @@
     "valider_montant": "Valider mes courses — {{montant}}"
   },
   "paywall": {
-    "titre": "Débloquer Courseo",
+    "titre": "Débloquer Coursia",
     "choisir_palier_label": "Choisir le palier {{nom}} à {{prix}}",
     "continuer": "Continuer"
   },
@@ -201,13 +209,14 @@
   },
   "session": {
     "expiree_titre": "Votre session a expiré",
-    "expiree_message": "Reconnectez-vous pour continuer à utiliser Courseo.",
+    "expiree_message": "Reconnectez-vous pour continuer à utiliser Coursia.",
     "se_reconnecter": "Se reconnecter"
   },
   "recettes": {
     "voir_detail_de": "Voir le détail de {{titre}}",
     "je_passe": "Je passe cette recette",
     "voir_detail": "Voir le détail de la recette",
-    "jaime": "J'aime cette recette"
+    "jaime": "J'aime cette recette",
+    "retirer_favoris": "Retirer des favoris"
   }
 }

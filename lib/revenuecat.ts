@@ -1,6 +1,6 @@
 /**
  * Configuration RevenueCat (sandbox). Gere les 4 paliers d'abonnement
- * Courseo : gratuit, standard, premium, famille.
+ * Coursia : gratuit, standard, premium, famille.
  */
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';

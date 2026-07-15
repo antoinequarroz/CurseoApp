@@ -1,4 +1,4 @@
-/** Detail recette — deep-linkable via courseo://recette/[id] (partage social). */
+/** Detail recette — deep-linkable via coursia://recette/[id] (partage social). */
 import React, { useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { Image } from 'expo-image';

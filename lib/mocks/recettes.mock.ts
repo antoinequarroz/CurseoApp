@@ -532,7 +532,7 @@ export const RECETTES_MOCK: Recette[] = [
   {
     id: 'rc-001',
     titre: 'Papet vaudois de ma grand-mère',
-    description: "Poireaux et pommes de terre mijotés, saucisse au chou vaudoise — la recette de famille partagée par un membre Courseo.",
+    description: "Poireaux et pommes de terre mijotés, saucisse au chou vaudoise — la recette de famille partagée par un membre Coursia.",
     image_url: 'https://images.unsplash.com/photo-1544025162-d76694265947',
     blurhash: 'L6Pj0^ofM{of~qWBofj[00of%May',
     temps_preparation: 55,

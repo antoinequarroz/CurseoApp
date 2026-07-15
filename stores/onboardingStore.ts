@@ -26,6 +26,6 @@ export const useOnboardingStore = create<OnboardingState>()(
       terminer: () => set({ estComplete: true }),
       reset: () => set({ etapeActuelle: 1, donneesPartielles: {}, estComplete: false }),
     }),
-    { name: 'courseo_onboarding_state', storage: createJSONStorage(() => AsyncStorage) },
+    { name: 'coursia_onboarding_state', storage: createJSONStorage(() => AsyncStorage) },
   ),
 );

@@ -13,7 +13,10 @@ const config: ExpoConfig = {
   // APP_ENV divergeait entre l'etape de credentials et celle de prebuild sur
   // les serveurs EAS. bundleIdentifier reste dynamique, ce qui suffit a
   // distinguer les environnements sur l'appareil.
-  name: 'Courseo',
+  // Rebranding "Coursia" : le nom affiche change, mais slug/scheme/bundleId
+  // restent sur "courseo" pour ne pas casser le projet EAS et les
+  // credentials App Store Connect deja enregistres.
+  name: 'Coursia',
   slug: 'courseo',
   version: '1.0.0',
   orientation: 'portrait', // Une app de courses ne beneficie pas du paysage
@@ -33,7 +36,7 @@ const config: ExpoConfig = {
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
       NSUserNotificationsUsageDescription:
-        'Courseo vous envoie des rappels de planification et des alertes de promotions.',
+        'Coursia vous envoie des rappels de planification et des alertes de promotions.',
       CFBundleLocalizations: ['fr', 'de', 'it'],
     },
   },
@@ -43,7 +46,7 @@ const config: ExpoConfig = {
       foregroundImage: './assets/android-icon-foreground.png',
       backgroundImage: './assets/android-icon-background.png',
       monochromeImage: './assets/android-icon-monochrome.png',
-      backgroundColor: '#2D6A4F',
+      backgroundColor: '#3E6B52',
     },
     permissions: ['RECEIVE_BOOT_COMPLETED', 'VIBRATE'],
   },
@@ -55,10 +58,10 @@ const config: ExpoConfig = {
     [
       'expo-splash-screen',
       {
-        // TODO design : remplacer par un vrai visuel splash Courseo (branche design system)
+        // TODO design : remplacer par un vrai visuel splash Coursia (branche design system)
         image: './assets/splash-icon.png',
         resizeMode: 'contain',
-        backgroundColor: '#2D6A4F',
+        backgroundColor: '#3E6B52',
       },
     ],
     'expo-status-bar',
@@ -75,7 +78,7 @@ const config: ExpoConfig = {
       {
         // TODO design : icone de notification monochrome dediee (actuellement l'icone app)
         icon: './assets/icon.png',
-        color: '#2D6A4F',
+        color: '#3E6B52',
       },
     ],
     '@sentry/react-native',

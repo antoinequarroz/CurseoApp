@@ -22,7 +22,7 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
-        tabBarLabelStyle: { fontFamily: 'DMSans_500Medium', fontSize: 11, marginTop: 2 },
+        tabBarLabelStyle: { fontFamily: 'Quicksand_500Medium', fontSize: 11, marginTop: 2 },
         tabBarItemStyle: { paddingTop: 8 },
         tabBarStyle: {
           position: 'absolute',

@@ -1,4 +1,4 @@
-# Politique de confidentialité — Courseo
+# Politique de confidentialité — Coursia
 
 Dernière mise à jour : à compléter à la date de lancement.
 
@@ -20,7 +20,7 @@ Courseo est exploité par [Nom / Raison sociale], Suisse. Contact vie privée : 
 | Données d'usage (PostHog) | Amélioration produit | Consentement (opt-out possible) |
 | Rapports de crash (Sentry) | Stabilité de l'application | Intérêt légitime |
 
-Courseo ne collecte **jamais** de coordonnées bancaires (paiements gérés par Apple/Google) ni de données de localisation précise.
+Coursia ne collecte **jamais** de coordonnées bancaires (paiements gérés par Apple/Google) ni de données de localisation précise.
 
 ## Durée de rétention
 

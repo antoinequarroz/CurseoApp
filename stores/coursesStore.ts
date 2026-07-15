@@ -69,7 +69,7 @@ export const useCoursesStore = create<CoursesState>()(
       },
     }),
     {
-      name: 'courseo_courses',
+      name: 'coursia_courses',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
         items: state.items,

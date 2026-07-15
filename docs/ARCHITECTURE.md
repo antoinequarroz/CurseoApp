@@ -1,8 +1,8 @@
-# Architecture Courseo
+# Architecture Coursia
 
 ## Vue d'ensemble
 
-Courseo est une app mobile Expo/React Native avec un backend Supabase (Postgres + Auth + Storage + Edge Functions). L'état est séparé en deux couches :
+Coursia est une app mobile Expo/React Native avec un backend Supabase (Postgres + Auth + Storage + Edge Functions). L'état est séparé en deux couches :
 
 - **Zustand** pour l'état client (profil en session, planning en cours d'édition, liste de courses, panier optimisé, progression de l'onboarding)
 - **TanStack Query** pour toute donnée asynchrone issue de Supabase ou des mocks (recettes, prix), avec cache offline-first

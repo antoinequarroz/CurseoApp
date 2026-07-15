@@ -17,7 +17,7 @@ import { toast } from '@/lib/toast';
 import { t } from '@/lib/i18n';
 
 export default function Connexion() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const [email, setEmail] = useState('');
   const [motDePasse, setMotDePasse] = useState('');
   const [chargement, setChargement] = useState(false);
@@ -68,7 +68,7 @@ export default function Connexion() {
           <AppleAuthentication.AppleAuthenticationButton
             buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
             buttonStyle={
-              colors.bg === '#0F1412'
+              isDark
                 ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
                 : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
             }

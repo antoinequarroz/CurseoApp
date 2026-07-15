@@ -15,15 +15,18 @@ const HISTORIQUE_AFFICHE = 5;
 
 export function useBudgetSemaine(profilId: string | undefined) {
   const [commandes, setCommandes] = useState<Commande[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(Boolean(profilId));
+  // Reinitialise quand profilId disparait (deconnexion) — ajustement pendant
+  // le rendu plutot qu'un setState dans un effet (evite les rendus en cascade).
+  const [profilIdPrecedent, setProfilIdPrecedent] = useState(profilId);
+  if (profilId !== profilIdPrecedent) {
+    setProfilIdPrecedent(profilId);
+    setIsLoading(Boolean(profilId));
+    if (!profilId) setCommandes([]);
+  }
 
   useEffect(() => {
-    if (!profilId) {
-      setCommandes([]);
-      setIsLoading(false);
-      return;
-    }
-    setIsLoading(true);
+    if (!profilId) return;
     void (async () => {
       try {
         const { data } = await supabase

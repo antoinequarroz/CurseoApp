@@ -40,7 +40,7 @@ export const RELEASES: Release[] = [
   },
 ];
 
-const STORAGE_KEY = 'courseo_whats_new_last_seen_version';
+const STORAGE_KEY = 'coursia_whats_new_last_seen_version';
 
 function compareVersions(a: string, b: string): number {
   const partsA = a.split('.').map(Number);

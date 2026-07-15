@@ -28,11 +28,11 @@ describe('useWhatsNew', () => {
     });
 
     expect(result.current.shouldShow).toBe(false);
-    expect(await AsyncStorage.getItem('courseo_whats_new_last_seen_version')).toBe(getCurrentVersion());
+    expect(await AsyncStorage.getItem('coursia_whats_new_last_seen_version')).toBe(getCurrentVersion());
   });
 
   it('reaffiche les nouveautes si la version vue est plus ancienne que la version courante', async () => {
-    await AsyncStorage.setItem('courseo_whats_new_last_seen_version', '0.9.0');
+    await AsyncStorage.setItem('coursia_whats_new_last_seen_version', '0.9.0');
     const { result } = await renderHook(() => useWhatsNew());
     await waitFor(() => expect(result.current.loaded).toBe(true));
     expect(result.current.shouldShow).toBe(true);

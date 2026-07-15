@@ -14,7 +14,10 @@ export function Badge({ label, variant = 'neutral' }: BadgeProps) {
 
   // Textes dedies "chipText*" — contraste AA verifie sur leur fond associe (voir lib/theme.ts).
   const styles: Record<NonNullable<BadgeProps['variant']>, { bg: string; text: string }> = {
-    meilleurPrix: { bg: colors.accent, text: isDark ? '#0F1412' : '#1B4332' },
+    // En light, accent est un corail pale -> texte fonce (primaryDark) lisible.
+    // En dark, accent devient un brun-corail sombre -> il faut du texte clair
+    // (textPrimary), sinon le contraste s'effondre (~1.8:1 avec du texte fonce).
+    meilleurPrix: { bg: colors.accent, text: isDark ? colors.textPrimary : colors.primaryDark },
     success: { bg: colors.swipeLike, text: colors.chipTextSuccess },
     warning: { bg: colors.warningBg, text: colors.chipTextWarning },
     error: { bg: colors.swipePass, text: colors.chipTextError },

@@ -1,4 +1,4 @@
-/** Echelle typographique Courseo — DM Sans (titres), Inter (corps), DM Mono (chiffres/prix). */
+/** Echelle typographique Coursia — Quicksand (titres, ronde/douce), Inter (corps), DM Mono (chiffres/prix). */
 import React from 'react';
 import { Text as RNText, type TextProps } from 'react-native';
 import { useTheme } from '@/lib/theme-context';
@@ -17,10 +17,10 @@ function make(className: string, colorKey: 'textPrimary' | 'textSecondary' | 'te
   };
 }
 
-export const DisplayXL = make('font-dm-sans-bold text-[32px]');
-export const DisplayLG = make('font-dm-sans-bold text-2xl');
-export const Heading = make('font-dm-sans-medium text-lg');
-export const Subheading = make('font-dm-sans-medium text-[15px]');
+export const DisplayXL = make('font-heading-bold text-[32px]');
+export const DisplayLG = make('font-heading-bold text-2xl');
+export const Heading = make('font-heading-medium text-lg');
+export const Subheading = make('font-heading-medium text-[15px]');
 export const Body = make('font-inter text-[15px]');
 export const BodySm = make('font-inter text-[13px]', 'textSecondary');
 export const Caption = make('font-inter text-xs', 'textMuted');

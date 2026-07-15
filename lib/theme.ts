@@ -1,67 +1,70 @@
 /**
- * Tokens de theme Courseo. Tous les composants doivent consommer ces valeurs
- * via useTheme() (contexts/ThemeContext.tsx) plutot que hardcoder des couleurs —
- * c'est le seul moyen de garantir un dark mode coherent sur toute l'app.
+ * Tokens de theme Coursia — palette "vert foret / sauge / corail / creme"
+ * (rebranding, voir moodboard). Tous les composants doivent consommer ces
+ * valeurs via useTheme() (lib/theme-context.tsx) plutot que hardcoder des
+ * couleurs — c'est le seul moyen de garantir un dark mode coherent sur toute
+ * l'app. Contrastes WCOG AA re-verifies pour chaque paire texte/fond utilisee
+ * reellement dans l'UI (voir script de verif dans l'historique du projet).
  */
 
 export const lightTheme = {
-  bg: '#FAFAF7',
-  bgSecondary: '#F2F0E8',
+  bg: '#FAF6EC',
+  bgSecondary: '#F0E7D6',
   bgCard: '#FFFFFF',
   bgElevated: '#FFFFFF',
-  textPrimary: '#1C1C1E',
-  textSecondary: '#6B7280',
-  textMuted: '#5D6B80',
-  primary: '#2D6A4F',
-  primaryLight: '#52B788',
-  primaryDark: '#1B4332',
-  accent: '#E8F5A3',
-  accentDark: '#C9E52A',
-  border: '#E5E7EB',
-  priceColor: '#2D6A4F',
-  savingsColor: '#52B788',
-  success: '#52B788',
+  textPrimary: '#1C1E1B',
+  textSecondary: '#5B6B60',
+  textMuted: '#55654A',
+  primary: '#3E6B52',
+  primaryLight: '#7FA087',
+  primaryDark: '#1B3A2E',
+  accent: '#F3C7A6',
+  accentDark: '#DD7C4E',
+  border: '#E4DAC4',
+  priceColor: '#2F5A44',
+  savingsColor: '#3E6B52',
+  success: '#3E6B52',
   warning: '#F59E0B',
-  error: '#DC2626',
-  swipeLike: '#D1FAE5',
-  swipePass: '#FEE2E2',
+  error: '#D42020',
+  swipeLike: '#DCE9DA',
+  swipePass: '#FBE0D2',
   overlay: 'rgba(0,0,0,0)',
   /** Couleurs dediees aux chips/badges pastel — contraste AA garanti sur leur fond associe (voir Badge.tsx). */
   warningBg: '#FEF3C7',
-  chipTextSuccess: '#146641',
+  chipTextSuccess: '#1F4A34',
   chipTextWarning: '#92400E',
   chipTextError: '#B91C1C',
-  chipTextNeutral: '#55606E',
+  chipTextNeutral: '#4C5A50',
 };
 
 export const darkTheme = {
-  bg: '#0F1412',
-  bgSecondary: '#1A2420',
-  bgCard: '#1F2E29',
-  bgElevated: '#263530',
-  textPrimary: '#F0F7F4',
-  textSecondary: '#9DB8AE',
-  textMuted: '#82A199',
-  primary: '#52B788',
-  primaryLight: '#74C69D',
-  primaryDark: '#2D6A4F',
-  accent: '#C9E52A',
-  accentDark: '#C9E52A',
-  border: '#2A3D37',
-  priceColor: '#74C69D',
-  savingsColor: '#74C69D',
-  success: '#74C69D',
+  bg: '#101E17',
+  bgSecondary: '#182A20',
+  bgCard: '#1F3428',
+  bgElevated: '#274030',
+  textPrimary: '#F3EFE2',
+  textSecondary: '#A8C2AC',
+  textMuted: '#87A38C',
+  primary: '#7FA087',
+  primaryLight: '#9DBE9F',
+  primaryDark: '#3E6B52',
+  accent: '#5A4131',
+  accentDark: '#EFA173',
+  border: '#2C4535',
+  priceColor: '#9DBE9F',
+  savingsColor: '#9DBE9F',
+  success: '#9DBE9F',
   warning: '#FCD34D',
   error: '#F87171',
-  swipeLike: '#1A3328',
-  swipePass: '#2D1515',
+  swipeLike: '#203526',
+  swipePass: '#3A2820',
   overlay: 'rgba(0,0,0,0.15)',
   /** Couleurs dediees aux chips/badges pastel — contraste AA garanti sur leur fond associe (voir Badge.tsx). */
   warningBg: '#3D2E0A',
-  chipTextSuccess: '#74C69D',
+  chipTextSuccess: '#9DBE9F',
   chipTextWarning: '#FCD34D',
   chipTextError: '#F87171',
-  chipTextNeutral: '#9DB8AE',
+  chipTextNeutral: '#A8C2AC',
 };
 
 export type Theme = typeof lightTheme;

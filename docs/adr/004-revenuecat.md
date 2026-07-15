@@ -4,7 +4,7 @@
 
 ## Contexte
 
-Courseo propose 4 paliers d'abonnement facturés via l'App Store et le Play Store. Gérer soi-même les receipts, le renouvellement, la grace period et la synchronisation cross-plateforme est un projet à part entière.
+Coursia propose 4 paliers d'abonnement facturés via l'App Store et le Play Store. Gérer soi-même les receipts, le renouvellement, la grace period et la synchronisation cross-plateforme est un projet à part entière.
 
 ## Décision
 

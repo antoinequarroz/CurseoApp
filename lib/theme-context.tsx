@@ -5,7 +5,7 @@ import { darkTheme, lightTheme, type Theme } from './theme';
 
 export type ApparencePreference = 'auto' | 'clair' | 'sombre';
 
-const STORAGE_KEY = 'courseo_apparence';
+const STORAGE_KEY = 'coursia_apparence';
 
 interface ThemeContextValue {
   isDark: boolean;

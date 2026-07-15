@@ -1,18 +1,18 @@
-# Conditions Générales de Vente et d'Utilisation — Courseo
+# Conditions Générales de Vente et d'Utilisation — Coursia
 
 Version 1.0 — à dater au lancement.
 
 ## 1. Identification de l'exploitant
 
-Courseo est exploité par [Nom / Raison sociale], [Adresse], Suisse. Contact : legal@courseo.ch
+Coursia est exploité par [Nom / Raison sociale], [Adresse], Suisse. Contact : legal@courseo.ch
 
 ## 2. Objet et acceptation
 
-En utilisant l'application Courseo, vous acceptez les présentes CGVU. L'utilisation de l'app est réservée aux personnes majeures (18 ans et plus) ou aux mineurs avec accord parental. L'acceptation est requise dès l'étape 1 de l'onboarding et tracée (`profils.cgvu_version_acceptee`, `profils.cgvu_acceptee_le`).
+En utilisant l'application Coursia, vous acceptez les présentes CGVU. L'utilisation de l'app est réservée aux personnes majeures (18 ans et plus) ou aux mineurs avec accord parental. L'acceptation est requise dès l'étape 1 de l'onboarding et tracée (`profils.cgvu_version_acceptee`, `profils.cgvu_acceptee_le`).
 
 ## 3. Description des services
 
-Courseo propose :
+Coursia propose :
 
 - Un service gratuit de planification de repas et génération de liste de courses
 - Des abonnements payants (Standard, Premium, Famille) donnant accès à des fonctionnalités avancées (comparateur de prix, assistant IA, objectifs nutritionnels, etc.)
@@ -26,7 +26,7 @@ Courseo propose :
 | Premium | CHF 12.90 |
 | Famille | CHF 16.90 |
 
-Les paiements sont traités par Apple (App Store) ou Google (Play Store). Courseo n'a pas accès aux informations de paiement. Les abonnements se renouvellent automatiquement sauf résiliation au moins 24 heures avant la fin de la période en cours.
+Les paiements sont traités par Apple (App Store) ou Google (Play Store). Coursia n'a pas accès aux informations de paiement. Les abonnements se renouvellent automatiquement sauf résiliation au moins 24 heures avant la fin de la période en cours.
 
 ## 5. Droit de rétractation
 
@@ -38,11 +38,11 @@ Le traitement de vos données est décrit dans `PRIVACY.md`. Conformément à la
 
 ## 7. Propriété intellectuelle
 
-Le nom "Courseo", le logo et l'interface de l'application sont protégés. Les recettes publiées par les utilisateurs restent leur propriété ; ils accordent à Courseo une licence d'affichage non exclusive.
+Le nom "Coursia", le logo et l'interface de l'application sont protégés. Les recettes publiées par les utilisateurs restent leur propriété ; ils accordent à Coursia une licence d'affichage non exclusive.
 
 ## 8. Responsabilité
 
-Courseo ne garantit pas l'exactitude des prix affichés (données indicatives). Les décisions d'achat restent sous la responsabilité de l'utilisateur. Courseo n'est pas responsable des allergies ou réactions alimentaires liées à l'utilisation de recettes communautaires.
+Coursia ne garantit pas l'exactitude des prix affichés (données indicatives). Les décisions d'achat restent sous la responsabilité de l'utilisateur. Coursia n'est pas responsable des allergies ou réactions alimentaires liées à l'utilisation de recettes communautaires.
 
 ## 9. Moderation du contenu communautaire
 
@@ -50,7 +50,7 @@ Règles de contenu : recettes alimentaires uniquement, photos de nourriture uniq
 
 ## 10. Suspension et résiliation
 
-Courseo se réserve le droit de suspendre un compte en cas de violation des présentes CGVU, notamment en cas de publication de contenu inapproprié.
+Coursia se réserve le droit de suspendre un compte en cas de violation des présentes CGVU, notamment en cas de publication de contenu inapproprié.
 
 ## 11. Droit applicable et for juridique
 
@@ -58,4 +58,4 @@ Les présentes CGVU sont soumises au droit suisse. Tout litige sera soumis aux t
 
 ## 12. Modifications
 
-Courseo se réserve le droit de modifier ces CGVU. Les utilisateurs seront notifiés par email et/ou notification in-app au moins 30 jours avant l'entrée en vigueur des modifications, avec ré-acceptation obligatoire au prochain lancement de l'app.
+Coursia se réserve le droit de modifier ces CGVU. Les utilisateurs seront notifiés par email et/ou notification in-app au moins 30 jours avant l'entrée en vigueur des modifications, avec ré-acceptation obligatoire au prochain lancement de l'app.

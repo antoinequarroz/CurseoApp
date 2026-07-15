@@ -1,4 +1,4 @@
-# Courseo
+# Coursia
 
 Copilote intelligent des repas et des courses pour le marché suisse. De l'inspiration recette à la commande validée : planification hebdomadaire, génération automatique de la liste de courses, comparaison de prix entre les principales enseignes (Coop, Migros, Lidl, Aldi, Ottos, Manor Food).
 

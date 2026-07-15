@@ -1,8 +1,8 @@
-# App Store Connect — Courseo
+# App Store Connect — Coursia
 
 ## Informations générales
 
-- Nom de l'app : Courseo
+- Nom de l'app : Coursia
 - Sous-titre : Repas et courses intelligents
 - Bundle ID : ch.courseo.app
 - Catégorie : Nourriture et boissons / Épicerie
@@ -13,19 +13,19 @@ Planifie tes repas, génère ta liste de courses et compare les prix chez Coop, 
 
 ## Description longue
 
-Courseo est le copilote alimentaire des foyers suisses.
+Coursia est le copilote alimentaire des foyers suisses.
 
 **PLANIFIE TES REPAS EN UN SWIPE**
-Découvre des recettes personnalisées selon tes goûts, ton budget et tes restrictions alimentaires. Swipe pour aimer ou passer — Courseo apprend tes préférences.
+Découvre des recettes personnalisées selon tes goûts, ton budget et tes restrictions alimentaires. Swipe pour aimer ou passer — Coursia apprend tes préférences.
 
 **GÉNÈRE TA LISTE DE COURSES AUTOMATIQUEMENT**
-Plus besoin de noter chaque ingrédient à la main. Courseo calcule exactement ce dont tu as besoin pour la semaine, ajuste les quantités selon le nombre de personnes et organise ta liste par rayon.
+Plus besoin de noter chaque ingrédient à la main. Coursia calcule exactement ce dont tu as besoin pour la semaine, ajuste les quantités selon le nombre de personnes et organise ta liste par rayon.
 
 **COMPARE LES PRIX ENTRE COOP, MIGROS, LIDL ET ALDI**
-Courseo compare les prix et optimise ton panier pour que tu dépenses le moins possible — sans sacrifier la qualité.
+Coursia compare les prix et optimise ton panier pour que tu dépenses le moins possible — sans sacrifier la qualité.
 
 **ÉCONOMISE CHAQUE SEMAINE**
-Vois exactement combien tu économises grâce à Courseo. Chaque commande affiche les économies réalisées par rapport à l'enseigne la plus chère.
+Vois exactement combien tu économises grâce à Coursia. Chaque commande affiche les économies réalisées par rapport à l'enseigne la plus chère.
 
 **POUR TOUTE LA FAMILLE**
 Planifie pour plusieurs personnes, gère les allergies et régimes de chaque membre, et partagez vos listes de courses en temps réel.
