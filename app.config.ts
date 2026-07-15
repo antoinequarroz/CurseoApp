@@ -3,7 +3,6 @@ import type { ExpoConfig } from 'expo/config';
 // APP_ENV distingue dev / staging / prod pour ne jamais melanger les bases
 // de donnees ou les cles d'abonnement entre environnements (voir .env.example).
 const APP_ENV = process.env.APP_ENV ?? 'development';
-const IS_PROD = APP_ENV === 'production';
 
 const config: ExpoConfig = {
   owner: 'antoinequarr',
@@ -22,7 +21,12 @@ const config: ExpoConfig = {
   scheme: 'courseo', // courseo://recette/123
   userInterfaceStyle: 'automatic', // Supporte light + dark automatiquement
   ios: {
-    bundleIdentifier: IS_PROD ? 'ch.courseo.app' : `ch.courseo.app.${APP_ENV}`,
+    // Fixe pour la meme raison que `name` ci-dessus : le binaire compile embarque
+    // cet identifiant au moment du prebuild, et sur les serveurs EAS la valeur
+    // de APP_ENV a divergé entre l'etape de credentials (correcte) et celle de
+    // prebuild (retombee sur le fallback 'development'), causant un mismatch
+    // avec le profil de provisioning App Store lors de la signature.
+    bundleIdentifier: 'ch.courseo.app',
     buildNumber: '7',
     supportsTablet: false, // MVP telephone uniquement
     requireFullScreen: true,
@@ -34,7 +38,7 @@ const config: ExpoConfig = {
     },
   },
   android: {
-    package: IS_PROD ? 'ch.courseo.app' : `ch.courseo.app.${APP_ENV}`,
+    package: 'ch.courseo.app',
     adaptiveIcon: {
       foregroundImage: './assets/android-icon-foreground.png',
       backgroundImage: './assets/android-icon-background.png',
