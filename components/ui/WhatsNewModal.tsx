@@ -4,6 +4,7 @@ import { Modal, Pressable, ScrollView, View } from 'react-native';
 import { X } from 'lucide-react-native';
 import { useTheme } from '@/lib/theme-context';
 import { useHaptics } from '@/hooks/useHaptics';
+import { t } from '@/lib/i18n';
 import type { Release } from '@/lib/whatsNew';
 import { Body, BodySm, Caption, DisplayLG, Heading } from './Typography';
 import { Button } from './Button';
@@ -30,13 +31,13 @@ export function WhatsNewModal({ visible, release, onClose }: WhatsNewModalProps)
         <View style={{ backgroundColor: colors.bgElevated, borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '85%' }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20 }}>
             <View style={{ gap: 4 }}>
-              <DisplayLG>Quoi de neuf ?</DisplayLG>
-              <Caption>Version {release.version}</Caption>
+              <DisplayLG>{t('whatsnew.titre')}</DisplayLG>
+              <Caption>{t('whatsnew.version', { version: release.version })}</Caption>
             </View>
             <Pressable
               onPress={onClose}
               accessibilityRole="button"
-              accessibilityLabel="Fermer"
+              accessibilityLabel={t('commun.fermer')}
               hitSlop={8}
             >
               <X size={24} color={colors.textSecondary} />
@@ -59,7 +60,7 @@ export function WhatsNewModal({ visible, release, onClose }: WhatsNewModalProps)
           </ScrollView>
 
           <View style={{ padding: 20 }}>
-            <Button label="Super, on continue !" onPress={onClose} />
+            <Button label={t('whatsnew.continuer')} onPress={onClose} />
           </View>
         </View>
       </View>

@@ -8,6 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import { Button } from '@/components/ui/Button';
 import { useHaptics } from '@/hooks/useHaptics';
+import { t } from '@/lib/i18n';
 import { formatPrix, formatEconomies } from '@/lib/format';
 import { PanierEnseigneCard } from './PanierEnseigneCard';
 import type { RecapCommande as RecapCommandeType } from '@/types';
@@ -40,7 +41,7 @@ export function RecapCommande({ recap, onValider }: { recap: RecapCommandeType; 
           {formatEconomies(recap.economies)}
         </Animated.Text>
         <Animated.Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: 'rgba(255,255,255,0.8)' }}>
-          Vous économisez par rapport à l&apos;enseigne la plus chère
+          {t('panier.economie_message')}
         </Animated.Text>
       </LinearGradient>
 
@@ -51,7 +52,7 @@ export function RecapCommande({ recap, onValider }: { recap: RecapCommandeType; 
       </View>
 
       <Button
-        label={`Valider mes courses — ${formatPrix(recap.montant_total)}`}
+        label={t('panier.valider_montant', { montant: formatPrix(recap.montant_total) })}
         onPress={() => {
           void haptics.heavy();
           onValider();

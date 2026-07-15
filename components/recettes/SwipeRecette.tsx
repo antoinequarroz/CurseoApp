@@ -15,6 +15,7 @@ import { supabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme-context';
 import { useHaptics } from '@/hooks/useHaptics';
 import { analytics } from '@/lib/analytics';
+import { t } from '@/lib/i18n';
 import { RecetteCard } from './RecetteCard';
 import type { Recette } from '@/types';
 
@@ -109,7 +110,7 @@ export function SwipeRecette({ recette, profilId, onSwiped, onTapDetail }: Swipe
     <View style={{ gap: 14 }}>
       <GestureDetector gesture={gesture}>
         <Animated.View style={cardStyle}>
-          <Pressable onPress={onTapDetail} accessibilityRole="button" accessibilityLabel={`Voir le détail de ${recette.titre}`}>
+          <Pressable onPress={onTapDetail} accessibilityRole="button" accessibilityLabel={t('recettes.voir_detail_de', { titre: recette.titre })}>
             <Animated.View
               pointerEvents="none"
               style={[{ position: 'absolute', inset: 0, borderRadius: 28, zIndex: 2 }, overlayStyle]}
@@ -129,7 +130,7 @@ export function SwipeRecette({ recette, profilId, onSwiped, onTapDetail }: Swipe
         <Pressable
           onPress={() => declencherSwipe(false)}
           accessibilityRole="button"
-          accessibilityLabel="Je passe cette recette"
+          accessibilityLabel={t('recettes.je_passe')}
           style={{
             width: 62,
             height: 62,
@@ -150,7 +151,7 @@ export function SwipeRecette({ recette, profilId, onSwiped, onTapDetail }: Swipe
         <Pressable
           onPress={onTapDetail}
           accessibilityRole="button"
-          accessibilityLabel="Voir le détail de la recette"
+          accessibilityLabel={t('recettes.voir_detail')}
           style={{
             width: 52,
             height: 52,
@@ -165,12 +166,12 @@ export function SwipeRecette({ recette, profilId, onSwiped, onTapDetail }: Swipe
         <Pressable
           onPress={() => declencherSwipe(true)}
           accessibilityRole="button"
-          accessibilityLabel="J'aime cette recette"
+          accessibilityLabel={t('recettes.jaime')}
           style={{
             width: 62,
             height: 62,
             borderRadius: 31,
-            backgroundColor: colors.primary,
+            backgroundColor: colors.primaryDark,
             alignItems: 'center',
             justifyContent: 'center',
             shadowColor: colors.primary,

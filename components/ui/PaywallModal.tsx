@@ -4,6 +4,7 @@ import { Modal, Pressable, ScrollView, View } from 'react-native';
 import { Check, X } from 'lucide-react-native';
 import { useTheme } from '@/lib/theme-context';
 import { useHaptics } from '@/hooks/useHaptics';
+import { t } from '@/lib/i18n';
 import { PALIERS_ABONNEMENT } from '@/lib/revenuecat';
 import { analytics } from '@/lib/analytics';
 import { Body, BodySm, Heading, DisplayLG } from './Typography';
@@ -33,11 +34,11 @@ export function PaywallModal({ visible, onClose, onChoisir, featureOrigine }: Pa
       <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}>
         <View style={{ backgroundColor: colors.bgElevated, borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '85%' }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20 }}>
-            <DisplayLG>Débloquer Courseo</DisplayLG>
+            <DisplayLG>{t('paywall.titre')}</DisplayLG>
             <Pressable
               onPress={onClose}
               accessibilityRole="button"
-              accessibilityLabel="Fermer"
+              accessibilityLabel={t('commun.fermer')}
               hitSlop={8}
             >
               <X size={24} color={colors.textSecondary} />
@@ -50,7 +51,7 @@ export function PaywallModal({ visible, onClose, onChoisir, featureOrigine }: Pa
                 key={palier.id}
                 onPress={() => onChoisir(palier.id)}
                 accessibilityRole="button"
-                accessibilityLabel={`Choisir le palier ${palier.nom} à ${palier.prix}`}
+                accessibilityLabel={t('paywall.choisir_palier_label', { nom: palier.nom, prix: palier.prix })}
                 style={{
                   borderRadius: 16,
                   borderWidth: 1,
@@ -74,7 +75,7 @@ export function PaywallModal({ visible, onClose, onChoisir, featureOrigine }: Pa
           </ScrollView>
 
           <View style={{ padding: 20 }}>
-            <Button label="Continuer" onPress={() => onChoisir('standard')} />
+            <Button label={t('paywall.continuer')} onPress={() => onChoisir('standard')} />
           </View>
         </View>
       </View>

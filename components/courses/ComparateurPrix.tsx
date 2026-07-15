@@ -10,13 +10,14 @@ import { Badge } from '@/components/ui/Badge';
 import { SkeletonComparateur } from '@/components/ui/Skeleton';
 import { PaywallModal } from '@/components/ui/PaywallModal';
 import { formatPrix } from '@/lib/format';
+import { t } from '@/lib/i18n';
 import type { NiveauAbonnement } from '@/types';
 
 const NOM_ENSEIGNE: Record<string, string> = {
-  coop: 'Coop',
-  migros: 'Migros',
-  lidl: 'Lidl',
-  aldi: 'Aldi',
+  coop: t('onboarding.enseigne_coop'),
+  migros: t('onboarding.enseigne_migros'),
+  lidl: t('onboarding.enseigne_lidl'),
+  aldi: t('onboarding.enseigne_aldi'),
 };
 
 export function ComparateurPrix({ produit, onChoisirPalier }: { produit: string; onChoisirPalier: (p: NiveauAbonnement) => void }) {
@@ -29,7 +30,7 @@ export function ComparateurPrix({ produit, onChoisirPalier }: { produit: string;
     return (
       <>
         <BodySm onPress={() => setPaywallVisible(true)} style={{ color: colors.primary }}>
-          Débloquer le comparateur de prix →
+          {t('comparateur.debloquer')}
         </BodySm>
         <PaywallModal
           visible={paywallVisible}
@@ -42,7 +43,7 @@ export function ComparateurPrix({ produit, onChoisirPalier }: { produit: string;
   }
 
   if (isLoading) return <SkeletonComparateur />;
-  if (isError || !comparatif) return <Caption>Prix indisponibles pour ce produit.</Caption>;
+  if (isError || !comparatif) return <Caption>{t('comparateur.indisponible')}</Caption>;
 
   return (
     <View style={{ gap: 8 }}>
@@ -63,7 +64,7 @@ export function ComparateurPrix({ produit, onChoisirPalier }: { produit: string;
             <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: enseigneColors[p.enseigne] }} />
             <Body>{NOM_ENSEIGNE[p.enseigne] ?? p.enseigne}</Body>
             {p.promotion ? <Badge label={p.promotion} variant="warning" /> : null}
-            {p.enseigne === comparatif.meilleur_prix ? <Badge label="Meilleur prix" variant="meilleurPrix" /> : null}
+            {p.enseigne === comparatif.meilleur_prix ? <Badge label={t('courses.meilleur_prix')} variant="meilleurPrix" /> : null}
           </View>
           <Price>{formatPrix(p.prix_unitaire)}</Price>
         </View>

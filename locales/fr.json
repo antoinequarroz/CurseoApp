@@ -84,7 +84,19 @@
     "choisir_recette": "Choisir une recette",
     "empty_favoris_titre": "Pas encore de favoris",
     "empty_favoris_soustitre": "Swipe vers la droite sur les recettes que tu aimes.",
-    "assigner_label": "Assigner {{titre}}"
+    "assigner_label": "Assigner {{titre}}",
+    "jour_lundi": "Lundi",
+    "jour_mardi": "Mardi",
+    "jour_mercredi": "Mercredi",
+    "jour_jeudi": "Jeudi",
+    "jour_vendredi": "Vendredi",
+    "jour_samedi": "Samedi",
+    "jour_dimanche": "Dimanche",
+    "slot_midi": "Midi",
+    "slot_soir": "Soir",
+    "slot_ajouter": "Ajouter",
+    "slot_label": "{{label}} : {{titre}}",
+    "slot_label_vide": "Ajouter une recette pour {{label}}"
   },
   "courses": {
     "meilleur_prix": "Meilleur prix",
@@ -148,5 +160,50 @@
     "erreur_apple": "Connexion Apple annulée ou impossible",
     "erreur_validation": "Vérifie ton email et ton mot de passe (8 caractères minimum)",
     "erreur_identifiants": "Email ou mot de passe incorrect"
+  },
+  "panier": {
+    "economie_message": "Vous économisez par rapport à l'enseigne la plus chère",
+    "valider_montant": "Valider mes courses — {{montant}}"
+  },
+  "paywall": {
+    "titre": "Débloquer Courseo",
+    "choisir_palier_label": "Choisir le palier {{nom}} à {{prix}}",
+    "continuer": "Continuer"
+  },
+  "whatsnew": {
+    "titre": "Quoi de neuf ?",
+    "version": "Version {{version}}",
+    "continuer": "Super, on continue !"
+  },
+  "signalement": {
+    "titre": "Signaler cette recette",
+    "question": "Pourquoi signales-tu cette recette ?",
+    "detail_placeholder": "Détail (optionnel)",
+    "detail_label": "Détail du signalement, optionnel",
+    "envoyer": "Envoyer le signalement",
+    "motif_contenu_inapproprie": "Contenu inapproprié",
+    "motif_information_incorrecte": "Information incorrecte",
+    "motif_spam_publicite": "Spam ou publicité",
+    "motif_plagiat": "Plagiat",
+    "motif_autre": "Autre"
+  },
+  "comparateur": {
+    "debloquer": "Débloquer le comparateur de prix →",
+    "indisponible": "Prix indisponibles pour ce produit."
+  },
+  "erreurs": {
+    "boundary_titre": "Une erreur est survenue",
+    "boundary_message": "Notre équipe a été notifiée. Réessaie dans un instant."
+  },
+  "session": {
+    "expiree_titre": "Votre session a expiré",
+    "expiree_message": "Reconnectez-vous pour continuer à utiliser Courseo.",
+    "se_reconnecter": "Se reconnecter"
+  },
+  "recettes": {
+    "voir_detail_de": "Voir le détail de {{titre}}",
+    "je_passe": "Je passe cette recette",
+    "voir_detail": "Voir le détail de la recette",
+    "jaime": "J'aime cette recette"
   }
 }

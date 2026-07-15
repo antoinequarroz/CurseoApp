@@ -4,6 +4,7 @@ import { Modal, Pressable, TextInput, View } from 'react-native';
 import { X } from 'lucide-react-native';
 import { useTheme } from '@/lib/theme-context';
 import { useHaptics } from '@/hooks/useHaptics';
+import { t } from '@/lib/i18n';
 import { useSignalerRecette, type MotifSignalement } from '@/hooks/useSignalerRecette';
 import { Body, BodySm, DisplayLG } from '@/components/ui/Typography';
 import { Button } from '@/components/ui/Button';
@@ -15,11 +16,11 @@ interface SignalerRecetteModalProps {
 }
 
 const MOTIFS: { id: MotifSignalement; label: string }[] = [
-  { id: 'contenu_inapproprie', label: 'Contenu inapproprié' },
-  { id: 'information_incorrecte', label: 'Information incorrecte' },
-  { id: 'spam_publicite', label: 'Spam ou publicité' },
-  { id: 'plagiat', label: 'Plagiat' },
-  { id: 'autre', label: 'Autre' },
+  { id: 'contenu_inapproprie', label: t('signalement.motif_contenu_inapproprie') },
+  { id: 'information_incorrecte', label: t('signalement.motif_information_incorrecte') },
+  { id: 'spam_publicite', label: t('signalement.motif_spam_publicite') },
+  { id: 'plagiat', label: t('signalement.motif_plagiat') },
+  { id: 'autre', label: t('signalement.motif_autre') },
 ];
 
 export function SignalerRecetteModal({ visible, onClose, recetteId }: SignalerRecetteModalProps) {
@@ -53,11 +54,11 @@ export function SignalerRecetteModal({ visible, onClose, recetteId }: SignalerRe
       <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)' }}>
         <View style={{ backgroundColor: colors.bgElevated, borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '85%' }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20 }}>
-            <DisplayLG>Signaler cette recette</DisplayLG>
+            <DisplayLG>{t('signalement.titre')}</DisplayLG>
             <Pressable
               onPress={fermer}
               accessibilityRole="button"
-              accessibilityLabel="Fermer"
+              accessibilityLabel={t('commun.fermer')}
               hitSlop={8}
             >
               <X size={24} color={colors.textSecondary} />
@@ -65,7 +66,7 @@ export function SignalerRecetteModal({ visible, onClose, recetteId }: SignalerRe
           </View>
 
           <View style={{ paddingHorizontal: 20, gap: 12 }}>
-            <BodySm>Pourquoi signales-tu cette recette ?</BodySm>
+            <BodySm>{t('signalement.question')}</BodySm>
 
             {MOTIFS.map((m) => {
               const selectionne = motif === m.id;
@@ -95,11 +96,11 @@ export function SignalerRecetteModal({ visible, onClose, recetteId }: SignalerRe
             <TextInput
               value={detail}
               onChangeText={setDetail}
-              placeholder="Détail (optionnel)"
+              placeholder={t('signalement.detail_placeholder')}
               placeholderTextColor={colors.textMuted}
               multiline
               numberOfLines={3}
-              accessibilityLabel="Détail du signalement, optionnel"
+              accessibilityLabel={t('signalement.detail_label')}
               style={{
                 borderRadius: 16,
                 borderWidth: 1,
@@ -114,7 +115,7 @@ export function SignalerRecetteModal({ visible, onClose, recetteId }: SignalerRe
 
           <View style={{ padding: 20 }}>
             <Button
-              label="Envoyer le signalement"
+              label={t('signalement.envoyer')}
               onPress={confirmer}
               disabled={!motif}
               loading={isPending}

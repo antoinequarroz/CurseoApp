@@ -3,6 +3,7 @@ import { Pressable, View } from 'react-native';
 import { Card } from '@/components/ui/Card';
 import { Subheading, TitreRecettePlanning, Caption } from '@/components/ui/Typography';
 import { useTheme } from '@/lib/theme-context';
+import { t } from '@/lib/i18n';
 import type { JourSemaine, RepasJour } from '@/types';
 
 interface JourCardProps {
@@ -12,13 +13,13 @@ interface JourCardProps {
 }
 
 const LABEL_JOUR: Record<JourSemaine, string> = {
-  lundi: 'Lundi',
-  mardi: 'Mardi',
-  mercredi: 'Mercredi',
-  jeudi: 'Jeudi',
-  vendredi: 'Vendredi',
-  samedi: 'Samedi',
-  dimanche: 'Dimanche',
+  lundi: t('planning.jour_lundi'),
+  mardi: t('planning.jour_mardi'),
+  mercredi: t('planning.jour_mercredi'),
+  jeudi: t('planning.jour_jeudi'),
+  vendredi: t('planning.jour_vendredi'),
+  samedi: t('planning.jour_samedi'),
+  dimanche: t('planning.jour_dimanche'),
 };
 
 function Slot({ label, titre, onPress }: { label: string; titre?: string; onPress: () => void }) {
@@ -27,7 +28,11 @@ function Slot({ label, titre, onPress }: { label: string; titre?: string; onPres
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={titre ? `${label} : ${titre}` : `Ajouter une recette pour ${label.toLowerCase()}`}
+      accessibilityLabel={
+        titre
+          ? t('planning.slot_label', { label, titre })
+          : t('planning.slot_label_vide', { label: label.toLowerCase() })
+      }
       style={{
         flex: 1,
         borderRadius: 12,
@@ -41,7 +46,7 @@ function Slot({ label, titre, onPress }: { label: string; titre?: string; onPres
     >
       <Caption>{label}</Caption>
       <TitreRecettePlanning style={{ color: titre ? colors.textPrimary : colors.textMuted }}>
-        {titre ?? 'Ajouter'}
+        {titre ?? t('planning.slot_ajouter')}
       </TitreRecettePlanning>
     </Pressable>
   );
@@ -52,8 +57,8 @@ export function JourCard({ jour, repas, onPressSlot }: JourCardProps) {
     <Card style={{ padding: 12, gap: 8 }}>
       <Subheading>{LABEL_JOUR[jour]}</Subheading>
       <View style={{ flexDirection: 'row', gap: 8 }}>
-        <Slot label="Midi" titre={repas.midi?.titre} onPress={() => onPressSlot('midi')} />
-        <Slot label="Soir" titre={repas.soir?.titre} onPress={() => onPressSlot('soir')} />
+        <Slot label={t('planning.slot_midi')} titre={repas.midi?.titre} onPress={() => onPressSlot('midi')} />
+        <Slot label={t('planning.slot_soir')} titre={repas.soir?.titre} onPress={() => onPressSlot('soir')} />
       </View>
     </Card>
   );
