@@ -36,12 +36,18 @@ eas-build-*.log
 .env
 .env.*
 !.env.example
+.env.development
+.env.production
+.env.staging
 
 # Coverage
 coverage/
 
 # typescript
 *.tsbuildinfo
+
+# Supabase CLI local state
+supabase/.temp/
 
 # generated native folders
 /ios

@@ -50,6 +50,7 @@ interface PanierState {
   recap: RecapCommande | null;
   setMode: (mode: ModeOptimisation) => void;
   calculer: (items: ItemCourse[]) => void;
+  reset: () => void;
 }
 
 export const usePanierStore = create<PanierState>((set, get) => ({
@@ -60,6 +61,7 @@ export const usePanierStore = create<PanierState>((set, get) => ({
     get().calculer(get().recap?.paniers.flatMap((p) => p.produits) ?? []);
   },
   calculer: (items) => set((state) => ({ recap: optimiserPanier(items, state.mode) })),
+  reset: () => set({ mode: 'prix_minimum', recap: null }),
 }));
 
 export { PRODUITS_COMPARATIFS };

@@ -148,7 +148,8 @@
     "email_placeholder": "Ton email",
     "email_confirmation_label": "Confirme ton email pour supprimer le compte",
     "confirmer_suppression": "Confirmer la suppression",
-    "erreur_session": "Session introuvable"
+    "erreur_session": "Session introuvable",
+    "erreur_suppression": "La suppression a échoué, réessaie dans un instant"
   },
   "connexion": {
     "ou_email": "Ou connecte-toi avec ton email",

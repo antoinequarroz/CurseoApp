@@ -222,6 +222,12 @@ create policy "recettes_read" on recettes for select using (true);
 create policy "recettes_write" on recettes for all using (auth.uid() = auteur_id);
 
 alter table signalements enable row level security;
+
+-- waitlist et rate_limits ne sont accedees que par les edge functions via la
+-- cle service_role (qui contourne RLS) : RLS activee sans policy bloque tout
+-- acces client direct via la cle anon publique.
+alter table waitlist enable row level security;
+alter table rate_limits enable row level security;
 create policy "signalement_insert" on signalements for insert with check (auth.uid() = signale_par);
 create policy "signalement_read_own" on signalements for select using (auth.uid() = signale_par);
 

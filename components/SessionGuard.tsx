@@ -3,8 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Modal, View } from 'react-native';
 import { router } from 'expo-router';
 import { supabase } from '@/lib/supabase';
-import { useProfilStore } from '@/stores/profilStore';
-import { queryClient } from '@/lib/queryClient';
+import { resetUserStores } from '@/lib/resetSession';
 import { Heading, BodySm } from '@/components/ui/Typography';
 import { Button } from '@/components/ui/Button';
 import { useTheme } from '@/lib/theme-context';
@@ -17,8 +16,7 @@ export function SessionGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const { data: subscription } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
-        useProfilStore.getState().reset();
-        queryClient.clear();
+        resetUserStores();
         setSessionExpiree(true);
       }
     });

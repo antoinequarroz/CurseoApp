@@ -1,6 +1,11 @@
 // Suppression de compte conforme nLPD (droit a l'effacement).
-// 1. Anonymise les donnees personnelles  2. Conserve les donnees agregees
-// 3. Marque deleted_at  4. Revoque les tokens  5. Confirme par email.
+// 1. Anonymise les donnees personnelles  2. Conserve la ligne profils (agregats
+// commandes/historique) marquee deleted_at  3. Interdit definitivement la
+// reconnexion (ban + email brouille) plutot que deleteUser(), qui echouerait
+// silencieusement : profils.id reference auth.users(id) sans ON DELETE CASCADE,
+// donc supprimer l'utilisateur auth tant que la ligne profils existe viole la
+// contrainte FK — deleteUser() renvoyait une erreur jamais lue, et la fonction
+// repondait quand meme { ok: true } alors que le compte restait connectable.
 import { serve } from 'https://deno.land/std/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { z } from 'https://deno.land/x/zod/mod.ts';
@@ -60,7 +65,7 @@ serve(async (req) => {
 
   const userId = parsed.data.userId;
 
-  await supabase
+  const { error: profilError } = await supabase
     .from('profils')
     .update({
       prenom: 'Utilisateur supprime',
@@ -71,7 +76,27 @@ serve(async (req) => {
     })
     .eq('id', userId);
 
-  await supabase.auth.admin.deleteUser(userId);
+  if (profilError) {
+    return new Response(JSON.stringify({ error: 'Echec de l\'anonymisation du profil' }), {
+      status: 500,
+      headers: SECURITY_HEADERS,
+    });
+  }
+
+  // Bannissement permanent + email brouille : empeche toute reconnexion sans
+  // violer la contrainte FK profils.id -> auth.users(id) (voir commentaire ci-dessus).
+  const { error: authUpdateError } = await supabase.auth.admin.updateUserById(userId, {
+    email: `deleted-${userId}@courseo.invalid`,
+    password: crypto.randomUUID(),
+    ban_duration: '876000h',
+  });
+
+  if (authUpdateError) {
+    return new Response(JSON.stringify({ error: 'Echec de la desactivation du compte' }), {
+      status: 500,
+      headers: SECURITY_HEADERS,
+    });
+  }
 
   return new Response(JSON.stringify({ ok: true }), {
     headers: SECURITY_HEADERS,

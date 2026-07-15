@@ -5,8 +5,8 @@ import { router } from 'expo-router';
 import { Bell, Crown, Home, Palette, ShieldAlert, UserRound } from 'lucide-react-native';
 import { useTheme, type ApparencePreference } from '@/lib/theme-context';
 import { useProfilStore } from '@/stores/profilStore';
-import { useOnboardingStore } from '@/stores/onboardingStore';
 import { supabase } from '@/lib/supabase';
+import { resetUserStores } from '@/lib/resetSession';
 import { PALIERS_ABONNEMENT } from '@/lib/revenuecat';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -27,9 +27,10 @@ function LigneNotification({ label, valeur, onChange }: { label: string; valeur:
 
 export default function Profil() {
   const { colors, preference, setPreference } = useTheme();
-  const { profil, mettreAJourPreferences, reset } = useProfilStore();
+  const { profil, mettreAJourPreferences } = useProfilStore();
   const [confirmationSuppression, setConfirmationSuppression] = useState(false);
   const [emailSaisi, setEmailSaisi] = useState('');
+  const [suppressionEnCours, setSuppressionEnCours] = useState(false);
 
   const profilAffiche = profil ?? {
     id: 'demo-user',
@@ -57,9 +58,16 @@ export default function Profil() {
       toast.erreur(t('profil.erreur_session'));
       return;
     }
-    await supabase.functions.invoke('delete-account', { body: { userId: session.session.user.id } });
-    reset();
-    useOnboardingStore.getState().reset();
+    setSuppressionEnCours(true);
+    const { error } = await supabase.functions.invoke('delete-account', {
+      body: { userId: session.session.user.id },
+    });
+    setSuppressionEnCours(false);
+    if (error) {
+      toast.erreur(t('profil.erreur_suppression'));
+      return;
+    }
+    resetUserStores();
     router.replace('/(auth)/connexion');
   };
 
@@ -189,7 +197,13 @@ export default function Profil() {
             accessibilityLabel={t('profil.email_confirmation_label')}
             style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 12, color: colors.textPrimary }}
           />
-          <Button label={t('profil.confirmer_suppression')} variant="secondary" onPress={supprimerCompte} disabled={!emailSaisi} />
+          <Button
+            label={t('profil.confirmer_suppression')}
+            variant="secondary"
+            onPress={supprimerCompte}
+            disabled={!emailSaisi}
+            loading={suppressionEnCours}
+          />
         </Card>
       )}
     </ScreenScroll>
