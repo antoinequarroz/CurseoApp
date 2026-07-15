@@ -3,12 +3,18 @@ import type { ExpoConfig } from 'expo/config';
 // APP_ENV distingue dev / staging / prod pour ne jamais melanger les bases
 // de donnees ou les cles d'abonnement entre environnements (voir .env.example).
 const APP_ENV = process.env.APP_ENV ?? 'development';
-const IS_DEV = APP_ENV === 'development';
 const IS_PROD = APP_ENV === 'production';
 
 const config: ExpoConfig = {
   owner: 'antoinequarr',
-  name: IS_DEV ? 'Courseo (Dev)' : IS_PROD ? 'Courseo' : 'Courseo (Staging)',
+  // Nom fixe (pas de suffixe Dev/Staging) : EAS Build derive le nom de la
+  // cible Xcode generee par `expo prebuild` de ce champ. Le faire varier
+  // avec APP_ENV a deja provoque des builds casses ("Could not find target
+  // 'CourseoStaging'/'Courseo' in project.pbxproj") quand la resolution de
+  // APP_ENV divergeait entre l'etape de credentials et celle de prebuild sur
+  // les serveurs EAS. bundleIdentifier reste dynamique, ce qui suffit a
+  // distinguer les environnements sur l'appareil.
+  name: 'Courseo',
   slug: 'courseo',
   version: '1.0.0',
   orientation: 'portrait', // Une app de courses ne beneficie pas du paysage
