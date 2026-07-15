@@ -18,14 +18,18 @@ interface PaywallModalProps {
   featureOrigine?: string;
 }
 
+const PALIER_DEFAUT: NiveauAbonnement = 'standard';
+
 export function PaywallModal({ visible, onClose, onChoisir, featureOrigine }: PaywallModalProps) {
   const { colors } = useTheme();
   const haptics = useHaptics();
+  const [palierSelectionne, setPalierSelectionne] = React.useState<NiveauAbonnement>(PALIER_DEFAUT);
 
   React.useEffect(() => {
     if (visible) {
       void haptics.medium();
       analytics.paywallShown(featureOrigine ?? 'inconnue');
+      setPalierSelectionne(PALIER_DEFAUT);
     }
   }, [visible, featureOrigine, haptics]);
 
@@ -49,13 +53,17 @@ export function PaywallModal({ visible, onClose, onChoisir, featureOrigine }: Pa
             {PALIERS_ABONNEMENT.map((palier) => (
               <Pressable
                 key={palier.id}
-                onPress={() => onChoisir(palier.id)}
-                accessibilityRole="button"
+                onPress={() => {
+                  void haptics.selection();
+                  setPalierSelectionne(palier.id);
+                }}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: palierSelectionne === palier.id }}
                 accessibilityLabel={t('paywall.choisir_palier_label', { nom: palier.nom, prix: palier.prix })}
                 style={{
                   borderRadius: 16,
-                  borderWidth: 1,
-                  borderColor: colors.border,
+                  borderWidth: palierSelectionne === palier.id ? 2 : 1,
+                  borderColor: palierSelectionne === palier.id ? colors.primary : colors.border,
                   padding: 16,
                   gap: 8,
                 }}
@@ -75,7 +83,7 @@ export function PaywallModal({ visible, onClose, onChoisir, featureOrigine }: Pa
           </ScrollView>
 
           <View style={{ padding: 20 }}>
-            <Button label={t('paywall.continuer')} onPress={() => onChoisir('standard')} />
+            <Button label={t('paywall.continuer')} onPress={() => onChoisir(palierSelectionne)} />
           </View>
         </View>
       </View>

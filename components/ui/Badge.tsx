@@ -20,7 +20,9 @@ export function Badge({ label, variant = 'neutral' }: BadgeProps) {
     error: { bg: colors.swipePass, text: colors.chipTextError },
     neutral: { bg: colors.bgSecondary, text: colors.chipTextNeutral },
   };
-  const s = styles[variant];
+  // Garde-fou : une valeur inattendue (ex. recette communautaire mal saisie)
+  // ne doit jamais faire crasher tout l'ecran pour un badge decoratif.
+  const s = styles[variant] ?? styles.neutral;
 
   return (
     <View

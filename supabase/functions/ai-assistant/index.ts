@@ -3,6 +3,7 @@
 import { serve } from 'https://deno.land/std/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { z } from 'https://deno.land/x/zod/mod.ts';
+import { SECURITY_HEADERS, reponsePreflight } from '../_shared/security-headers.ts';
 
 const AssistantRequestSchema = z.object({
   message: z.string().min(1).max(500),
@@ -20,15 +21,11 @@ const AssistantRequestSchema = z.object({
 });
 
 const RATE_LIMIT_PAR_HEURE = 20;
-const SECURITY_HEADERS = {
-  'Content-Type': 'application/json',
-  'X-Content-Type-Options': 'nosniff',
-  'X-Frame-Options': 'DENY',
-  'Strict-Transport-Security': 'max-age=31536000',
-  'Access-Control-Allow-Origin': 'https://courseo.ch',
-};
 
 serve(async (req) => {
+  const preflight = reponsePreflight(req);
+  if (preflight) return preflight;
+
   const authHeader = req.headers.get('Authorization');
   if (!authHeader) {
     return new Response(JSON.stringify({ error: 'Non authentifie' }), {
@@ -91,7 +88,15 @@ serve(async (req) => {
       .upsert({ user_id: userId, endpoint: 'ai-assistant', requests: 1, window_start: new Date().toISOString() });
   }
 
-  const body = await req.json();
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return new Response(JSON.stringify({ error: 'Requete invalide' }), {
+      status: 400,
+      headers: SECURITY_HEADERS,
+    });
+  }
   const parsed = AssistantRequestSchema.safeParse(body);
   if (!parsed.success) {
     return new Response(JSON.stringify({ error: 'Requete invalide', details: parsed.error.flatten() }), {

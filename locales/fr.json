@@ -58,8 +58,10 @@
     "non_planifie": "Non planifié",
     "budget_restant": "Budget restant cette semaine",
     "budget_message": "Ton budget est prêt. Génère une liste pour commencer à le suivre.",
-    "economies_titre": "Économies réalisées ce mois",
+    "budget_message_suivi": "{{consomme}} dépensés cette semaine.",
+    "economies_titre": "Économies cumulées",
     "economies_message": "Les économies apparaîtront après ta première liste comparée.",
+    "economies_message_suivi": "Cumulées depuis ta première commande validée.",
     "generer_courses": "Générer mes courses"
   },
   "tabs": {
@@ -111,7 +113,8 @@
     "empty_soustitre": "Planifie ta semaine pour générer ta liste automatiquement.",
     "sous_titre": "Ta liste organisée par rayon, prête pour le magasin.",
     "articles_a_verifier": "{{count}} article(s) à vérifier",
-    "hero_message": "Coche au fur et à mesure. Courseo garde le panier lisible par rayon."
+    "hero_message": "Coche au fur et à mesure. Courseo garde le panier lisible par rayon.",
+    "erreur_validation": "Impossible de valider ta commande, réessaie dans un instant"
   },
   "economies": {
     "budget_suivi": "{{consomme}} suivis sur {{budget}}",

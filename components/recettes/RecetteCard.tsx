@@ -35,7 +35,7 @@ export function RecetteCard({ recette, variant = 'default' }: { recette: Recette
         />
         <View style={{ position: 'absolute', inset: 0, backgroundColor: isDark ? 'rgba(0,0,0,0.28)' : 'rgba(0,0,0,0.16)' }} />
         <View style={{ position: 'absolute', bottom: 12, left: 12 }}>
-          <Badge label={recette.difficulte} variant={COULEUR_DIFFICULTE[recette.difficulte]} />
+          <Badge label={recette.difficulte} variant={COULEUR_DIFFICULTE[recette.difficulte] ?? 'neutral'} />
         </View>
         <View style={{ position: 'absolute', bottom: 12, right: 12 }}>
           <Badge label={formatTemps(recette.temps_preparation)} variant="neutral" />

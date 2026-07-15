@@ -9,6 +9,7 @@ import { useTheme } from '@/lib/theme-context';
 import { useProfilStore } from '@/stores/profilStore';
 import { usePlanningStore } from '@/stores/planningStore';
 import { useCoursesStore } from '@/stores/coursesStore';
+import { useBudgetSemaine } from '@/hooks/useBudgetSemaine';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { ScreenScroll } from '@/components/ui/Screen';
@@ -58,8 +59,12 @@ export default function Accueil() {
   const genererDepuisPlanning = useCoursesStore((s) => s.genererDepuisPlanning);
 
   const jourAujourdhui = dates.formatJour(dates.maintenant());
+  const jourActuel = dates.jourSemaine(dates.maintenant());
+  const repasJourActuel = planning[jourActuel];
   const budgetHebdo = profil?.budget_hebdo ?? 150;
-  const budgetRestant = budgetHebdo;
+  const { budgetConsomme, economiesCumulees } = useBudgetSemaine(profil?.id);
+  const budgetRestant = Math.max(0, budgetHebdo - budgetConsomme);
+  const progressionBudget = budgetHebdo > 0 ? Math.min(1, budgetConsomme / budgetHebdo) : 0;
   const repasPlanifies = Object.values(planning).reduce(
     (total, jour) => total + (jour.midi ? 1 : 0) + (jour.soir ? 1 : 0),
     0,
@@ -116,8 +121,8 @@ export default function Accueil() {
           <Heading>{t('accueil.prochains_repas')}</Heading>
         </View>
         <View style={{ gap: 8 }}>
-          <Body>{t('accueil.midi', { titre: planning.lundi.midi?.titre ?? t('accueil.non_planifie') })}</Body>
-          <Body>{t('accueil.soir', { titre: planning.lundi.soir?.titre ?? t('accueil.non_planifie') })}</Body>
+          <Body>{t('accueil.midi', { titre: repasJourActuel.midi?.titre ?? t('accueil.non_planifie') })}</Body>
+          <Body>{t('accueil.soir', { titre: repasJourActuel.soir?.titre ?? t('accueil.non_planifie') })}</Body>
         </View>
       </Card>
 
@@ -125,15 +130,19 @@ export default function Accueil() {
         <Heading>{t('accueil.budget_restant')}</Heading>
         <PriceXL>{formatPrix(budgetRestant)}</PriceXL>
         <View style={{ height: 9, borderRadius: 999, backgroundColor: colors.bgSecondary, overflow: 'hidden' }}>
-          <View style={{ width: '0%', height: '100%', backgroundColor: colors.primary }} />
+          <View style={{ width: `${progressionBudget * 100}%`, height: '100%', backgroundColor: colors.primary }} />
         </View>
-        <BodySm>{t('accueil.budget_message')}</BodySm>
+        <BodySm>
+          {budgetConsomme > 0
+            ? t('accueil.budget_message_suivi', { consomme: formatPrix(budgetConsomme) })
+            : t('accueil.budget_message')}
+        </BodySm>
       </Card>
 
       <Card style={{ padding: 20, gap: 8, borderRadius: 24, borderTopLeftRadius: 24 }}>
         <Heading>{t('accueil.economies_titre')}</Heading>
-        <SavingsXL>{formatPrix(0)}</SavingsXL>
-        <BodySm>{t('accueil.economies_message')}</BodySm>
+        <SavingsXL>{formatPrix(economiesCumulees)}</SavingsXL>
+        <BodySm>{economiesCumulees > 0 ? t('accueil.economies_message_suivi') : t('accueil.economies_message')}</BodySm>
       </Card>
 
       <Button

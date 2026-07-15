@@ -6,6 +6,7 @@ import { SlidersHorizontal, ShoppingBasket } from 'lucide-react-native';
 import { useTheme } from '@/lib/theme-context';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useCoursesSync } from '@/hooks/useCoursesSync';
+import { useAbonnement } from '@/hooks/useAbonnement';
 import { useCoursesStore } from '@/stores/coursesStore';
 import { usePanierStore } from '@/stores/panierStore';
 import { useProfilStore } from '@/stores/profilStore';
@@ -37,6 +38,7 @@ export default function Courses() {
   const { items, toggleCoche } = useCoursesStore();
   const { mode, recap, setMode, calculer } = usePanierStore();
   const profil = useProfilStore((s) => s.profil);
+  const { estAuMoins } = useAbonnement();
   const [paywallVisible, setPaywallVisible] = useState(false);
   const [hydrated, setHydrated] = useState(useCoursesStore.persist.hasHydrated());
   useCoursesSync();
@@ -51,16 +53,27 @@ export default function Courses() {
   }, [items, calculer]);
 
   const validerCommande = async () => {
-    if (!recap) return;
-    if (profil) {
-      await supabase.from('commandes').insert({
-        profil_id: profil.id,
-        paniers: recap.paniers,
-        montant_total: recap.montant_total,
-        economies: recap.economies,
-      });
+    if (!recap || !profil) return;
+    const { error } = await supabase.from('commandes').insert({
+      profil_id: profil.id,
+      paniers: recap.paniers,
+      montant_total: recap.montant_total,
+      economies: recap.economies,
+    });
+    if (error) {
+      toast.erreur(t('courses.erreur_validation'));
+      return;
     }
     toast.economies(recap.economies);
+  };
+
+  const choisirMode = (id: ModeOptimisation) => {
+    if (id !== 'prix_minimum' && !estAuMoins('standard')) {
+      setPaywallVisible(true);
+      return;
+    }
+    void haptics.selection();
+    setMode(id);
   };
 
   if (!hydrated) {
@@ -119,10 +132,7 @@ export default function Courses() {
             {MODES.map((m) => (
               <Pressable
                 key={m.id}
-                onPress={() => {
-                  void haptics.selection();
-                  setMode(m.id);
-                }}
+                onPress={() => choisirMode(m.id)}
                 accessibilityRole="button"
                 accessibilityState={{ selected: mode === m.id }}
                 style={{

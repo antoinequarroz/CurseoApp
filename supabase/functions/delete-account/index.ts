@@ -9,13 +9,16 @@
 import { serve } from 'https://deno.land/std/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { z } from 'https://deno.land/x/zod/mod.ts';
-import { SECURITY_HEADERS } from '../_shared/security-headers.ts';
+import { SECURITY_HEADERS, reponsePreflight } from '../_shared/security-headers.ts';
 
 const DeleteRequestSchema = z.object({
   userId: z.string().uuid(),
 });
 
 serve(async (req) => {
+  const preflight = reponsePreflight(req);
+  if (preflight) return preflight;
+
   const authHeader = req.headers.get('Authorization');
   if (!authHeader) {
     return new Response(JSON.stringify({ error: 'Non authentifie' }), {

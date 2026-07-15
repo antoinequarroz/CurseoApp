@@ -1,26 +1,48 @@
 /** Panier optimise par enseigne — calcule depuis la liste de courses + mode d'optimisation. */
 import { create } from 'zustand';
-import type { Enseigne, ItemCourse, ModeOptimisation, PanierEnseigne, RecapCommande } from '@/types';
+import type { Enseigne, ItemCourse, ModeOptimisation, PanierEnseigne, PrixProduit, RecapCommande } from '@/types';
 import { PRODUITS_COMPARATIFS, trouverPrixProduit } from '@/lib/mocks/prix.mock';
 
 const ENSEIGNES: Enseigne[] = ['coop', 'migros', 'lidl', 'aldi'];
+const PRIX_DEFAUT = 3; // valeur par defaut si produit non reference dans le comparatif
 
-/** Repartit chaque item sur l'enseigne au meilleur prix (mode prix_minimum). */
+/**
+ * Choisit l'enseigne pour un produit selon le mode d'optimisation, a partir
+ * du classement reel des prix (et non plus toujours 'migros' hors prix_minimum).
+ * Limitation connue : le catalogue mock (lib/mocks/prix.mock.ts) n'a pas de
+ * tag bio/sante par produit, donc 'bio' et 'sante' restent alignes sur
+ * 'equilibre' (prix median) plutot que d'inventer un faux signal qualite.
+ */
+function enseigneSelonMode(prix: PrixProduit[], mode: ModeOptimisation): Enseigne {
+  const classement = [...prix].sort((a, b) => a.prix_unitaire - b.prix_unitaire);
+  switch (mode) {
+    case 'prix_minimum':
+      return classement[0]!.enseigne;
+    case 'premium':
+      return classement[classement.length - 1]!.enseigne;
+    case 'equilibre':
+    case 'bio':
+    case 'sante':
+    default:
+      return classement[Math.floor(classement.length / 2)]!.enseigne;
+  }
+}
+
+/** Repartit chaque item sur l'enseigne selon le mode d'optimisation choisi. */
 function optimiserPanier(items: ItemCourse[], mode: ModeOptimisation): RecapCommande {
   const paniers = new Map<Enseigne, PanierEnseigne>(
     ENSEIGNES.map((e) => [e, { enseigne: e, produits: [], montant: 0 }]),
   );
 
   let montantTotal = 0;
-  let montantEnseigneUnique: Record<Enseigne, number> = { coop: 0, migros: 0, lidl: 0, aldi: 0, ottos: 0, manor_food: 0 };
+  const montantEnseigneUnique: Record<Enseigne, number> = { coop: 0, migros: 0, lidl: 0, aldi: 0, ottos: 0, manor_food: 0 };
 
   for (const item of items) {
     const comparatif = trouverPrixProduit(item.produit);
-    const enseigneChoisie: Enseigne =
-      mode === 'prix_minimum' && comparatif ? comparatif.meilleur_prix : 'migros';
+    const enseigneChoisie: Enseigne = comparatif ? enseigneSelonMode(comparatif.prix, mode) : 'migros';
 
     const prixInfo = comparatif?.prix.find((p) => p.enseigne === enseigneChoisie);
-    const prixEstime = prixInfo?.prix_unitaire ?? 3; // valeur par defaut si produit non reference
+    const prixEstime = prixInfo?.prix_unitaire ?? PRIX_DEFAUT;
 
     const panier = paniers.get(enseigneChoisie);
     if (panier) {
@@ -29,8 +51,11 @@ function optimiserPanier(items: ItemCourse[], mode: ModeOptimisation): RecapComm
     }
     montantTotal += prixEstime;
 
-    for (const p of comparatif?.prix ?? []) {
-      montantEnseigneUnique[p.enseigne] += p.prix_unitaire;
+    // Prix "si tout achete dans une seule enseigne" — comparatif absent = meme
+    // estimation par defaut partout, pour rester coherent avec montantTotal.
+    for (const e of ENSEIGNES) {
+      const prixEnseigne = comparatif?.prix.find((p) => p.enseigne === e)?.prix_unitaire ?? PRIX_DEFAUT;
+      montantEnseigneUnique[e] += prixEnseigne;
     }
   }
 

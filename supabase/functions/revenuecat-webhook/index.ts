@@ -3,16 +3,20 @@
 import { serve } from 'https://deno.land/std/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { comparaisonTempsConstant } from '../_shared/crypto.ts';
+import { SECURITY_HEADERS, reponsePreflight } from '../_shared/security-headers.ts';
 
 const WEBHOOK_SECRET = Deno.env.get('REVENUECAT_WEBHOOK_SECRET');
 
 serve(async (req) => {
+  const preflight = reponsePreflight(req);
+  if (preflight) return preflight;
+
   const authHeader = req.headers.get('Authorization') ?? '';
   // RevenueCat V1 authentifie ses webhooks via un Authorization: Bearer <secret>
   // statique (pas de HMAC de payload) — cf. https://www.revenuecat.com/docs/webhooks
   // On compare donc ce secret en temps constant pour eviter une timing attack.
   if (!WEBHOOK_SECRET || !comparaisonTempsConstant(authHeader, `Bearer ${WEBHOOK_SECRET}`)) {
-    return new Response('Non autorise', { status: 401 });
+    return new Response('Non autorise', { status: 401, headers: SECURITY_HEADERS });
   }
 
   const supabase = createClient(
@@ -24,12 +28,12 @@ serve(async (req) => {
   try {
     body = await req.json();
   } catch {
-    return new Response('Requete invalide', { status: 400 });
+    return new Response('Requete invalide', { status: 400, headers: SECURITY_HEADERS });
   }
   const event = body.event;
   const userId = event?.app_user_id;
   if (!userId || !event?.type) {
-    return new Response('Requete invalide', { status: 400 });
+    return new Response('Requete invalide', { status: 400, headers: SECURITY_HEADERS });
   }
 
   // Doit rester synchronise avec les 4 paliers de lib/revenuecat.ts (PALIERS_ABONNEMENT)
@@ -42,12 +46,12 @@ serve(async (req) => {
   const majAbonnement = async (niveau: string): Promise<Response | null> => {
     if (!PALIERS_VALIDES.has(niveau)) {
       console.error(`[revenuecat-webhook] Palier inconnu "${niveau}" pour ${userId}`);
-      return new Response(`Palier inconnu: ${niveau}`, { status: 422 });
+      return new Response(`Palier inconnu: ${niveau}`, { status: 422, headers: SECURITY_HEADERS });
     }
     const { error } = await supabase.from('profils').update({ abonnement: niveau }).eq('id', userId);
     if (error) {
       console.error(`[revenuecat-webhook] Echec update profils pour ${userId}:`, error.message);
-      return new Response('Echec de la mise a jour', { status: 500 });
+      return new Response('Echec de la mise a jour', { status: 500, headers: SECURITY_HEADERS });
     }
     return null;
   };
@@ -87,5 +91,5 @@ serve(async (req) => {
       break;
   }
 
-  return new Response('OK', { status: 200 });
+  return new Response('OK', { status: 200, headers: SECURITY_HEADERS });
 });

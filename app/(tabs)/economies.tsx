@@ -1,10 +1,10 @@
 /** Économies — budget consommé, économies cumulées, enseigne la plus avantageuse, historique. */
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { useTheme } from '@/lib/theme-context';
 import { useProfilStore } from '@/stores/profilStore';
-import { supabase } from '@/lib/supabase';
+import { useBudgetSemaine } from '@/hooks/useBudgetSemaine';
 import { Card } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonComparateur } from '@/components/ui/Skeleton';
@@ -13,7 +13,6 @@ import { DisplayLG, Heading, Body, BodySm, Savings, SavingsXL, Caption, Price } 
 import { formatPrix } from '@/lib/format';
 import { dates } from '@/lib/dates';
 import { t } from '@/lib/i18n';
-import type { Commande } from '@/types';
 
 function DonutBudget({ progression }: { progression: number }) {
   const { colors } = useTheme();
@@ -42,34 +41,9 @@ function DonutBudget({ progression }: { progression: number }) {
 
 export default function Economies() {
   const profil = useProfilStore((s) => s.profil);
-  const [commandes, setCommandes] = useState<Commande[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (!profil) {
-      setIsLoading(false);
-      return;
-    }
-    setIsLoading(true);
-    void (async () => {
-      try {
-        const { data } = await supabase
-          .from('commandes')
-          .select('*')
-          .eq('profil_id', profil.id)
-          .order('created_at', { ascending: false })
-          .limit(5);
-        setCommandes((data as Commande[] | null) ?? []);
-      } catch {
-        setCommandes([]);
-      } finally {
-        setIsLoading(false);
-      }
-    })();
-  }, [profil]);
-
-  const economiesCumulees = commandes.reduce((total, c) => total + c.economies, 0);
-  const budgetConsomme = commandes.reduce((total, c) => total + c.montant_total, 0);
+  const { isLoading, budgetConsomme, economiesCumulees, dernieresCommandes, aDesCommandes } = useBudgetSemaine(
+    profil?.id,
+  );
   const budgetHebdo = profil?.budget_hebdo ?? 150;
 
   if (isLoading) {
@@ -81,7 +55,7 @@ export default function Economies() {
     );
   }
 
-  if (commandes.length === 0) {
+  if (!aDesCommandes) {
     return (
       <Screen style={{ justifyContent: 'center' }}>
         <EmptyState
@@ -114,7 +88,7 @@ export default function Economies() {
 
       <View style={{ gap: 10 }}>
         <Heading>{t('economies.dernieres_commandes')}</Heading>
-        {commandes.map((c) => (
+        {dernieresCommandes.map((c) => (
           <Card key={c.id} style={{ padding: 16, flexDirection: 'row', justifyContent: 'space-between' }}>
             <View>
               <BodySm>{dates.formatCourt(new Date(c.created_at))}</BodySm>

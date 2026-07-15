@@ -35,6 +35,11 @@ export function SwipeRecette({ recette, profilId, onSwiped, onTapDetail }: Swipe
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
   const [swipeEnCours, setSwipeEnCours] = useState(false);
+  // Lu depuis les worklets du geste (thread UI) : setSwipeEnCours seul ne
+  // suffit pas a bloquer un nouveau .onUpdate/.onEnd declenche pendant que la
+  // carte precedente est encore en train de s'animer hors de l'ecran, ce qui
+  // pouvait provoquer un double enregistrerSwipe() pour la meme recette.
+  const swipeVerrou = useSharedValue(false);
 
   const enregistrerSwipe = async (aime: boolean) => {
     void haptics[aime ? 'success' : 'error']();
@@ -47,12 +52,14 @@ export function SwipeRecette({ recette, profilId, onSwiped, onTapDetail }: Swipe
     translateX.value = 0;
     translateY.value = 0;
     setSwipeEnCours(false);
+    swipeVerrou.value = false;
     onSwiped(aime);
   };
 
   const declencherSwipe = (aime: boolean) => {
     if (swipeEnCours) return;
     setSwipeEnCours(true);
+    swipeVerrou.value = true;
     translateX.value = withSpring(aime ? SCREEN_WIDTH * 1.5 : -SCREEN_WIDTH * 1.5, {}, () => {
       runOnJS(enregistrerSwipe)(aime);
     });
@@ -60,15 +67,19 @@ export function SwipeRecette({ recette, profilId, onSwiped, onTapDetail }: Swipe
 
   const gesture = Gesture.Pan()
     .onBegin(() => {
+      if (swipeVerrou.value) return;
       runOnJS(setSwipeEnCours)(true);
     })
     .onUpdate((e) => {
+      if (swipeVerrou.value) return;
       translateX.value = e.translationX;
       translateY.value = e.translationY * 0.2;
     })
     .onEnd((e) => {
+      if (swipeVerrou.value) return;
       if (Math.abs(e.translationX) > SWIPE_THRESHOLD) {
         const aime = e.translationX > 0;
+        swipeVerrou.value = true;
         translateX.value = withSpring(aime ? SCREEN_WIDTH * 1.5 : -SCREEN_WIDTH * 1.5, {}, () => {
           runOnJS(enregistrerSwipe)(aime);
         });
