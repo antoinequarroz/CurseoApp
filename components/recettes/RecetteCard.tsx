@@ -1,7 +1,8 @@
 /** Card recette — image, badges difficulté/temps, prix. */
-import React from 'react';
+import React, { useState } from 'react';
 import { View } from 'react-native';
 import { Image } from 'expo-image';
+import { ImageOff } from 'lucide-react-native';
 import { useTheme } from '@/lib/theme-context';
 import { useResponsive } from '@/hooks/useResponsive';
 import { Card } from '@/components/ui/Card';
@@ -20,19 +21,29 @@ export function RecetteCard({ recette, variant = 'default' }: { recette: Recette
   const { colors, isDark } = useTheme();
   const { isSmall } = useResponsive();
   const imageHeight = variant === 'hero' ? (isSmall ? 220 : 260) : isSmall ? 180 : 200;
+  const [imageEnEchec, setImageEnEchec] = useState(false);
 
   return (
     <Card style={variant === 'hero' ? { borderRadius: 28, borderTopLeftRadius: 28 } : undefined}>
       <View style={{ height: imageHeight, backgroundColor: colors.bgSecondary }}>
-        <Image
-          source={{ uri: `${recette.image_url}?auto=format&fit=crop&w=1000&q=80` }}
-          placeholder={recette.blurhash}
-          contentFit="cover"
-          transition={120}
-          cachePolicy="memory-disk"
-          style={{ width: '100%', height: '100%' }}
-          accessibilityLabel={`Photo de ${recette.titre}`}
-        />
+        {imageEnEchec ? (
+          // Repli si l'URL de l'image est cassee (ex. photo Unsplash supprimee) —
+          // sans ca la carte affichait un rectangle vide/noir, sans indice visuel.
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+            <ImageOff size={28} color={colors.textMuted} />
+          </View>
+        ) : (
+          <Image
+            source={{ uri: `${recette.image_url}?auto=format&fit=crop&w=1000&q=80` }}
+            placeholder={recette.blurhash}
+            contentFit="cover"
+            transition={120}
+            cachePolicy="memory-disk"
+            style={{ width: '100%', height: '100%' }}
+            accessibilityLabel={`Photo de ${recette.titre}`}
+            onError={() => setImageEnEchec(true)}
+          />
+        )}
         <View style={{ position: 'absolute', inset: 0, backgroundColor: isDark ? 'rgba(0,0,0,0.28)' : 'rgba(0,0,0,0.16)' }} />
         <View style={{ position: 'absolute', bottom: 12, left: 12 }}>
           <Badge label={recette.difficulte} variant={COULEUR_DIFFICULTE[recette.difficulte] ?? 'neutral'} />
