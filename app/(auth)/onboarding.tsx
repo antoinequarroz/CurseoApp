@@ -8,7 +8,24 @@ import { Pressable, TextInput, View } from 'react-native';
 import Slider from '@react-native-community/slider';
 import Animated, { SlideInRight, SlideOutLeft } from 'react-native-reanimated';
 import { router } from 'expo-router';
-import { Check, ChefHat, Leaf, Salad, Sprout, WheatOff, MilkOff, NutOff, Drumstick, type LucideIcon } from 'lucide-react-native';
+import {
+  Check,
+  ChefHat,
+  Fish,
+  Heart,
+  Leaf,
+  MoreHorizontal,
+  Salad,
+  Sprout,
+  Target,
+  Users,
+  Wallet,
+  WheatOff,
+  MilkOff,
+  NutOff,
+  Drumstick,
+  type LucideIcon,
+} from 'lucide-react-native';
 import { useTheme } from '@/lib/theme-context';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useOnboardingStore } from '@/stores/onboardingStore';
@@ -32,6 +49,7 @@ const REGIMES: { id: Regime; label: string; Icon: LucideIcon }[] = [
   { id: 'sans_lactose', label: t('onboarding.regime_sans_lactose'), Icon: MilkOff },
   { id: 'sans_noix', label: t('onboarding.regime_sans_noix'), Icon: NutOff },
   { id: 'halal', label: t('onboarding.regime_halal'), Icon: Drumstick },
+  { id: 'poisson', label: t('onboarding.regime_poisson'), Icon: Fish },
 ];
 const OBJECTIFS: { id: Objectif; label: string }[] = [
   { id: 'perdre_poids', label: t('onboarding.objectif_perdre_poids') },
@@ -171,6 +189,8 @@ export default function Onboarding() {
   const haptics = useHaptics();
   const { etapeActuelle, donneesPartielles, setEtape, mettreAJourDonnees, terminer } = useOnboardingStore();
   const [cgvuAcceptees, setCgvuAcceptees] = useState(false);
+  const [autresOuvert, setAutresOuvert] = useState(false);
+  const [allergieSaisie, setAllergieSaisie] = useState('');
 
   const suivant = () => {
     void haptics.selection();
@@ -233,6 +253,17 @@ export default function Onboarding() {
   const toggleRegime = (id: Regime) => {
     const actuel = donneesPartielles.regime ?? [];
     mettreAJourDonnees({ regime: actuel.includes(id) ? actuel.filter((r) => r !== id) : [...actuel, id] });
+  };
+  const ajouterAllergie = () => {
+    const nomNettoye = allergieSaisie.trim();
+    if (!nomNettoye) return;
+    const actuel = donneesPartielles.allergies ?? [];
+    if (!actuel.includes(nomNettoye)) mettreAJourDonnees({ allergies: [...actuel, nomNettoye] });
+    setAllergieSaisie('');
+  };
+  const retirerAllergie = (nom: string) => {
+    const actuel = donneesPartielles.allergies ?? [];
+    mettreAJourDonnees({ allergies: actuel.filter((a) => a !== nom) });
   };
   const toggleObjectif = (id: Objectif) => {
     const actuel = donneesPartielles.objectifs ?? [];
@@ -312,6 +343,7 @@ export default function Onboarding() {
 
           {etapeActuelle === 2 && (
             <View style={{ gap: 16 }}>
+              <Users size={24} color={colors.primaryLight} style={{ alignSelf: 'flex-end' }} />
               <DisplayXL>{t('onboarding.composition_titre')}</DisplayXL>
               <Body>{t('onboarding.nb_personnes', { count: donneesPartielles.nb_personnes ?? 1 })}</Body>
               <Slider
@@ -351,6 +383,7 @@ export default function Onboarding() {
 
           {etapeActuelle === 3 && (
             <View style={{ gap: 16 }}>
+              <Wallet size={24} color={colors.primaryLight} style={{ alignSelf: 'flex-end' }} />
               <DisplayXL>{t('onboarding.budget_titre_court')}</DisplayXL>
               <PriceXL>{formatPrix(donneesPartielles.budget_hebdo ?? 150)}</PriceXL>
               <Slider
@@ -368,6 +401,7 @@ export default function Onboarding() {
 
           {etapeActuelle === 4 && (
             <View style={{ gap: 16 }}>
+              <Heart size={24} color={colors.primaryLight} style={{ alignSelf: 'flex-end' }} />
               <DisplayXL>{t('onboarding.regime_titre')}</DisplayXL>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
                 {REGIMES.map((r) => (
@@ -379,7 +413,71 @@ export default function Onboarding() {
                     onPress={() => toggleRegime(r.id)}
                   />
                 ))}
+                <IconTile
+                  label={t('onboarding.regime_autres')}
+                  Icon={MoreHorizontal}
+                  selected={autresOuvert || (donneesPartielles.allergies ?? []).length > 0}
+                  onPress={() => setAutresOuvert((v) => !v)}
+                />
               </View>
+
+              {autresOuvert && (
+                <View style={{ gap: 8 }}>
+                  <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                    <TextInput
+                      value={allergieSaisie}
+                      onChangeText={setAllergieSaisie}
+                      onSubmitEditing={ajouterAllergie}
+                      returnKeyType="done"
+                      placeholder={t('onboarding.regime_autres_placeholder')}
+                      placeholderTextColor={colors.textMuted}
+                      accessibilityLabel={t('onboarding.regime_autres_placeholder')}
+                      style={{
+                        flex: 1,
+                        backgroundColor: colors.bgCard,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        borderRadius: 10,
+                        padding: 12,
+                        color: colors.textPrimary,
+                      }}
+                    />
+                    <Pressable
+                      onPress={ajouterAllergie}
+                      disabled={!allergieSaisie.trim()}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('onboarding.regime_autres_ajouter')}
+                      style={{
+                        paddingHorizontal: 16,
+                        paddingVertical: 12,
+                        borderRadius: 10,
+                        backgroundColor: allergieSaisie.trim() ? colors.primary : colors.border,
+                      }}
+                    >
+                      <BodySm style={{ color: '#FFFFFF' }}>{t('onboarding.regime_autres_ajouter')}</BodySm>
+                    </Pressable>
+                  </View>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                    {(donneesPartielles.allergies ?? []).map((a) => (
+                      <Pressable
+                        key={a}
+                        onPress={() => retirerAllergie(a)}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('onboarding.regime_autres_retirer', { allergie: a })}
+                        style={{
+                          paddingVertical: 6,
+                          paddingHorizontal: 12,
+                          borderRadius: 9999,
+                          backgroundColor: colors.bgSecondary,
+                        }}
+                      >
+                        <Caption>{a} ✕</Caption>
+                      </Pressable>
+                    ))}
+                  </View>
+                </View>
+              )}
+
               <RegimeParPersonneTeaser />
               <Button label={t('onboarding.regime_passer')} variant="ghost" onPress={suivant} />
             </View>
@@ -387,6 +485,7 @@ export default function Onboarding() {
 
           {etapeActuelle === 5 && (
             <View style={{ gap: 16 }}>
+              <Target size={24} color={colors.primaryLight} style={{ alignSelf: 'flex-end' }} />
               <DisplayXL>{t('onboarding.objectifs_titre_court')}</DisplayXL>
               <View style={{ gap: 8 }}>
                 {OBJECTIFS.map((o) => (
