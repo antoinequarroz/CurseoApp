@@ -12,6 +12,7 @@ import { RECETTES_MOCK } from '@/lib/mocks/recettes.mock';
 import { SwipeRecette } from '@/components/recettes/SwipeRecette';
 import { RecetteCard } from '@/components/recettes/RecetteCard';
 import { PlanningHebdo } from '@/components/planning/PlanningHebdo';
+import { ProchainSlot } from '@/components/planning/ProchainSlot';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonRecetteCard } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/Button';
@@ -19,7 +20,17 @@ import { Screen, ScreenScroll } from '@/components/ui/Screen';
 import { DisplayLG, Subheading, Caption, BodySm } from '@/components/ui/Typography';
 import { analytics } from '@/lib/analytics';
 import { t } from '@/lib/i18n';
-import type { JourSemaine, Recette } from '@/types';
+import { JOURS_SEMAINE, type JourSemaine, type Recette } from '@/types';
+
+/** Premier jour/moment ni planifie ni explicitement ignore — undefined si la semaine est complete. */
+function trouverProchainSlot(planning: ReturnType<typeof usePlanningStore.getState>['planning']) {
+  for (const jour of JOURS_SEMAINE) {
+    const repas = planning[jour];
+    if (!repas.midi && !repas.midiIgnore) return { jour, moment: 'midi' as const };
+    if (!repas.soir && !repas.soirIgnore) return { jour, moment: 'soir' as const };
+  }
+  return undefined;
+}
 
 type SousOnglet = 'recettes' | 'planning' | 'communaute';
 
@@ -56,23 +67,30 @@ function SegmentedControl({ valeur, onChange }: { valeur: SousOnglet; onChange: 
 
 export default function Planifier() {
   const haptics = useHaptics();
+  const { colors } = useTheme();
   const { paddingHorizontal } = useResponsive();
   const profil = useProfilStore((s) => s.profil);
-  const { planning, assignerRecette } = usePlanningStore();
+  const { planning, assignerRecette, ignorerRepas } = usePlanningStore();
   const [sousOnglet, setSousOnglet] = useState<SousOnglet>('recettes');
   const [indexCourant, setIndexCourant] = useState(0);
   const [recettesAimees, setRecettesAimees] = useState<Recette[]>([]);
   const [slotChoix, setSlotChoix] = useState<{ jour: JourSemaine; moment: 'midi' | 'soir' } | null>(null);
+  const [portionsChoix, setPortionsChoix] = useState<number | null>(null);
 
   const { data, isLoading, fetchNextPage, hasNextPage } = useRecettes({ regime: profil?.regime });
   const recettes = useMemo(() => data?.pages.flat() ?? [], [data]);
   const recetteActuelle = recettes[indexCourant];
   const recettesCommunaute = useMemo(() => RECETTES_MOCK.filter((r) => r.est_communautaire), []);
+  const prochainSlot = useMemo(() => trouverProchainSlot(planning), [planning]);
+
+  const ouvrirChoixSlot = (jour: JourSemaine, moment: 'midi' | 'soir') => {
+    setSlotChoix({ jour, moment });
+    setPortionsChoix(profil?.nb_personnes ?? 1);
+  };
 
   const genererSemaineIA = () => {
     void haptics.success();
-    const joursOrdre: JourSemaine[] = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
-    joursOrdre.forEach((jour, i) => {
+    JOURS_SEMAINE.forEach((jour, i) => {
       const recette = recettesAimees[i % Math.max(recettesAimees.length, 1)];
       if (recette) assignerRecette(jour, 'midi', recette);
     });
@@ -119,7 +137,20 @@ export default function Planifier() {
       {sousOnglet === 'planning' && (
         <ScreenScroll style={{ flex: 1 }} contentContainerStyle={{ gap: 16 }} padded>
           <Button label={t('planning.generer_semaine_ia')} onPress={genererSemaineIA} />
-          <PlanningHebdo planning={planning} onPressSlot={(jour, moment) => setSlotChoix({ jour, moment })} />
+          {prochainSlot ? (
+            <ProchainSlot
+              jour={prochainSlot.jour}
+              moment={prochainSlot.moment}
+              onChoisirRecette={() => ouvrirChoixSlot(prochainSlot.jour, prochainSlot.moment)}
+              onIgnorer={() => {
+                void haptics.selection();
+                ignorerRepas(prochainSlot.jour, prochainSlot.moment);
+              }}
+            />
+          ) : (
+            <EmptyState illustration="favoris" titre={t('planning.tout_planifie_titre')} sousTitre={t('planning.tout_planifie_soustitre')} />
+          )}
+          <PlanningHebdo planning={planning} onPressSlot={(jour, moment) => ouvrirChoixSlot(jour, moment)} />
         </ScreenScroll>
       )}
 
@@ -152,6 +183,35 @@ export default function Planifier() {
       <Modal visible={!!slotChoix} animationType="slide" onRequestClose={() => setSlotChoix(null)}>
         <ScreenScroll contentContainerStyle={{ gap: 12 }} tabBar={false}>
           <DisplayLG>{t('planning.choisir_recette')}</DisplayLG>
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <View>
+              <BodySm style={{ fontWeight: '600' }}>{t('planning.portions_invites_titre')}</BodySm>
+              <Caption>{t('planning.portions_invites_hint')}</Caption>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+              <Pressable
+                onPress={() => setPortionsChoix((p) => Math.max(1, (p ?? 1) - 1))}
+                accessibilityRole="button"
+                accessibilityLabel={t('onboarding.age_diminuer', { label: t('planning.portions_invites_titre') })}
+                hitSlop={8}
+                style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}
+              >
+                <BodySm>–</BodySm>
+              </Pressable>
+              <BodySm style={{ minWidth: 24, textAlign: 'center' }}>{portionsChoix ?? profil?.nb_personnes ?? 1}</BodySm>
+              <Pressable
+                onPress={() => setPortionsChoix((p) => Math.min(20, (p ?? 1) + 1))}
+                accessibilityRole="button"
+                accessibilityLabel={t('onboarding.age_augmenter', { label: t('planning.portions_invites_titre') })}
+                hitSlop={8}
+                style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}
+              >
+                <BodySm>+</BodySm>
+              </Pressable>
+            </View>
+          </View>
+
           {recettesAimees.length === 0 ? (
             <EmptyState illustration="favoris" titre={t('planning.empty_favoris_titre')} sousTitre={t('planning.empty_favoris_soustitre')} />
           ) : (
@@ -159,7 +219,16 @@ export default function Planifier() {
               <Pressable
                 key={r.id}
                 onPress={() => {
-                  if (slotChoix) assignerRecette(slotChoix.jour, slotChoix.moment, r);
+                  if (slotChoix) {
+                    const portionsFoyer = profil?.nb_personnes ?? 1;
+                    const portionsFinales = portionsChoix ?? portionsFoyer;
+                    assignerRecette(
+                      slotChoix.jour,
+                      slotChoix.moment,
+                      r,
+                      portionsFinales !== portionsFoyer ? portionsFinales : undefined,
+                    );
+                  }
                   setSlotChoix(null);
                 }}
                 accessibilityRole="button"

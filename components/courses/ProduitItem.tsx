@@ -1,15 +1,16 @@
 /** Item de liste de courses — ligne moderne avec checkbox tactile. */
 import React, { useEffect } from 'react';
 import { Pressable, View } from 'react-native';
-import { Check } from 'lucide-react-native';
+import { Check, X } from 'lucide-react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useTheme } from '@/lib/theme-context';
 import { useHaptics } from '@/hooks/useHaptics';
 import { NomProduitCourse, Caption } from '@/components/ui/Typography';
 import { formatQuantite } from '@/lib/format';
+import { t } from '@/lib/i18n';
 import type { ItemCourse } from '@/types';
 
-export function ProduitItem({ item, onToggle }: { item: ItemCourse; onToggle: () => void }) {
+export function ProduitItem({ item, onToggle, onSupprimer }: { item: ItemCourse; onToggle: () => void; onSupprimer?: () => void }) {
   const { colors } = useTheme();
   const haptics = useHaptics();
   const opaciteTexte = useSharedValue(item.coche ? 0.48 : 1);
@@ -60,6 +61,18 @@ export function ProduitItem({ item, onToggle }: { item: ItemCourse; onToggle: ()
         <NomProduitCourse>{item.produit}</NomProduitCourse>
         <Caption>{formatQuantite(item.quantite, item.unite)}</Caption>
       </Animated.View>
+
+      {onSupprimer && (
+        <Pressable
+          onPress={onSupprimer}
+          accessibilityRole="button"
+          accessibilityLabel={t('courses.supprimer_article', { produit: item.produit })}
+          hitSlop={8}
+          style={{ padding: 4 }}
+        >
+          <X size={16} color={colors.textMuted} />
+        </Pressable>
+      )}
     </Pressable>
   );
 }

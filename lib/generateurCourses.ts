@@ -76,25 +76,28 @@ export function genererListeCourses(
   >();
 
   for (const jour of Object.values(planning)) {
-    for (const repas of [jour.midi, jour.soir]) {
-      if (!repas) continue;
+    for (const repasPlanifie of [jour.midi, jour.soir]) {
+      if (!repasPlanifie) continue;
+      const { recette, portions } = repasPlanifie;
+      // portions : nombre de personnes pour CE repas (invites), sinon le foyer par defaut.
+      const nbPersonnesRepas = portions ?? profil.nb_personnes;
 
-      for (const ingredient of repas.ingredients) {
-        const quantiteAjustee = ajusterPortion(ingredient.quantite, repas.portions, profil.nb_personnes);
+      for (const ingredient of recette.ingredients) {
+        const quantiteAjustee = ajusterPortion(ingredient.quantite, recette.portions, nbPersonnesRepas);
         const { valeur, base } = normaliserUnite(quantiteAjustee, ingredient.unite);
         const cle = `${normaliserNom(ingredient.nom)}::${base}`;
 
         const existant = accumulateur.get(cle);
         if (existant) {
           existant.total += valeur;
-          existant.recettes.add(repas.titre);
+          existant.recettes.add(recette.titre);
         } else {
           accumulateur.set(cle, {
             nomAffiche: ingredient.nom,
             base,
             total: valeur,
             rayon: ingredient.rayon ?? RAYON_PAR_DEFAUT,
-            recettes: new Set([repas.titre]),
+            recettes: new Set([recette.titre]),
           });
         }
       }

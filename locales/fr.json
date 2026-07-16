@@ -38,10 +38,22 @@
     "objectif_prise_masse": "Prise de masse",
     "objectif_manger_sain": "Manger sainement",
     "objectif_rapide": "Repas rapides",
+    "objectif_diminuer_charge_mentale": "Diminuer la charge mentale",
+    "objectif_maitriser_budget": "Maîtriser son budget",
+    "objectif_manger_varie": "Manger varié",
+    "objectif_reduire_gaspillage": "Réduire le gaspillage",
     "enseigne_coop": "Coop",
     "enseigne_migros": "Migros",
     "enseigne_lidl": "Lidl",
-    "enseigne_aldi": "Aldi"
+    "enseigne_aldi": "Aldi",
+    "ages_enfants_hint": "Âge de chaque enfant (influence les quantités et produits suggérés)",
+    "age_enfant": "Enfant {{numero}}",
+    "age_diminuer": "Diminuer l'âge de {{label}}",
+    "age_augmenter": "Augmenter l'âge de {{label}}",
+    "regime_par_personne_titre": "Personnaliser par personne",
+    "regime_par_personne_description": "Bientôt disponible : indique un régime ou des allergies différents pour chaque membre du foyer.",
+    "regime_par_personne_a11y": "Personnaliser les régimes par personne, fonctionnalité du palier Famille, bientôt disponible",
+    "palier_famille": "Palier Famille"
   },
   "accueil": {
     "salutation": "Bonjour {{prenom}}, voici ta semaine",
@@ -105,8 +117,16 @@
     "slot_midi": "Midi",
     "slot_soir": "Soir",
     "slot_ajouter": "Ajouter",
+    "slot_rien_prevu": "Rien prévu",
     "slot_label": "{{label}} : {{titre}}",
-    "slot_label_vide": "Ajouter une recette pour {{label}}"
+    "slot_label_vide": "Ajouter une recette pour {{label}}",
+    "prochain_a_planifier": "À planifier",
+    "rien_prevu_bouton": "Rien prévu ce jour",
+    "choisir_recette_bouton": "Choisir une recette",
+    "tout_planifie_titre": "Semaine complète !",
+    "tout_planifie_soustitre": "Tous les repas de la semaine sont planifiés ou marqués comme non prévus.",
+    "portions_invites_titre": "Nombre de personnes pour ce repas",
+    "portions_invites_hint": "Différent du foyer si tu as des invités"
   },
   "courses": {
     "meilleur_prix": "Meilleur prix",
@@ -122,7 +142,19 @@
     "sous_titre": "Ta liste organisée par rayon, prête pour le magasin.",
     "articles_a_verifier": "{{count}} article(s) à vérifier",
     "hero_message": "Coche au fur et à mesure. Coursia garde le panier lisible par rayon.",
-    "erreur_validation": "Impossible de valider ta commande, réessaie dans un instant"
+    "erreur_validation": "Impossible de valider ta commande, réessaie dans un instant",
+    "ajouter_article_titre": "Ajouter un article",
+    "ajouter_article_placeholder": "Ex. yogourts, papier toilette…",
+    "ajouter_article_bouton": "Ajouter l'article",
+    "supprimer_article": "Supprimer {{produit}} de la liste",
+    "rayon_fruits_legumes": "Fruits & Légumes",
+    "rayon_viandes": "Viandes",
+    "rayon_produits_laitiers": "Produits laitiers",
+    "rayon_epicerie": "Épicerie",
+    "rayon_conserves": "Conserves",
+    "rayon_surgeles": "Surgelés",
+    "rayon_boissons": "Boissons",
+    "rayon_hygiene": "Hygiène"
   },
   "economies": {
     "budget_suivi": "{{consomme}} suivis sur {{budget}}",

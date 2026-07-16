@@ -9,9 +9,10 @@ import { ProduitItem } from './ProduitItem';
 interface ListeCoursesProps {
   items: ItemCourse[];
   onToggle: (id: string) => void;
+  onSupprimer?: (id: string) => void;
 }
 
-export function ListeCourses({ items, onToggle }: ListeCoursesProps) {
+export function ListeCourses({ items, onToggle, onSupprimer }: ListeCoursesProps) {
   const groupes = ORDRE_RAYONS.map((rayon) => ({
     rayon,
     items: items.filter((i) => i.rayon === rayon),
@@ -26,7 +27,12 @@ export function ListeCourses({ items, onToggle }: ListeCoursesProps) {
             <Caption>{groupe.items.length} article(s)</Caption>
           </View>
           {groupe.items.map((item) => (
-            <ProduitItem key={item.id} item={item} onToggle={() => onToggle(item.id)} />
+            <ProduitItem
+              key={item.id}
+              item={item}
+              onToggle={() => onToggle(item.id)}
+              onSupprimer={!item.recette_origine && onSupprimer ? () => onSupprimer(item.id) : undefined}
+            />
           ))}
         </Card>
       ))}

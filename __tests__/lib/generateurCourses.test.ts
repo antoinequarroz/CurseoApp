@@ -30,7 +30,7 @@ const planningVide: PlanningHebdomadaire = {
 
 describe('genererListeCourses', () => {
   it('ajuste les quantites au nombre de personnes et arrondit vers le haut', () => {
-    const planning = { ...planningVide, lundi: { midi: recetteTest } };
+    const planning = { ...planningVide, lundi: { midi: { recette: recetteTest } } };
     const items = genererListeCourses(planning, { nb_personnes: 4 });
     // 200g pour 2 portions -> 400g pour 4 personnes -> arrondi a 500g
     expect(items).toHaveLength(1);
@@ -38,14 +38,14 @@ describe('genererListeCourses', () => {
   });
 
   it('fusionne les doublons entre plusieurs recettes', () => {
-    const planning = { ...planningVide, lundi: { midi: recetteTest }, mardi: { midi: recetteTest } };
+    const planning = { ...planningVide, lundi: { midi: { recette: recetteTest } }, mardi: { midi: { recette: recetteTest } } };
     const items = genererListeCourses(planning, { nb_personnes: 2 });
     expect(items).toHaveLength(1);
     expect(items[0]?.quantite).toBe(500); // 200g + 200g = 400g -> arrondi 500g
   });
 
   it('deduit les stocks deja en frigo', () => {
-    const planning = { ...planningVide, lundi: { midi: recetteTest } };
+    const planning = { ...planningVide, lundi: { midi: { recette: recetteTest } } };
     const items = genererListeCourses(planning, { nb_personnes: 2 }, [{ produit: 'Pâtes', quantite: 200, unite: 'g' }]);
     expect(items).toHaveLength(0);
   });

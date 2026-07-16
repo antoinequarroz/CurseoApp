@@ -8,6 +8,7 @@ import { useProfilStore } from '@/stores/profilStore';
 import { supabase } from '@/lib/supabase';
 import { resetUserStores } from '@/lib/resetSession';
 import { PALIERS_ABONNEMENT } from '@/lib/revenuecat';
+import { RegimeParPersonneTeaser } from '@/components/ui/RegimeParPersonneTeaser';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { ScreenScroll } from '@/components/ui/Screen';
@@ -37,6 +38,7 @@ export default function Profil() {
     prenom: 'Ton foyer',
     nb_personnes: 1,
     nb_enfants: 0,
+    enfants_ages: [],
     budget_hebdo: 150,
     regime: [],
     allergies: [],
@@ -179,6 +181,8 @@ export default function Profil() {
         </View>
         <BodySm>{t('profil.preferences_message')}</BodySm>
       </Card>
+
+      <RegimeParPersonneTeaser />
 
       {!confirmationSuppression ? (
         <Pressable onPress={() => setConfirmationSuppression(true)} accessibilityRole="button" accessibilityLabel={t('profil.supprimer_compte')}>

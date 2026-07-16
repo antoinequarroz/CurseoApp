@@ -5,7 +5,15 @@
  */
 
 export type Regime = 'vegetarien' | 'vegan' | 'halal' | 'sans_gluten' | 'sans_lactose';
-export type Objectif = 'perdre_poids' | 'prise_masse' | 'manger_sain' | 'rapide';
+export type Objectif =
+  | 'perdre_poids'
+  | 'prise_masse'
+  | 'manger_sain'
+  | 'rapide'
+  | 'diminuer_charge_mentale'
+  | 'maitriser_budget'
+  | 'manger_varie'
+  | 'reduire_gaspillage';
 export type Enseigne = 'coop' | 'migros' | 'lidl' | 'aldi' | 'ottos' | 'manor_food';
 export type ModeOptimisation = 'prix_minimum' | 'equilibre' | 'premium' | 'bio' | 'sante';
 export type NiveauAbonnement = 'gratuit' | 'standard' | 'premium' | 'famille';
@@ -37,6 +45,9 @@ export interface Profil {
   prenom: string;
   nb_personnes: number;
   nb_enfants: number;
+  /** Age (en annees) de chaque enfant du foyer — influence quantites et produits
+   *  suggeres (ex. produits bebe). Longueur toujours synchronisee avec nb_enfants. */
+  enfants_ages: number[];
   budget_hebdo: number;
   regime: Regime[];
   allergies: string[];
@@ -77,9 +88,19 @@ export interface Recette {
   est_communautaire: boolean;
 }
 
+export interface RepasPlanifie {
+  recette: Recette;
+  /** Nombre de personnes pour ce repas precis (invites), si different du foyer. */
+  portions?: number;
+}
+
 export interface RepasJour {
-  midi?: Recette;
-  soir?: Recette;
+  midi?: RepasPlanifie;
+  soir?: RepasPlanifie;
+  /** true si l'utilisateur a explicitement choisi de ne rien prevoir ce moment-la
+   *  (distinct de "pas encore decide", qui reste undefined/false). */
+  midiIgnore?: boolean;
+  soirIgnore?: boolean;
 }
 
 export interface PlanningHebdomadaire {

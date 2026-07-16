@@ -22,8 +22,9 @@ const LABEL_JOUR: Record<JourSemaine, string> = {
   dimanche: t('planning.jour_dimanche'),
 };
 
-function Slot({ label, titre, onPress }: { label: string; titre?: string; onPress: () => void }) {
+function Slot({ label, titre, ignore, onPress }: { label: string; titre?: string; ignore?: boolean; onPress: () => void }) {
   const { colors } = useTheme();
+  const texteAffiche = titre ?? (ignore ? t('planning.slot_rien_prevu') : t('planning.slot_ajouter'));
   return (
     <Pressable
       onPress={onPress}
@@ -42,11 +43,12 @@ function Slot({ label, titre, onPress }: { label: string; titre?: string; onPres
         padding: 10,
         minHeight: 56,
         justifyContent: 'center',
+        opacity: ignore ? 0.6 : 1,
       }}
     >
       <Caption>{label}</Caption>
       <TitreRecettePlanning style={{ color: titre ? colors.textPrimary : colors.textMuted }}>
-        {titre ?? t('planning.slot_ajouter')}
+        {texteAffiche}
       </TitreRecettePlanning>
     </Pressable>
   );
@@ -57,8 +59,18 @@ export function JourCard({ jour, repas, onPressSlot }: JourCardProps) {
     <Card style={{ padding: 12, gap: 8 }}>
       <Subheading>{LABEL_JOUR[jour]}</Subheading>
       <View style={{ flexDirection: 'row', gap: 8 }}>
-        <Slot label={t('planning.slot_midi')} titre={repas.midi?.titre} onPress={() => onPressSlot('midi')} />
-        <Slot label={t('planning.slot_soir')} titre={repas.soir?.titre} onPress={() => onPressSlot('soir')} />
+        <Slot
+          label={t('planning.slot_midi')}
+          titre={repas.midi?.recette.titre}
+          ignore={repas.midiIgnore}
+          onPress={() => onPressSlot('midi')}
+        />
+        <Slot
+          label={t('planning.slot_soir')}
+          titre={repas.soir?.recette.titre}
+          ignore={repas.soirIgnore}
+          onPress={() => onPressSlot('soir')}
+        />
       </View>
     </Card>
   );

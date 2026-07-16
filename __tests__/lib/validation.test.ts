@@ -5,6 +5,7 @@ describe('ProfilSchema', () => {
     prenom: 'Alex',
     nb_personnes: 2,
     nb_enfants: 0,
+    enfants_ages: [] as number[],
     budget_hebdo: 150,
     regime: [] as const,
     allergies: [] as string[],

@@ -15,6 +15,7 @@ import { useProfilStore } from '@/stores/profilStore';
 import { supabase } from '@/lib/supabase';
 import { analytics } from '@/lib/analytics';
 import { KeyboardView } from '@/components/ui/KeyboardView';
+import { RegimeParPersonneTeaser } from '@/components/ui/RegimeParPersonneTeaser';
 import { Button } from '@/components/ui/Button';
 import { Screen } from '@/components/ui/Screen';
 import { DisplayXL, Body, BodySm, Caption, PriceXL } from '@/components/ui/Typography';
@@ -35,6 +36,10 @@ const OBJECTIFS: { id: Objectif; label: string }[] = [
   { id: 'prise_masse', label: t('onboarding.objectif_prise_masse') },
   { id: 'manger_sain', label: t('onboarding.objectif_manger_sain') },
   { id: 'rapide', label: t('onboarding.objectif_rapide') },
+  { id: 'diminuer_charge_mentale', label: t('onboarding.objectif_diminuer_charge_mentale') },
+  { id: 'maitriser_budget', label: t('onboarding.objectif_maitriser_budget') },
+  { id: 'manger_varie', label: t('onboarding.objectif_manger_varie') },
+  { id: 'reduire_gaspillage', label: t('onboarding.objectif_reduire_gaspillage') },
 ];
 const ENSEIGNES: { id: Enseigne; label: string }[] = [
   { id: 'coop', label: t('onboarding.enseigne_coop') },
@@ -42,6 +47,40 @@ const ENSEIGNES: { id: Enseigne; label: string }[] = [
   { id: 'lidl', label: t('onboarding.enseigne_lidl') },
   { id: 'aldi', label: t('onboarding.enseigne_aldi') },
 ];
+
+const AGE_PAR_DEFAUT = 5;
+const AGE_MIN = 0;
+const AGE_MAX = 17;
+
+function StepperAge({ label, age, onChange }: { label: string; age: number; onChange: (age: number) => void }) {
+  const { colors } = useTheme();
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8 }}>
+      <Body>{label}</Body>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+        <Pressable
+          onPress={() => onChange(Math.max(AGE_MIN, age - 1))}
+          accessibilityRole="button"
+          accessibilityLabel={t('onboarding.age_diminuer', { label })}
+          hitSlop={8}
+          style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}
+        >
+          <Body>–</Body>
+        </Pressable>
+        <Body style={{ minWidth: 28, textAlign: 'center' }}>{age}</Body>
+        <Pressable
+          onPress={() => onChange(Math.min(AGE_MAX, age + 1))}
+          accessibilityRole="button"
+          accessibilityLabel={t('onboarding.age_augmenter', { label })}
+          hitSlop={8}
+          style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}
+        >
+          <Body>+</Body>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
 
 function Chip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
   const { colors } = useTheme();
@@ -90,6 +129,7 @@ export default function Onboarding() {
       prenom: donneesPartielles.prenom ?? 'Toi',
       nb_personnes: donneesPartielles.nb_personnes ?? 1,
       nb_enfants: donneesPartielles.nb_enfants ?? 0,
+      enfants_ages: donneesPartielles.enfants_ages ?? [],
       budget_hebdo: donneesPartielles.budget_hebdo ?? 150,
       regime: donneesPartielles.regime ?? [],
       allergies: donneesPartielles.allergies ?? [],
@@ -112,6 +152,20 @@ export default function Onboarding() {
     analytics.onboardingCompleted();
     void haptics.success();
     router.replace('/(tabs)');
+  };
+
+  const changerNbEnfants = (nb: number) => {
+    const agesActuels = donneesPartielles.enfants_ages ?? [];
+    const nouveauxAges =
+      nb > agesActuels.length
+        ? [...agesActuels, ...Array(nb - agesActuels.length).fill(AGE_PAR_DEFAUT)]
+        : agesActuels.slice(0, nb);
+    mettreAJourDonnees({ nb_enfants: nb, enfants_ages: nouveauxAges });
+  };
+  const changerAgeEnfant = (index: number, age: number) => {
+    const ages = [...(donneesPartielles.enfants_ages ?? [])];
+    ages[index] = age;
+    mettreAJourDonnees({ enfants_ages: ages });
   };
 
   const toggleRegime = (id: Regime) => {
@@ -198,10 +252,23 @@ export default function Onboarding() {
                 maximumValue={8}
                 step={1}
                 value={donneesPartielles.nb_enfants ?? 0}
-                onValueChange={(v) => mettreAJourDonnees({ nb_enfants: Math.round(v) })}
+                onValueChange={(v) => changerNbEnfants(Math.round(v))}
                 minimumTrackTintColor={colors.primary}
                 accessibilityLabel={t('onboarding.nb_enfants_label')}
               />
+              {(donneesPartielles.nb_enfants ?? 0) > 0 && (
+                <View style={{ gap: 4 }}>
+                  <Caption>{t('onboarding.ages_enfants_hint')}</Caption>
+                  {(donneesPartielles.enfants_ages ?? []).map((age, index) => (
+                    <StepperAge
+                      key={index}
+                      label={t('onboarding.age_enfant', { numero: index + 1 })}
+                      age={age}
+                      onChange={(nouvelAge) => changerAgeEnfant(index, nouvelAge)}
+                    />
+                  ))}
+                </View>
+              )}
             </View>
           )}
 
@@ -230,6 +297,7 @@ export default function Onboarding() {
                   <Chip key={r.id} label={r.label} selected={(donneesPartielles.regime ?? []).includes(r.id)} onPress={() => toggleRegime(r.id)} />
                 ))}
               </View>
+              <RegimeParPersonneTeaser />
             </View>
           )}
 

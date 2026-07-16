@@ -19,7 +19,7 @@ const recette: Recette = {
 };
 
 const planning: PlanningHebdomadaire = {
-  lundi: { midi: recette },
+  lundi: { midi: { recette } },
   mardi: {},
   mercredi: {},
   jeudi: {},

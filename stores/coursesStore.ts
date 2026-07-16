@@ -7,7 +7,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { ItemCourse, PlanningHebdomadaire, Profil } from '@/types';
+import type { ItemCourse, PlanningHebdomadaire, Profil, Rayon } from '@/types';
 import { genererListeCourses } from '@/lib/generateurCourses';
 import { supabase } from '@/lib/supabase';
 
@@ -19,6 +19,9 @@ interface CoursesState {
   syncing: boolean;
   genererDepuisPlanning: (planning: PlanningHebdomadaire, profil: Pick<Profil, 'nb_personnes'>, planningId?: string) => void;
   toggleCoche: (id: string) => void;
+  /** Ajoute un article libre (pas issu d'une recette) : fruits du dejeuner, papier toilette, etc. */
+  ajouterItemLibre: (produit: string, rayon: Rayon, quantite?: number, unite?: string) => void;
+  retirerItem: (id: string) => void;
   reset: () => void;
   syncerAvecSupabase: (profilId: string) => Promise<void>;
 }
@@ -32,16 +35,36 @@ export const useCoursesStore = create<CoursesState>()(
       syncEnAttente: false,
       syncing: false,
       genererDepuisPlanning: (planning, profil, planningId) =>
-        set({
-          items: genererListeCourses(planning, profil),
+        set((state) => ({
+          // Les articles libres (sans recette_origine) sont preserves lors d'une
+          // regeneration — sinon la liste "papier toilette / yogourts" ajoutee a
+          // la main disparaitrait des qu'on re-planifie la semaine.
+          items: [...genererListeCourses(planning, profil), ...state.items.filter((i) => !i.recette_origine)],
           planningId: planningId ?? get().planningId,
           syncEnAttente: true,
-        }),
+        })),
       toggleCoche: (id) =>
         set((state) => ({
           items: state.items.map((item) => (item.id === id ? { ...item, coche: !item.coche } : item)),
           syncEnAttente: true,
         })),
+      ajouterItemLibre: (produit, rayon, quantite = 1, unite = 'unite') =>
+        set((state) => ({
+          items: [
+            ...state.items,
+            {
+              id: `libre-${Date.now()}-${Math.round(Math.random() * 1000)}`,
+              produit,
+              quantite,
+              unite,
+              rayon,
+              coche: false,
+            },
+          ],
+          syncEnAttente: true,
+        })),
+      retirerItem: (id) =>
+        set((state) => ({ items: state.items.filter((i) => i.id !== id), syncEnAttente: true })),
       reset: () => set({ items: [], listeId: null, planningId: null, syncEnAttente: false }),
       syncerAvecSupabase: async (profilId) => {
         const { items, listeId, planningId, syncing } = get();

@@ -12,12 +12,13 @@ import { usePanierStore } from '@/stores/panierStore';
 import { useProfilStore } from '@/stores/profilStore';
 import { supabase } from '@/lib/supabase';
 import { ListeCourses } from '@/components/courses/ListeCourses';
+import { AjouterArticle } from '@/components/courses/AjouterArticle';
 import { RecapCommande } from '@/components/panier/RecapCommande';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonListeCourses } from '@/components/ui/Skeleton';
 import { PaywallModal } from '@/components/ui/PaywallModal';
-import { Screen, ScreenScroll } from '@/components/ui/Screen';
+import { ScreenScroll } from '@/components/ui/Screen';
 import { DisplayLG, Heading, BodySm, Subheading } from '@/components/ui/Typography';
 import { toast } from '@/lib/toast';
 import { analytics } from '@/lib/analytics';
@@ -35,7 +36,7 @@ const MODES: { id: ModeOptimisation; label: string }[] = [
 export default function Courses() {
   const { colors } = useTheme();
   const haptics = useHaptics();
-  const { items, toggleCoche } = useCoursesStore();
+  const { items, toggleCoche, ajouterItemLibre, retirerItem } = useCoursesStore();
   const { mode, recap, setMode, calculer } = usePanierStore();
   const profil = useProfilStore((s) => s.profil);
   const { estAuMoins } = useAbonnement();
@@ -87,13 +88,14 @@ export default function Courses() {
 
   if (items.length === 0) {
     return (
-      <Screen style={{ justifyContent: 'center' }}>
+      <ScreenScroll contentContainerStyle={{ gap: 22, justifyContent: 'center', flexGrow: 1 }}>
         <EmptyState
           illustration="courses"
           titre={t('courses.empty_titre')}
           sousTitre={t('courses.empty_soustitre')}
         />
-      </Screen>
+        <AjouterArticle onAjouter={ajouterItemLibre} />
+      </ScreenScroll>
     );
   }
 
@@ -149,7 +151,9 @@ export default function Courses() {
           </ScrollView>
         </View>
 
-        <ListeCourses items={items} onToggle={toggleCoche} />
+        <AjouterArticle onAjouter={ajouterItemLibre} />
+
+        <ListeCourses items={items} onToggle={toggleCoche} onSupprimer={retirerItem} />
 
         {recap && <RecapCommande recap={recap} onValider={() => void validerCommande()} />}
       </ScreenScroll>

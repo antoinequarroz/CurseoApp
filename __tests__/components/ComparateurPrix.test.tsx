@@ -23,6 +23,7 @@ describe('ComparateurPrix', () => {
       prenom: 'Alex',
       nb_personnes: 1,
       nb_enfants: 0,
+      enfants_ages: [] as number[],
       budget_hebdo: 100,
       regime: [],
       allergies: [],

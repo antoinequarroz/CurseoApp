@@ -23,7 +23,7 @@ describe('planningStore', () => {
 
   it('assigne une recette a un jour/moment donne', () => {
     usePlanningStore.getState().assignerRecette('lundi', 'midi', recette);
-    expect(usePlanningStore.getState().planning.lundi.midi?.id).toBe('r-1');
+    expect(usePlanningStore.getState().planning.lundi.midi?.recette.id).toBe('r-1');
   });
 
   it('retire une recette assignee', () => {
