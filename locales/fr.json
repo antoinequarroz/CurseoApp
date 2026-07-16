@@ -250,5 +250,31 @@
     "voir_detail": "Voir le détail de la recette",
     "jaime": "J'aime cette recette",
     "retirer_favoris": "Retirer des favoris"
+  },
+  "gouts": {
+    "titre": "On cerne vos goûts",
+    "sous_titre": "Swipe quelques recettes par catégorie pour des suggestions plus justes.",
+    "onglet_decouverte": "Découverte",
+    "onglet_sondage": "Sondage",
+    "categorie_viande": "Viande",
+    "categorie_poisson": "Poisson",
+    "categorie_vegetarien": "Végétarien",
+    "categorie_petit_dejeuner": "Petit-déjeuner",
+    "categorie_dessert": "Dessert",
+    "categorie_progression": "{{restant}} recette(s) restante(s) sur {{total}}",
+    "categorie_cernee_titre": "Catégorie cernée !",
+    "categorie_cernee_soustitre": "{{count}} recette(s) aimée(s) dans cette catégorie.",
+    "frequence_viande_titre": "Combien de fois par semaine manges-tu de la viande ?",
+    "frequence_poisson_titre": "Et du poisson ?",
+    "frequence_jamais": "Jamais",
+    "frequence_rarement": "Rarement",
+    "frequence_parfois": "Parfois",
+    "frequence_souvent": "Souvent",
+    "frequence_quotidien": "Tous les jours",
+    "produits_favoris_titre": "Tes produits favoris",
+    "produits_favoris_hint": "Marques ou produits que tu préfères retrouver dans tes courses.",
+    "produits_favoris_placeholder": "Ex. yogourt nature Migros…",
+    "produits_favoris_ajouter": "Ajouter",
+    "produits_favoris_retirer": "Retirer {{produit}} des favoris"
   }
 }

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Pressable, Switch, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
-import { Bell, Crown, Home, Palette, ShieldAlert, UserRound } from 'lucide-react-native';
+import { Bell, ChevronRight, Crown, Home, Palette, Sparkles, ShieldAlert, UserRound } from 'lucide-react-native';
 import { useTheme, type ApparencePreference } from '@/lib/theme-context';
 import { useProfilStore } from '@/stores/profilStore';
 import { supabase } from '@/lib/supabase';
@@ -181,6 +181,25 @@ export default function Profil() {
         </View>
         <BodySm>{t('profil.preferences_message')}</BodySm>
       </Card>
+
+      <Pressable
+        onPress={() => router.push('/gouts')}
+        accessibilityRole="button"
+        accessibilityLabel={t('gouts.titre')}
+      >
+        <Card style={{ padding: 20, gap: 4, borderRadius: 28, borderTopLeftRadius: 28 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}>
+              <Sparkles size={22} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Heading>{t('gouts.titre')}</Heading>
+              <Caption>{t('gouts.sous_titre')}</Caption>
+            </View>
+            <ChevronRight size={20} color={colors.textMuted} />
+          </View>
+        </Card>
+      </Pressable>
 
       <RegimeParPersonneTeaser />
 

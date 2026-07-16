@@ -88,6 +88,21 @@ export interface Recette {
   est_communautaire: boolean;
 }
 
+/** Categorie utilisee pour le swipe "on cerne vos gouts" — derivee de la recette, pas stockee. */
+export type CategorieGout = 'viande' | 'poisson' | 'vegetarien' | 'petit_dejeuner' | 'dessert';
+
+export const CATEGORIES_GOUT: CategorieGout[] = ['viande', 'poisson', 'vegetarien', 'petit_dejeuner', 'dessert'];
+
+export type FrequenceRepas = 'jamais' | 'rarement' | 'parfois' | 'souvent' | 'quotidien';
+
+export const FREQUENCES_REPAS: FrequenceRepas[] = ['jamais', 'rarement', 'parfois', 'souvent', 'quotidien'];
+
+export interface SondageGouts {
+  frequence_viande: FrequenceRepas | null;
+  frequence_poisson: FrequenceRepas | null;
+  produits_favoris: string[];
+}
+
 export interface RepasPlanifie {
   recette: Recette;
   /** Nombre de personnes pour ce repas precis (invites), si different du foyer. */
