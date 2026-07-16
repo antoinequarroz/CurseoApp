@@ -12,7 +12,15 @@ import { Screen, ScreenScroll } from '@/components/ui/Screen';
 import { DisplayLG, Heading, Body, BodySm, Savings, SavingsXL, Caption, Price } from '@/components/ui/Typography';
 import { formatPrix } from '@/lib/format';
 import { dates } from '@/lib/dates';
+import { enseigneColors } from '@/lib/theme';
 import { t } from '@/lib/i18n';
+
+const NOM_ENSEIGNE: Record<string, string> = {
+  coop: t('onboarding.enseigne_coop'),
+  migros: t('onboarding.enseigne_migros'),
+  lidl: t('onboarding.enseigne_lidl'),
+  aldi: t('onboarding.enseigne_aldi'),
+};
 
 function DonutBudget({ progression }: { progression: number }) {
   const { colors } = useTheme();
@@ -40,10 +48,10 @@ function DonutBudget({ progression }: { progression: number }) {
 }
 
 export default function Economies() {
+  const { colors } = useTheme();
   const profil = useProfilStore((s) => s.profil);
-  const { isLoading, budgetConsomme, economiesCumulees, dernieresCommandes, aDesCommandes } = useBudgetSemaine(
-    profil?.id,
-  );
+  const { isLoading, budgetConsomme, economiesCumulees, dernieresCommandes, meilleureEnseigne, aDesCommandes } =
+    useBudgetSemaine(profil?.id);
   const budgetHebdo = profil?.budget_hebdo ?? 150;
 
   if (isLoading) {
@@ -81,9 +89,27 @@ export default function Economies() {
         <SavingsXL>{formatPrix(economiesCumulees)}</SavingsXL>
       </Card>
 
-      <Card style={{ padding: 18, gap: 6 }}>
+      <Card style={{ padding: 18, gap: 10 }}>
         <Heading>{t('economies.enseigne_avantageuse')}</Heading>
-        <Body>{t('economies.enseigne_avantageuse_indisponible')}</Body>
+        {meilleureEnseigne ? (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              alignSelf: 'flex-start',
+              paddingVertical: 6,
+              paddingHorizontal: 12,
+              borderRadius: 9999,
+              backgroundColor: colors.bgSecondary,
+            }}
+          >
+            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: enseigneColors[meilleureEnseigne] }} />
+            <Body style={{ fontWeight: '600' }}>{NOM_ENSEIGNE[meilleureEnseigne] ?? meilleureEnseigne}</Body>
+          </View>
+        ) : (
+          <Body>{t('economies.enseigne_avantageuse_indisponible')}</Body>
+        )}
       </Card>
 
       <View style={{ gap: 10 }}>

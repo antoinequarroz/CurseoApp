@@ -9,7 +9,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { dates } from '@/lib/dates';
-import type { Commande } from '@/types';
+import type { Commande, Enseigne } from '@/types';
 
 const HISTORIQUE_AFFICHE = 5;
 
@@ -50,5 +50,33 @@ export function useBudgetSemaine(profilId: string | undefined) {
   const economiesCumulees = commandes.reduce((total, c) => total + c.economies, 0);
   const dernieresCommandes = commandes.slice(0, HISTORIQUE_AFFICHE);
 
-  return { isLoading, budgetConsomme, economiesCumulees, dernieresCommandes, aDesCommandes: commandes.length > 0 };
+  // Enseigne la moins chere ce mois-ci, toutes commandes confondues — seule
+  // metrique deductible des donnees existantes (pas de tracking par enseigne
+  // en base au-dela des paniers de chaque commande).
+  const maintenant = dates.maintenant();
+  const totauxParEnseigne = new Map<Enseigne, number>();
+  for (const c of commandes) {
+    const dateCommande = new Date(c.created_at);
+    if (dateCommande.getMonth() !== maintenant.getMonth() || dateCommande.getFullYear() !== maintenant.getFullYear()) continue;
+    for (const panier of c.paniers) {
+      totauxParEnseigne.set(panier.enseigne, (totauxParEnseigne.get(panier.enseigne) ?? 0) + panier.montant);
+    }
+  }
+  let meilleureEnseigne: Enseigne | null = null;
+  let montantMinimum = Infinity;
+  for (const [enseigne, montant] of totauxParEnseigne) {
+    if (montant < montantMinimum) {
+      montantMinimum = montant;
+      meilleureEnseigne = enseigne;
+    }
+  }
+
+  return {
+    isLoading,
+    budgetConsomme,
+    economiesCumulees,
+    dernieresCommandes,
+    meilleureEnseigne,
+    aDesCommandes: commandes.length > 0,
+  };
 }

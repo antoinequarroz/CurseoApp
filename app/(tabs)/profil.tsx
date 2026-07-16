@@ -26,6 +26,45 @@ function LigneNotification({ label, valeur, onChange }: { label: string; valeur:
   );
 }
 
+function RowRepliable({
+  Icon,
+  titre,
+  resume,
+  ouvert,
+  onToggle,
+  children,
+}: {
+  Icon: React.ComponentType<{ size: number; color: string }>;
+  titre: string;
+  resume?: string;
+  ouvert: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  const { colors } = useTheme();
+  return (
+    <Card style={{ padding: 20, borderRadius: 28, borderTopLeftRadius: 28 }}>
+      <Pressable
+        onPress={onToggle}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: ouvert }}
+        accessibilityLabel={titre}
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}
+      >
+        <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}>
+          <Icon size={22} color={colors.primary} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Heading>{titre}</Heading>
+          {resume && <Caption>{resume}</Caption>}
+        </View>
+        <ChevronRight size={20} color={colors.textMuted} style={{ transform: [{ rotate: ouvert ? '90deg' : '0deg' }] }} />
+      </Pressable>
+      {ouvert && <View style={{ marginTop: 14, gap: 10 }}>{children}</View>}
+    </Card>
+  );
+}
+
 export default function Profil() {
   const { colors, preference, setPreference } = useTheme();
   const { profil, mettreAJourPreferences } = useProfilStore();
@@ -33,6 +72,8 @@ export default function Profil() {
   const [emailSaisi, setEmailSaisi] = useState('');
   const [suppressionEnCours, setSuppressionEnCours] = useState(false);
   const [email, setEmail] = useState<string | null>(null);
+  const [abonnementOuvert, setAbonnementOuvert] = useState(false);
+  const [apparenceOuvert, setApparenceOuvert] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? null));
@@ -137,28 +178,28 @@ export default function Profil() {
         <BodySm>{t('profil.personnes_enfants', { nb_personnes: profilAffiche.nb_personnes, nb_enfants: profilAffiche.nb_enfants })}</BodySm>
       </Card>
 
-      <Card style={{ padding: 20, gap: 12, borderRadius: 28, borderTopLeftRadius: 28 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}>
-            <Crown size={22} color={colors.primary} />
-          </View>
-          <Heading>{t('profil.abonnement')}</Heading>
-        </View>
+      <RowRepliable
+        Icon={Crown}
+        titre={t('profil.abonnement')}
+        resume={PALIERS_ABONNEMENT.find((p) => p.id === profilAffiche.abonnement)?.nom}
+        ouvert={abonnementOuvert}
+        onToggle={() => setAbonnementOuvert((v) => !v)}
+      >
         {PALIERS_ABONNEMENT.map((p) => (
           <View key={p.id} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 }}>
             <Body style={{ fontWeight: profilAffiche.abonnement === p.id ? '700' : '400' }}>{p.nom}</Body>
             <Caption>{p.prix}</Caption>
           </View>
         ))}
-      </Card>
+      </RowRepliable>
 
-      <Card style={{ padding: 20, gap: 10, borderRadius: 28, borderTopLeftRadius: 28 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}>
-            <Palette size={22} color={colors.primary} />
-          </View>
-          <Heading>{t('profil.apparence')}</Heading>
-        </View>
+      <RowRepliable
+        Icon={Palette}
+        titre={t('profil.apparence')}
+        resume={apparenceOptions.find((o) => o.id === preference)?.label}
+        ouvert={apparenceOuvert}
+        onToggle={() => setApparenceOuvert((v) => !v)}
+      >
         <Caption>{t('profil.apparence_desc')}</Caption>
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
           {apparenceOptions.map((o) => (
@@ -179,7 +220,7 @@ export default function Profil() {
             </Pressable>
           ))}
         </View>
-      </Card>
+      </RowRepliable>
 
       <Card style={{ padding: 20, borderRadius: 28, borderTopLeftRadius: 28 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 }}>

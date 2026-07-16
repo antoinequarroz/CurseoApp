@@ -8,7 +8,7 @@ import { Pressable, TextInput, View } from 'react-native';
 import Slider from '@react-native-community/slider';
 import Animated, { SlideInRight, SlideOutLeft } from 'react-native-reanimated';
 import { router } from 'expo-router';
-import { Check, Leaf, Sprout, WheatOff, MilkOff, NutOff, Drumstick, type LucideIcon } from 'lucide-react-native';
+import { Check, ChefHat, Leaf, Salad, Sprout, WheatOff, MilkOff, NutOff, Drumstick, type LucideIcon } from 'lucide-react-native';
 import { useTheme } from '@/lib/theme-context';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useOnboardingStore } from '@/stores/onboardingStore';
@@ -273,6 +273,21 @@ export default function Onboarding() {
         >
           {etapeActuelle === 1 && (
             <View style={{ gap: 16 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <View
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: 28,
+                    backgroundColor: colors.bgSecondary,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <ChefHat size={28} color={colors.primary} />
+                </View>
+                <Salad size={26} color={colors.primaryLight} />
+              </View>
               <DisplayXL>{t('onboarding.bienvenue_titre')}</DisplayXL>
               <BodySm>{t('onboarding.bienvenue_sous_titre')}</BodySm>
               <TextInput
