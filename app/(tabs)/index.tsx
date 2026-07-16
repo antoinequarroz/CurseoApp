@@ -46,7 +46,7 @@ export default function Accueil() {
       </View>
 
       <View style={{ gap: 4 }}>
-        <DisplayLG>{t('accueil.bonjour_emoji')}</DisplayLG>
+        <DisplayLG>{t('accueil.bonjour_emoji', { prenom: profil?.prenom || t('accueil.toi_par_defaut') })}</DisplayLG>
         <BodySm>{t('accueil.question_semaine')}</BodySm>
       </View>
 

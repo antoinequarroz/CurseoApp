@@ -332,6 +332,7 @@ export default function Onboarding() {
               </View>
               <DisplayXL style={{ color: '#FFFFFF' }}>{t('onboarding.bienvenue_titre')}</DisplayXL>
               <BodySm style={{ color: 'rgba(255,255,255,0.72)' }}>{t('onboarding.bienvenue_sous_titre')}</BodySm>
+              <Body style={{ color: '#FFFFFF', fontWeight: '600' }}>{t('onboarding.nom_foyer')}</Body>
               <TextInput
                 value={donneesPartielles.prenom ?? ''}
                 onChangeText={(v) => mettreAJourDonnees({ prenom: v })}
