@@ -30,7 +30,7 @@ const config: ExpoConfig = {
     // prebuild (retombee sur le fallback 'development'), causant un mismatch
     // avec le profil de provisioning App Store lors de la signature.
     bundleIdentifier: 'ch.courseo.app',
-    buildNumber: '8',
+    buildNumber: '9',
     supportsTablet: false, // MVP telephone uniquement
     requireFullScreen: true,
     infoPlist: {
