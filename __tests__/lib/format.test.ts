@@ -18,7 +18,7 @@ describe('format', () => {
     expect(formatTemps(120)).toBe('2h');
   });
   it('formatQuantite convertit g en kg au-dela de 1000', () => {
-    expect(formatQuantite(1500, 'g')).toBe('1.5kg');
-    expect(formatQuantite(500, 'g')).toBe('500g');
+    expect(formatQuantite(1500, 'g')).toBe('1.5 kg');
+    expect(formatQuantite(500, 'g')).toBe('500 g');
   });
 });

@@ -12,7 +12,7 @@ export const formatTemps = (min: number): string => {
 };
 
 export const formatQuantite = (v: number, u: string): string => {
-  if (u === 'g' && v >= 1000) return `${(v / 1000).toFixed(1)}kg`;
-  if (u === 'ml' && v >= 1000) return `${(v / 1000).toFixed(1)}L`;
-  return `${v}${u}`;
+  if (u === 'g' && v >= 1000) return `${(v / 1000).toFixed(1)} kg`;
+  if (u === 'ml' && v >= 1000) return `${(v / 1000).toFixed(1)} L`;
+  return `${v} ${u}`;
 };

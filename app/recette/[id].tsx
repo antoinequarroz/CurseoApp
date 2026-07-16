@@ -6,8 +6,9 @@ import { useLocalSearchParams } from 'expo-router';
 import { Flag } from 'lucide-react-native';
 import { useTheme } from '@/lib/theme-context';
 import { RECETTES_MOCK } from '@/lib/mocks/recettes.mock';
+import { Card } from '@/components/ui/Card';
 import { DisplayLG, Heading, Body, BodySm, Price, Data } from '@/components/ui/Typography';
-import { formatCalories, formatPrix, formatTemps } from '@/lib/format';
+import { formatCalories, formatPrix, formatQuantite, formatTemps } from '@/lib/format';
 import { SignalerRecetteModal } from '@/components/recettes/SignalerRecetteModal';
 
 export default function DetailRecette() {
@@ -26,32 +27,46 @@ export default function DetailRecette() {
 
   return (
     <ScrollView style={{ backgroundColor: colors.bg }} contentContainerStyle={{ paddingBottom: 40 }}>
-      <Image source={{ uri: recette.image_url }} placeholder={recette.blurhash} contentFit="cover" transition={200} style={{ width: '100%', height: 260 }} accessibilityLabel={`Photo de ${recette.titre}`} />
-      <View style={{ padding: 20, gap: 12 }}>
-        <DisplayLG>{recette.titre}</DisplayLG>
-        <Body>{recette.description}</Body>
-        <View style={{ flexDirection: 'row', gap: 16 }}>
+      <Image
+        source={{ uri: recette.image_url }}
+        placeholder={recette.blurhash}
+        contentFit="cover"
+        transition={200}
+        style={{ width: '100%', height: 260, borderRadius: 24 }}
+        accessibilityLabel={`Photo de ${recette.titre}`}
+      />
+      <View style={{ padding: 20, gap: 16 }}>
+        <View>
+          <DisplayLG>{recette.titre}</DisplayLG>
+          <Body style={{ color: colors.textSecondary, marginTop: 4 }}>{recette.description}</Body>
+        </View>
+
+        <Card style={{ flexDirection: 'row', padding: 16, justifyContent: 'space-between' }}>
           <Data>{formatTemps(recette.temps_preparation)}</Data>
           <Data>{formatCalories(recette.calories)}</Data>
           <Price>{formatPrix(recette.cout_estime)}</Price>
-        </View>
+        </Card>
 
-        <Heading>Ingrédients</Heading>
-        {recette.ingredients.map((ing) => (
-          <BodySm key={ing.nom}>• {ing.quantite}{ing.unite} {ing.nom}</BodySm>
-        ))}
+        <Card style={{ padding: 18, gap: 8 }}>
+          <Heading>Ingrédients</Heading>
+          {recette.ingredients.map((ing) => (
+            <BodySm key={ing.nom}>• {formatQuantite(ing.quantite, ing.unite)} {ing.nom}</BodySm>
+          ))}
+        </Card>
 
-        <Heading>Étapes</Heading>
-        {recette.etapes.map((etape, i) => (
-          <BodySm key={i}>{i + 1}. {etape}</BodySm>
-        ))}
+        <Card style={{ padding: 18, gap: 8 }}>
+          <Heading>Étapes</Heading>
+          {recette.etapes.map((etape, i) => (
+            <BodySm key={i}>{i + 1}. {etape}</BodySm>
+          ))}
+        </Card>
 
         <Pressable
           onPress={() => setSignalementVisible(true)}
           accessibilityRole="button"
           accessibilityLabel="Signaler cette recette"
           hitSlop={8}
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'center', marginTop: 16, padding: 8 }}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'center', marginTop: 8, padding: 8 }}
         >
           <Flag size={14} color={colors.textMuted} />
           <BodySm>Signaler cette recette</BodySm>
