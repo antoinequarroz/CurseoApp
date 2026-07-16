@@ -46,7 +46,7 @@ const config: ExpoConfig = {
       foregroundImage: './assets/android-icon-foreground.png',
       backgroundImage: './assets/android-icon-background.png',
       monochromeImage: './assets/android-icon-monochrome.png',
-      backgroundColor: '#3E6B52',
+      backgroundColor: '#0F2D27',
     },
     permissions: ['RECEIVE_BOOT_COMPLETED', 'VIBRATE'],
   },
@@ -58,10 +58,9 @@ const config: ExpoConfig = {
     [
       'expo-splash-screen',
       {
-        // TODO design : remplacer par un vrai visuel splash Coursia (branche design system)
         image: './assets/splash-icon.png',
         resizeMode: 'contain',
-        backgroundColor: '#3E6B52',
+        backgroundColor: '#0F2D27',
       },
     ],
     'expo-status-bar',
@@ -76,9 +75,8 @@ const config: ExpoConfig = {
     [
       'expo-notifications',
       {
-        // TODO design : icone de notification monochrome dediee (actuellement l'icone app)
-        icon: './assets/icon.png',
-        color: '#3E6B52',
+        icon: './assets/android-icon-monochrome.png',
+        color: '#0F2D27',
       },
     ],
     '@sentry/react-native',
