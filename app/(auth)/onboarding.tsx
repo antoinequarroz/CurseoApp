@@ -276,9 +276,14 @@ export default function Onboarding() {
     });
   };
 
+  // Etape 1 : fond vert foret fixe (comme l'ecran de bienvenue/connexion), independant
+  // du theme clair/sombre — voir les deux rangees "light/dark" du mockup, toutes deux
+  // montrent ce meme fond fonce pour l'etape "Bienvenue".
+  const etapeBienvenue = etapeActuelle === 1;
+
   return (
     <KeyboardView>
-      <Screen style={{ gap: 16 }}>
+      <Screen style={{ gap: 16, backgroundColor: etapeBienvenue ? '#0F2D27' : colors.bg }}>
         {/* Progress bar */}
         <View style={{ flexDirection: 'row', gap: 6, marginBottom: 12 }}>
           {Array.from({ length: TOTAL_ETAPES }).map((_, i) => (
@@ -288,7 +293,13 @@ export default function Onboarding() {
                 flex: 1,
                 height: 4,
                 borderRadius: 2,
-                backgroundColor: i < etapeActuelle ? colors.primary : colors.bgSecondary,
+                backgroundColor: etapeBienvenue
+                  ? i < etapeActuelle
+                    ? '#FFFFFF'
+                    : 'rgba(255,255,255,0.25)'
+                  : i < etapeActuelle
+                    ? colors.primary
+                    : colors.bgSecondary,
               }}
             />
           ))}
@@ -310,24 +321,24 @@ export default function Onboarding() {
                     width: 56,
                     height: 56,
                     borderRadius: 28,
-                    backgroundColor: colors.bgSecondary,
+                    backgroundColor: 'rgba(255,255,255,0.1)',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <ChefHat size={28} color={colors.primary} />
+                  <ChefHat size={28} color="#FFFFFF" />
                 </View>
-                <Salad size={26} color={colors.primaryLight} />
+                <Salad size={26} color="rgba(255,255,255,0.6)" />
               </View>
-              <DisplayXL>{t('onboarding.bienvenue_titre')}</DisplayXL>
-              <BodySm>{t('onboarding.bienvenue_sous_titre')}</BodySm>
+              <DisplayXL style={{ color: '#FFFFFF' }}>{t('onboarding.bienvenue_titre')}</DisplayXL>
+              <BodySm style={{ color: 'rgba(255,255,255,0.72)' }}>{t('onboarding.bienvenue_sous_titre')}</BodySm>
               <TextInput
                 value={donneesPartielles.prenom ?? ''}
                 onChangeText={(v) => mettreAJourDonnees({ prenom: v })}
                 placeholder={t('onboarding.nom_placeholder')}
                 placeholderTextColor={colors.textMuted}
                 accessibilityLabel={t('onboarding.nom_foyer_label')}
-                style={{ backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 14, color: colors.textPrimary }}
+                style={{ backgroundColor: '#FFFFFF', borderRadius: 10, padding: 14, color: '#0F2D27' }}
               />
               <Pressable
                 onPress={() => setCgvuAcceptees((v) => !v)}
@@ -335,8 +346,17 @@ export default function Onboarding() {
                 accessibilityState={{ checked: cgvuAcceptees }}
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
               >
-                <View style={{ width: 20, height: 20, borderRadius: 4, borderWidth: 2, borderColor: colors.primary, backgroundColor: cgvuAcceptees ? colors.primary : 'transparent' }} />
-                <Caption>{t('onboarding.cgvu_accept')}</Caption>
+                <View
+                  style={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: 4,
+                    borderWidth: 2,
+                    borderColor: '#FFFFFF',
+                    backgroundColor: cgvuAcceptees ? '#FFFFFF' : 'transparent',
+                  }}
+                />
+                <Caption style={{ color: 'rgba(255,255,255,0.72)' }}>{t('onboarding.cgvu_accept')}</Caption>
               </Pressable>
             </View>
           )}
