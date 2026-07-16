@@ -127,10 +127,10 @@ export function SwipeRecette({ recette, profilId, onSwiped, onTapDetail }: Swipe
               style={[{ position: 'absolute', inset: 0, borderRadius: 28, zIndex: 2 }, overlayStyle]}
             />
             <Animated.View style={[{ position: 'absolute', top: 24, right: 24, zIndex: 3 }, heartOpacity]}>
-              <Heart size={54} color={colors.success} fill={colors.success} />
+              <Heart size={54} color={colors.accentDark} fill={colors.accentDark} />
             </Animated.View>
             <Animated.View style={[{ position: 'absolute', top: 24, left: 24, zIndex: 3 }, xOpacity]}>
-              <X size={54} color={colors.error} />
+              <X size={54} color={colors.textPrimary} />
             </Animated.View>
             <RecetteCard recette={recette} variant="hero" />
           </Pressable>
@@ -157,7 +157,7 @@ export function SwipeRecette({ recette, profilId, onSwiped, onTapDetail }: Swipe
             shadowOffset: { width: 0, height: 6 },
           }}
         >
-          <X size={26} color={colors.error} />
+          <X size={26} color={colors.textPrimary} />
         </Pressable>
         <Pressable
           onPress={onTapDetail}
