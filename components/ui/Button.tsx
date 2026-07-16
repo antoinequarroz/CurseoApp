@@ -24,11 +24,10 @@ export function Button({ label, onPress, variant = 'primary', disabled, loading,
 
   const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
-  // primaryDark garantit >=4.5:1 avec le texte blanc dans les deux themes (colors.primary
-  // s'eclaircit en dark mode pour rester lisible sur fond sombre ailleurs, mais devient
-  // trop clair comme fond de bouton sous du texte blanc).
+  // accentDark (corail fonce, ~4.67:1 avec du blanc dans les deux themes) est le
+  // CTA du moodboard — le corail vif (accent) seul ne passe pas AA avec du texte blanc.
   const bg =
-    variant === 'primary' ? colors.primaryDark : variant === 'secondary' ? colors.bgSecondary : 'transparent';
+    variant === 'primary' ? colors.accentDark : variant === 'secondary' ? colors.bgSecondary : 'transparent';
   const textColor = variant === 'primary' ? '#FFFFFF' : colors.primary;
 
   return (
@@ -55,7 +54,7 @@ export function Button({ label, onPress, variant = 'primary', disabled, loading,
           alignItems: 'center',
           justifyContent: 'center',
           opacity: disabled ? 0.5 : 1,
-          shadowColor: variant === 'primary' ? colors.primary : 'transparent',
+          shadowColor: variant === 'primary' ? colors.accentDark : 'transparent',
           shadowOpacity: variant === 'primary' ? 0.25 : 0,
           shadowRadius: 12,
           shadowOffset: { width: 0, height: 4 },

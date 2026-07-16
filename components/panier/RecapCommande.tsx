@@ -27,7 +27,7 @@ export function RecapCommande({ recap, onValider }: { recap: RecapCommandeType; 
     <View style={{ gap: 16 }}>
       {/* Degrade fixe (independant du theme) — les deux teintes garantissent >=4.5:1 avec le texte blanc. */}
       <LinearGradient
-        colors={['#1B3A2E', '#3E6B52']}
+        colors={['#081712', '#0F2D27']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={{ borderRadius: 20, padding: 24, gap: 4 }}
@@ -40,7 +40,7 @@ export function RecapCommande({ recap, onValider }: { recap: RecapCommandeType; 
         >
           {formatEconomies(recap.economies)}
         </Animated.Text>
-        <Animated.Text style={{ fontFamily: 'Inter_400Regular', fontSize: 14, color: 'rgba(255,255,255,0.8)' }}>
+        <Animated.Text style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)' }}>
           {t('panier.economie_message')}
         </Animated.Text>
       </LinearGradient>

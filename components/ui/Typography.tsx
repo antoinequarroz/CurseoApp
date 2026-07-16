@@ -1,4 +1,4 @@
-/** Echelle typographique Coursia — Quicksand (titres, ronde/douce), Inter (corps), DM Mono (chiffres/prix). */
+/** Echelle typographique Coursia — police systeme (SF Pro/Roboto, moodboard v2), DM Mono (chiffres/prix). */
 import React from 'react';
 import { Text as RNText, type TextProps } from 'react-native';
 import { useTheme } from '@/lib/theme-context';

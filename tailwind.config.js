@@ -12,30 +12,31 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#3E6B52',
-          light: '#7FA087',
-          dark: '#1B3A2E',
+          DEFAULT: '#0F2D27',
+          light: '#A6C1B1',
+          dark: '#081712',
         },
         accent: {
-          DEFAULT: '#F3C7A6',
-          dark: '#DD7C4E',
+          DEFAULT: '#FF7A59',
+          dark: '#CC4728',
         },
         background: {
-          DEFAULT: '#FAF6EC',
-          secondary: '#F0E7D6',
+          DEFAULT: '#FFFFFF',
+          secondary: '#E7EFE9',
           card: '#FFFFFF',
+          warm: '#FFF5E8',
         },
         text: {
-          primary: '#1C1E1B',
-          secondary: '#5B6B60',
-          muted: '#55654A',
+          primary: '#0F2D27',
+          secondary: '#4B5D54',
+          muted: '#5F756A',
         },
         status: {
           success: '#3E6B52',
           warning: '#F59E0B',
           error: '#D42020',
-          'swipe-like': '#DCE9DA',
-          'swipe-pass': '#FBE0D2',
+          'swipe-like': '#DCEAE0',
+          'swipe-pass': '#FDE1D6',
         },
         enseigne: {
           coop: '#E2001A',
@@ -45,42 +46,40 @@ module.exports = {
         },
         dark: {
           primary: {
-            DEFAULT: '#7FA087',
-            light: '#9DBE9F',
-            dark: '#3E6B52',
+            DEFAULT: '#A6C1B1',
+            light: '#C9DCD0',
+            dark: '#0F2D27',
           },
           accent: {
-            DEFAULT: '#EFA173',
+            DEFAULT: '#4A2E22',
+            dark: '#CC4728',
           },
           background: {
-            DEFAULT: '#101E17',
-            secondary: '#182A20',
-            card: '#1F3428',
-            elevated: '#274030',
+            DEFAULT: '#0B1613',
+            secondary: '#132420',
+            card: '#172B25',
+            elevated: '#1E362E',
+            warm: '#241C16',
           },
           text: {
-            primary: '#F3EFE2',
-            secondary: '#A8C2AC',
-            muted: '#87A38C',
+            primary: '#F3F7F4',
+            secondary: '#B9CAC0',
+            muted: '#8CA69A',
           },
           status: {
             success: '#9DBE9F',
             warning: '#FCD34D',
             error: '#F87171',
-            'swipe-like': '#203526',
-            'swipe-pass': '#3A2820',
+            'swipe-like': '#1C3129',
+            'swipe-pass': '#3A2016',
           },
-          border: '#2C4535',
+          border: '#20372E',
         },
       },
       fontFamily: {
-        // Quicksand (ronde/douce) pour les titres — nom de classe neutre pour
-        // ne pas coupler le design system a un choix de police precis.
-        heading: ['Quicksand_400Regular'],
-        'heading-medium': ['Quicksand_500Medium'],
-        'heading-bold': ['Quicksand_700Bold'],
-        inter: ['Inter_400Regular'],
-        'inter-medium': ['Inter_500Medium'],
+        // Police systeme (San Francisco sur iOS, Roboto sur Android) — equivalent
+        // cross-platform de la spec moodboard "SF Pro Display / SF Pro Text".
+        // Les poids sont geres via les classes font-semibold/font-medium standard.
         'dm-mono': ['DMMono_400Regular'],
         'dm-mono-medium': ['DMMono_500Medium'],
       },

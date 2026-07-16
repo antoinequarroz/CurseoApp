@@ -12,14 +12,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClientProvider } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
-import {
-  useFonts as useQuicksandFonts,
-  Quicksand_400Regular,
-  Quicksand_500Medium,
-  Quicksand_700Bold,
-} from '@expo-google-fonts/quicksand';
-import { Inter_400Regular, Inter_500Medium } from '@expo-google-fonts/inter';
-import { DMMono_400Regular, DMMono_500Medium } from '@expo-google-fonts/dm-mono';
+import { useFonts as useDMMonoFonts, DMMono_400Regular, DMMono_500Medium } from '@expo-google-fonts/dm-mono';
 import { ThemeProvider } from '@/lib/theme-context';
 import { queryClient } from '@/lib/queryClient';
 import { supabase } from '@/lib/supabase';
@@ -35,15 +28,7 @@ export default function RootLayout() {
   const [appReady, setAppReady] = useState(false);
   const profil = useProfilStore((state) => state.profil);
   const { shouldShow: shouldShowWhatsNew, currentRelease, markAsSeen } = useWhatsNew();
-  const [fontsLoaded] = useQuicksandFonts({
-    Quicksand_400Regular,
-    Quicksand_500Medium,
-    Quicksand_700Bold,
-    Inter_400Regular,
-    Inter_500Medium,
-    DMMono_400Regular,
-    DMMono_500Medium,
-  });
+  const [fontsLoaded] = useDMMonoFonts({ DMMono_400Regular, DMMono_500Medium });
 
   useEffect(() => {
     async function prepare() {
