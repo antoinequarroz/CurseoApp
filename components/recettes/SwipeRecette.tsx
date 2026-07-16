@@ -1,6 +1,6 @@
 /** Swipe droite = j'aime, swipe gauche = je passe. */
 import React, { useState } from 'react';
-import { Dimensions, Pressable, View } from 'react-native';
+import { Dimensions, Pressable, View, type AccessibilityRole } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   interpolate,
@@ -65,7 +65,12 @@ export function SwipeRecette({ recette, profilId, onSwiped, onTapDetail }: Swipe
     });
   };
 
-  const gesture = Gesture.Pan()
+  // activeOffsetX : un simple tap (deplacement < 10px) ne declenche jamais le
+  // Pan, il est libre d'etre reconnu comme un tap par le geste ci-dessous —
+  // sans ca, un swipe complet pouvait aussi etre interprete comme un appui
+  // (le Pressable imbrique s'ouvrait en meme temps que le swipe s'executait).
+  const panGesture = Gesture.Pan()
+    .activeOffsetX([-10, 10])
     .onBegin(() => {
       if (swipeVerrou.value) return;
       runOnJS(setSwipeEnCours)(true);
@@ -89,6 +94,16 @@ export function SwipeRecette({ recette, profilId, onSwiped, onTapDetail }: Swipe
         runOnJS(setSwipeEnCours)(false);
       }
     });
+
+  const tapGesture = Gesture.Tap().onEnd(() => {
+    if (swipeVerrou.value) return;
+    runOnJS(onTapDetail)();
+  });
+
+  // Exclusive : le Pan est tente en premier ; s'il n'atteint jamais son seuil
+  // d'activation (mouvement < 10px), le Tap prend le relais — les deux ne
+  // peuvent plus se declencher pour le meme geste.
+  const gesture = Gesture.Exclusive(panGesture, tapGesture);
 
   const cardStyle = useAnimatedStyle(() => {
     const rotate = interpolate(translateX.value, [-SCREEN_WIDTH, 0, SCREEN_WIDTH], [-10, 0, 10]);
@@ -120,20 +135,22 @@ export function SwipeRecette({ recette, profilId, onSwiped, onTapDetail }: Swipe
   return (
     <View style={{ gap: 14 }}>
       <GestureDetector gesture={gesture}>
-        <Animated.View style={cardStyle}>
-          <Pressable onPress={onTapDetail} accessibilityRole="button" accessibilityLabel={t('recettes.voir_detail_de', { titre: recette.titre })}>
-            <Animated.View
-              pointerEvents="none"
-              style={[{ position: 'absolute', inset: 0, borderRadius: 28, zIndex: 2 }, overlayStyle]}
-            />
-            <Animated.View style={[{ position: 'absolute', top: 24, right: 24, zIndex: 3 }, heartOpacity]}>
-              <Heart size={54} color={colors.accentDark} fill={colors.accentDark} />
-            </Animated.View>
-            <Animated.View style={[{ position: 'absolute', top: 24, left: 24, zIndex: 3 }, xOpacity]}>
-              <X size={54} color={colors.textPrimary} />
-            </Animated.View>
-            <RecetteCard recette={recette} variant="hero" />
-          </Pressable>
+        <Animated.View
+          style={cardStyle}
+          accessibilityRole={'button' as AccessibilityRole}
+          accessibilityLabel={t('recettes.voir_detail_de', { titre: recette.titre })}
+        >
+          <Animated.View
+            pointerEvents="none"
+            style={[{ position: 'absolute', inset: 0, borderRadius: 28, zIndex: 2 }, overlayStyle]}
+          />
+          <Animated.View style={[{ position: 'absolute', top: 24, right: 24, zIndex: 3 }, heartOpacity]}>
+            <Heart size={54} color={colors.accentDark} fill={colors.accentDark} />
+          </Animated.View>
+          <Animated.View style={[{ position: 'absolute', top: 24, left: 24, zIndex: 3 }, xOpacity]}>
+            <X size={54} color={colors.textPrimary} />
+          </Animated.View>
+          <RecetteCard recette={recette} variant="hero" />
         </Animated.View>
       </GestureDetector>
 
