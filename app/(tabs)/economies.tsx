@@ -22,7 +22,7 @@ function DonutBudget({ progression }: { progression: number }) {
 
   return (
     <Svg width={taille} height={taille}>
-      <Circle cx={taille / 2} cy={taille / 2} r={rayon} stroke={colors.bgSecondary} strokeWidth={14} fill="none" />
+      <Circle cx={taille / 2} cy={taille / 2} r={rayon} stroke={colors.accent} strokeWidth={14} fill="none" />
       <Circle
         cx={taille / 2}
         cy={taille / 2}

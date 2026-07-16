@@ -7,7 +7,7 @@ export const ProfilSchema = z.object({
   nb_enfants: z.number().int().min(0).max(15),
   enfants_ages: z.array(z.number().int().min(0).max(17)),
   budget_hebdo: z.number().min(10, 'Budget minimum CHF 10').max(2000),
-  regime: z.array(z.enum(['vegetarien', 'vegan', 'halal', 'sans_gluten', 'sans_lactose'])),
+  regime: z.array(z.enum(['vegetarien', 'vegan', 'halal', 'sans_gluten', 'sans_lactose', 'sans_noix'])),
   allergies: z.array(z.string()),
   objectifs: z.array(
     z.enum([

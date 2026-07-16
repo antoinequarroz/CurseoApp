@@ -1,8 +1,8 @@
 /** Profil — infos foyer, abonnement, notifications, apparence, suppression de compte. */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Pressable, Switch, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
-import { Bell, ChevronRight, Crown, Home, Palette, Sparkles, ShieldAlert, UserRound } from 'lucide-react-native';
+import { Bell, ChevronRight, Crown, Home, LogOut, MapPin, Palette, Sparkles, ShieldAlert, UserRound } from 'lucide-react-native';
 import { useTheme, type ApparencePreference } from '@/lib/theme-context';
 import { useProfilStore } from '@/stores/profilStore';
 import { supabase } from '@/lib/supabase';
@@ -32,6 +32,11 @@ export default function Profil() {
   const [confirmationSuppression, setConfirmationSuppression] = useState(false);
   const [emailSaisi, setEmailSaisi] = useState('');
   const [suppressionEnCours, setSuppressionEnCours] = useState(false);
+  const [email, setEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? null));
+  }, []);
 
   const profilAffiche = profil ?? {
     id: 'demo-user',
@@ -73,6 +78,12 @@ export default function Profil() {
     router.replace('/(auth)/connexion');
   };
 
+  const seDeconnecter = async () => {
+    await supabase.auth.signOut();
+    resetUserStores();
+    router.replace('/(auth)/connexion');
+  };
+
   const apparenceOptions: { id: ApparencePreference; label: string }[] = [
     { id: 'auto', label: t('profil.apparence_auto') },
     { id: 'clair', label: t('profil.apparence_clair') },
@@ -81,9 +92,23 @@ export default function Profil() {
 
   return (
     <ScreenScroll contentContainerStyle={{ gap: 22 }}>
-      <View>
-        <Caption>{t('profil.parametres')}</Caption>
-        <DisplayLG>{t('tabs.profil')}</DisplayLG>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+        <View
+          style={{
+            width: 56,
+            height: 56,
+            borderRadius: 28,
+            backgroundColor: colors.primary,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Heading style={{ color: '#FFFFFF' }}>{profilAffiche.prenom.charAt(0).toUpperCase()}</Heading>
+        </View>
+        <View style={{ flex: 1 }}>
+          <DisplayLG numberOfLines={1}>{profilAffiche.prenom}</DisplayLG>
+          {email && <Caption>{email}</Caption>}
+        </View>
       </View>
 
       <Card style={{ padding: 20, gap: 14, borderRadius: 28, borderTopLeftRadius: 28 }}>
@@ -202,6 +227,36 @@ export default function Profil() {
       </Pressable>
 
       <RegimeParPersonneTeaser />
+
+      <View
+        style={{
+          borderRadius: 14,
+          borderWidth: 1,
+          borderColor: colors.border,
+          borderStyle: 'dashed',
+          padding: 14,
+          gap: 4,
+          opacity: 0.6,
+        }}
+        accessibilityRole="text"
+        accessibilityLabel={t('profil.adresses_livraison_a11y')}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <MapPin size={14} color={colors.textMuted} />
+          <Body>{t('profil.adresses_livraison_titre')}</Body>
+        </View>
+        <BodySm>{t('profil.adresses_livraison_description')}</BodySm>
+      </View>
+
+      <Pressable
+        onPress={() => void seDeconnecter()}
+        accessibilityRole="button"
+        accessibilityLabel={t('profil.deconnexion')}
+        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 4 }}
+      >
+        <LogOut size={16} color={colors.textPrimary} />
+        <BodySm style={{ color: colors.textPrimary }}>{t('profil.deconnexion')}</BodySm>
+      </Pressable>
 
       {!confirmationSuppression ? (
         <Pressable onPress={() => setConfirmationSuppression(true)} accessibilityRole="button" accessibilityLabel={t('profil.supprimer_compte')}>

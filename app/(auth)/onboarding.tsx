@@ -8,6 +8,7 @@ import { Pressable, TextInput, View } from 'react-native';
 import Slider from '@react-native-community/slider';
 import Animated, { SlideInRight, SlideOutLeft } from 'react-native-reanimated';
 import { router } from 'expo-router';
+import { Check, Leaf, Sprout, WheatOff, MilkOff, NutOff, Drumstick, type LucideIcon } from 'lucide-react-native';
 import { useTheme } from '@/lib/theme-context';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useOnboardingStore } from '@/stores/onboardingStore';
@@ -24,12 +25,13 @@ import { t } from '@/lib/i18n';
 import type { Enseigne, Objectif, Regime } from '@/types';
 
 const TOTAL_ETAPES = 5;
-const REGIMES: { id: Regime; label: string }[] = [
-  { id: 'vegetarien', label: t('onboarding.regime_vegetarien') },
-  { id: 'vegan', label: t('onboarding.regime_vegan') },
-  { id: 'halal', label: t('onboarding.regime_halal') },
-  { id: 'sans_gluten', label: t('onboarding.regime_sans_gluten') },
-  { id: 'sans_lactose', label: t('onboarding.regime_sans_lactose') },
+const REGIMES: { id: Regime; label: string; Icon: LucideIcon }[] = [
+  { id: 'vegetarien', label: t('onboarding.regime_vegetarien'), Icon: Leaf },
+  { id: 'vegan', label: t('onboarding.regime_vegan'), Icon: Sprout },
+  { id: 'sans_gluten', label: t('onboarding.regime_sans_gluten'), Icon: WheatOff },
+  { id: 'sans_lactose', label: t('onboarding.regime_sans_lactose'), Icon: MilkOff },
+  { id: 'sans_noix', label: t('onboarding.regime_sans_noix'), Icon: NutOff },
+  { id: 'halal', label: t('onboarding.regime_halal'), Icon: Drumstick },
 ];
 const OBJECTIFS: { id: Objectif; label: string }[] = [
   { id: 'perdre_poids', label: t('onboarding.objectif_perdre_poids') },
@@ -79,6 +81,66 @@ function StepperAge({ label, age, onChange }: { label: string; age: number; onCh
         </Pressable>
       </View>
     </View>
+  );
+}
+
+function IconTile({ label, Icon, selected, onPress }: { label: string; Icon: LucideIcon; selected: boolean; onPress: () => void }) {
+  const { colors } = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      accessibilityLabel={label}
+      style={{
+        width: '31%',
+        gap: 8,
+        alignItems: 'center',
+        paddingVertical: 14,
+        borderRadius: 16,
+        backgroundColor: selected ? colors.primary : colors.bgSecondary,
+      }}
+    >
+      <Icon size={22} color={selected ? '#FFFFFF' : colors.textPrimary} />
+      <BodySm style={{ color: selected ? '#FFFFFF' : colors.textPrimary, textAlign: 'center' }}>{label}</BodySm>
+    </Pressable>
+  );
+}
+
+function CheckRow({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
+  const { colors } = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked: selected }}
+      accessibilityLabel={label}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 14,
+        backgroundColor: colors.bgSecondary,
+      }}
+    >
+      <Body>{label}</Body>
+      <View
+        style={{
+          width: 22,
+          height: 22,
+          borderRadius: 11,
+          borderWidth: 2,
+          borderColor: selected ? colors.success : colors.border,
+          backgroundColor: selected ? colors.success : 'transparent',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {selected && <Check size={13} color="#FFFFFF" strokeWidth={3} />}
+      </View>
+    </Pressable>
   );
 }
 
@@ -292,21 +354,28 @@ export default function Onboarding() {
           {etapeActuelle === 4 && (
             <View style={{ gap: 16 }}>
               <DisplayXL>{t('onboarding.regime_titre')}</DisplayXL>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
                 {REGIMES.map((r) => (
-                  <Chip key={r.id} label={r.label} selected={(donneesPartielles.regime ?? []).includes(r.id)} onPress={() => toggleRegime(r.id)} />
+                  <IconTile
+                    key={r.id}
+                    label={r.label}
+                    Icon={r.Icon}
+                    selected={(donneesPartielles.regime ?? []).includes(r.id)}
+                    onPress={() => toggleRegime(r.id)}
+                  />
                 ))}
               </View>
               <RegimeParPersonneTeaser />
+              <Button label={t('onboarding.regime_passer')} variant="ghost" onPress={suivant} />
             </View>
           )}
 
           {etapeActuelle === 5 && (
             <View style={{ gap: 16 }}>
               <DisplayXL>{t('onboarding.objectifs_titre_court')}</DisplayXL>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+              <View style={{ gap: 8 }}>
                 {OBJECTIFS.map((o) => (
-                  <Chip key={o.id} label={o.label} selected={(donneesPartielles.objectifs ?? []).includes(o.id)} onPress={() => toggleObjectif(o.id)} />
+                  <CheckRow key={o.id} label={o.label} selected={(donneesPartielles.objectifs ?? []).includes(o.id)} onPress={() => toggleObjectif(o.id)} />
                 ))}
               </View>
               <Body>{t('onboarding.enseignes_preferees')}</Body>

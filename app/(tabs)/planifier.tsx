@@ -11,14 +11,14 @@ import { usePlanningStore } from '@/stores/planningStore';
 import { RECETTES_MOCK } from '@/lib/mocks/recettes.mock';
 import { SwipeRecette } from '@/components/recettes/SwipeRecette';
 import { RecetteCard } from '@/components/recettes/RecetteCard';
-import { PlanningHebdo } from '@/components/planning/PlanningHebdo';
-import { ProchainSlot } from '@/components/planning/ProchainSlot';
+import { PlanningSemaine } from '@/components/planning/PlanningSemaine';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonRecetteCard } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/Button';
 import { Screen, ScreenScroll } from '@/components/ui/Screen';
 import { DisplayLG, Subheading, Caption, BodySm } from '@/components/ui/Typography';
 import { analytics } from '@/lib/analytics';
+import { dates } from '@/lib/dates';
 import { t } from '@/lib/i18n';
 import { JOURS_SEMAINE, type JourSemaine, type Recette } from '@/types';
 
@@ -135,22 +135,20 @@ export default function Planifier() {
       )}
 
       {sousOnglet === 'planning' && (
-        <ScreenScroll style={{ flex: 1 }} contentContainerStyle={{ gap: 16 }} padded>
+        <ScreenScroll style={{ flex: 1 }} contentContainerStyle={{ gap: 20 }} padded>
           <Button label={t('planning.generer_semaine_ia')} onPress={genererSemaineIA} />
-          {prochainSlot ? (
-            <ProchainSlot
-              jour={prochainSlot.jour}
-              moment={prochainSlot.moment}
-              onChoisirRecette={() => ouvrirChoixSlot(prochainSlot.jour, prochainSlot.moment)}
-              onIgnorer={() => {
-                void haptics.selection();
-                ignorerRepas(prochainSlot.jour, prochainSlot.moment);
-              }}
-            />
-          ) : (
+          {!prochainSlot && (
             <EmptyState illustration="favoris" titre={t('planning.tout_planifie_titre')} sousTitre={t('planning.tout_planifie_soustitre')} />
           )}
-          <PlanningHebdo planning={planning} onPressSlot={(jour, moment) => ouvrirChoixSlot(jour, moment)} />
+          <PlanningSemaine
+            planning={planning}
+            jourInitial={prochainSlot?.jour ?? dates.jourSemaine(dates.maintenant())}
+            onPressSlot={(jour, moment) => ouvrirChoixSlot(jour, moment)}
+            onIgnorer={(jour, moment) => {
+              void haptics.selection();
+              ignorerRepas(jour, moment);
+            }}
+          />
         </ScreenScroll>
       )}
 

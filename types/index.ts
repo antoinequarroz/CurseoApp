@@ -4,7 +4,7 @@
  * etre typee ici — zero `any` toilere dans le reste du code.
  */
 
-export type Regime = 'vegetarien' | 'vegan' | 'halal' | 'sans_gluten' | 'sans_lactose';
+export type Regime = 'vegetarien' | 'vegan' | 'halal' | 'sans_gluten' | 'sans_lactose' | 'sans_noix';
 export type Objectif =
   | 'perdre_poids'
   | 'prise_masse'
