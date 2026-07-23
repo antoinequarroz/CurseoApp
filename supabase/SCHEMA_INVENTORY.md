@@ -106,6 +106,16 @@ policies du §4, sauf pour `rate_limits`/`waitlist` où l'absence de policy neut
 
 - 1 bucket : `images` (public) — voir policies au §4.
 
+## 7bis. Realtime, Database Webhooks, Auth
+
+- **Realtime** : aucune table publiée sur `supabase_realtime` — l'app ne dépend d'aucune
+  souscription temps réel côté serveur (cohérent avec le code, qui poll/refetch plutôt que
+  s'abonner).
+- **Database Webhooks** : aucun trigger de ce type sur le schéma `public`.
+- **Auth** : un seul provider actif, `email` (pas d'OAuth Google/Apple configuré côté Supabase —
+  le "Sign in with Apple" de l'app passe par `supabase.auth.signInWithIdToken`, pas par un
+  provider OAuth Supabase classique, donc rien à recenser ici de plus).
+
 ## 8. Edge Functions (via API Management, 4 déployées, toutes `ACTIVE`)
 
 | Slug | verify_jwt | Version | Statut vs repo |
