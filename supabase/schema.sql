@@ -1,3 +1,12 @@
+-- OBSOLETE (COUR-9) — NE PLUS EXECUTER A LA MAIN.
+-- Ce fichier a servi a appliquer le schema initial directement dans l'editeur
+-- SQL Supabase, sans jamais etre reflete dans supabase/migrations/. C'est
+-- exactement l'ecart trouve par COUR-8/COUR-9. Le schema reel est maintenant
+-- versionne dans supabase/migrations/20260723150000 a 20260723150500, qui
+-- font foi (voir supabase/MIGRATIONS.md). Conserve ici pour l'historique
+-- uniquement — au moins une divergence reelle a ete trouvee entre ce fichier
+-- et la prod (policy storage "images_write", voir MIGRATIONS.md).
+--
 -- Schema Courseo MVP — a executer dans l'editeur SQL Supabase (ou via migrations).
 -- Convention : toutes les tables portant des donnees utilisateur ont RLS active
 -- et une policy "own" basee sur auth.uid().
