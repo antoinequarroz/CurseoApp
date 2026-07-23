@@ -85,6 +85,28 @@ Cette commande ne modifie que la table de suivi `supabase_migrations.schema_migr
 l'infrastructure de production réelle, donc volontairement laissée à une
 confirmation explicite plutôt que lancée automatiquement.
 
+## COUR-14 : recettes/ingredients normalises
+
+`recettes.ingredients` (jsonb) et `recettes.etapes` (text[]) — denormalises,
+irrecuperables par contrainte SQL — remplaces par `ingredients` (catalogue
+partage), `recette_ingredients` (lignes quantite/unite par recette) et
+`recette_etapes` (etapes numerotees). `unites_mesure` ajoutee comme table de
+reference plutot qu'un enum fige. Fait sans risque de perte de donnees :
+`recettes` avait 0 ligne en production au moment du ticket (verifie via
+l'API Management avant d'ecrire la migration).
+
+Piege rencontre : `create or replace view` ne peut pas retirer de colonnes
+(seulement en ajouter a la fin) — `recettes_a_moderer` selectionnait
+`r.ingredients`/`r.etapes`. Il a fallu `drop view` + `create view` (nouvel
+OID ⇒ regrant necessaire) **avant** le `alter table drop column`, sinon
+Postgres refuse ("other objects depend on it"). Voir
+`20260724000000_recettes_normalisees_tables.sql`.
+
+Types TypeScript versionnes : `supabase/database.types.ts`, genere via
+`npm run supabase:types` (= `supabase gen types typescript --local`) contre
+l'environnement de validation local, a regenerer apres toute migration qui
+touche au schema.
+
 ## ⚠️ Divergence de sécurité trouvée pendant ce ticket
 
 `supabase/schema.sql` (l'ancien fichier appliqué à la main) définit la policy

@@ -1,10 +1,12 @@
--- COUR-10/COUR-11 : donnees de seed minimales et anonymes pour developper et
--- tester sans copier de donnees personnelles de production. Execute
--- automatiquement par `supabase db reset`. Deterministe et reexecutable a
--- l'identique (dates fixes, ids fixes, `on conflict do nothing`) : jamais de
--- donnee reelle, jamais de `now()`/valeur aleatoire dans les donnees seedees
--- elles-memes. Couvre les 4 parcours minimaux du ticket : un utilisateur
--- fictif, un foyer (profil), un planning, une liste de courses.
+-- COUR-10/COUR-11/COUR-14 : donnees de seed minimales et anonymes pour
+-- developper et tester sans copier de donnees personnelles de production.
+-- Execute automatiquement par `supabase db reset`. Deterministe et
+-- reexecutable a l'identique (dates fixes, ids fixes, `on conflict do
+-- nothing`) : jamais de donnee reelle, jamais de `now()`/valeur aleatoire
+-- dans les donnees seedees elles-memes. Couvre les parcours minimaux : un
+-- utilisateur fictif, un foyer (profil), 5 recettes normalisees (COUR-14 :
+-- ingredients/etapes en tables, plus en jsonb/text[]), un planning, une
+-- liste de courses.
 
 -- Utilisateur de demonstration (auth.users minimal pour dev local uniquement
 -- — ce flux n'existe pas en production, ou l'auth passe par Supabase Auth
@@ -33,10 +35,12 @@ insert into profils (
 
 -- 5 recettes reprises de lib/mocks/recettes.mock.ts, pour tester le
 -- filtrage regime/allergies cote base (idx_recettes_regime/allergenes)
--- plutot que le mock client.
+-- plutot que le mock client. COUR-14 : ingredients/etapes ne sont plus des
+-- colonnes jsonb/text[] sur `recettes` mais des tables normalisees
+-- (ingredients, recette_ingredients, recette_etapes) inserees juste apres.
 insert into recettes (
   id, titre, description, image_url, blurhash, temps_preparation, difficulte,
-  cout_estime, calories, portions, regime, allergenes, ingredients, etapes,
+  cout_estime, calories, portions, regime, allergenes, source, statut_publication,
   est_communautaire
 ) values
   (
@@ -46,9 +50,7 @@ insert into recettes (
     'https://images.unsplash.com/photo-1541592106381-b31e9677c0e5',
     'L6Pj0^jE.AyE_3t7t7R**0o#DgR4', 35, 'moyen', 12.5, 620, 4,
     array['vegetarien', 'sans_noix']::text[], array['lactose', 'oeuf']::text[],
-    '[{"nom":"Pommes de terre","quantite":1,"unite":"kg","rayon":"Fruits & Legumes"},{"nom":"Gruyère râpé","quantite":200,"unite":"g","rayon":"Produits laitiers"}]'::jsonb,
-    array['Rincer et râper grossièrement les pommes de terre.', 'Former des galettes et cuire au beurre 10 min de chaque côté.']::text[],
-    false
+    'maison', 'publiee', false
   ),
   (
     '22222222-2222-2222-2222-222222222202',
@@ -57,9 +59,7 @@ insert into recettes (
     'https://images.unsplash.com/photo-1573821663912-6df460f9c684',
     'L5Q9_@of00WB~qofofof9Faz%2ay', 25, 'facile', 22, 780, 4,
     array['vegetarien', 'sans_noix']::text[], array['lactose']::text[],
-    '[{"nom":"Gruyère","quantite":400,"unite":"g","rayon":"Produits laitiers"},{"nom":"Vacherin fribourgeois","quantite":400,"unite":"g","rayon":"Produits laitiers"}]'::jsonb,
-    array['Frotter le caquelon avec la gousse d''ail.', 'Faire fondre le fromage râpé avec le vin blanc à feu doux.']::text[],
-    false
+    'maison', 'publiee', false
   ),
   (
     '22222222-2222-2222-2222-222222222203',
@@ -68,9 +68,7 @@ insert into recettes (
     'https://images.unsplash.com/photo-1512621776951-a57141f2eefd',
     'L6Pj0^jE.AyE_3t7t7R**0o#DgR4', 30, 'facile', 14, 480, 2,
     array['vegan', 'vegetarien', 'sans_gluten', 'sans_noix']::text[], array[]::text[],
-    '[{"nom":"Quinoa","quantite":200,"unite":"g","rayon":"Epicerie"},{"nom":"Patate douce","quantite":2,"unite":"unite","rayon":"Fruits & Legumes"}]'::jsonb,
-    array['Cuire le quinoa.', 'Rotir les legumes 25 min au four.', 'Assembler et napper de sauce tahini.']::text[],
-    false
+    'maison', 'publiee', false
   ),
   (
     '22222222-2222-2222-2222-222222222204',
@@ -79,9 +77,7 @@ insert into recettes (
     'https://images.unsplash.com/photo-1467003909585-2f8a72700288',
     'L6Pj0^jE.AyE_3t7t7R**0o#DgR4', 20, 'facile', 18, 410, 2,
     array['sans_gluten', 'sans_lactose', 'sans_noix', 'poisson']::text[], array['poisson']::text[],
-    '[{"nom":"Pave de saumon","quantite":2,"unite":"unite","rayon":"Viandes"},{"nom":"Asperges vertes","quantite":500,"unite":"g","rayon":"Fruits & Legumes"}]'::jsonb,
-    array['Griller le saumon 4 min de chaque cote.', 'Cuire les asperges 8 min a la vapeur.']::text[],
-    false
+    'maison', 'publiee', false
   ),
   (
     '22222222-2222-2222-2222-222222222205',
@@ -90,11 +86,49 @@ insert into recettes (
     'https://images.unsplash.com/photo-1585937421612-70a008356fbe',
     'L6Pj0^jE.AyE_3t7t7R**0o#DgR4', 30, 'facile', 9, 520, 4,
     array['vegan', 'vegetarien', 'sans_gluten', 'sans_noix']::text[], array[]::text[],
-    '[{"nom":"Lentilles corail","quantite":300,"unite":"g","rayon":"Epicerie"},{"nom":"Lait de coco","quantite":400,"unite":"ml","rayon":"Epicerie"}]'::jsonb,
-    array['Faire revenir les epices.', 'Ajouter les lentilles et le lait de coco, mijoter 20 min.']::text[],
-    false
+    'maison', 'publiee', false
   )
 on conflict (id) do nothing;
+
+-- Catalogue d'ingredients (COUR-14) partage entre les recettes ci-dessus.
+insert into ingredients (id, nom, rayon, unite_defaut) values
+  ('55555555-5555-5555-5555-555555555501', 'Pommes de terre', 'Fruits & Legumes', 'kg'),
+  ('55555555-5555-5555-5555-555555555502', 'Gruyère râpé', 'Produits laitiers', 'g'),
+  ('55555555-5555-5555-5555-555555555503', 'Gruyère', 'Produits laitiers', 'g'),
+  ('55555555-5555-5555-5555-555555555504', 'Vacherin fribourgeois', 'Produits laitiers', 'g'),
+  ('55555555-5555-5555-5555-555555555505', 'Quinoa', 'Epicerie', 'g'),
+  ('55555555-5555-5555-5555-555555555506', 'Patate douce', 'Fruits & Legumes', 'unite'),
+  ('55555555-5555-5555-5555-555555555507', 'Pave de saumon', 'Viandes', 'unite'),
+  ('55555555-5555-5555-5555-555555555508', 'Asperges vertes', 'Fruits & Legumes', 'g'),
+  ('55555555-5555-5555-5555-555555555509', 'Lentilles corail', 'Epicerie', 'g'),
+  ('55555555-5555-5555-5555-555555555510', 'Lait de coco', 'Epicerie', 'ml')
+on conflict (id) do nothing;
+
+insert into recette_ingredients (recette_id, ingredient_id, quantite, unite, ordre) values
+  ('22222222-2222-2222-2222-222222222201', '55555555-5555-5555-5555-555555555501', 1, 'kg', 1),
+  ('22222222-2222-2222-2222-222222222201', '55555555-5555-5555-5555-555555555502', 200, 'g', 2),
+  ('22222222-2222-2222-2222-222222222202', '55555555-5555-5555-5555-555555555503', 400, 'g', 1),
+  ('22222222-2222-2222-2222-222222222202', '55555555-5555-5555-5555-555555555504', 400, 'g', 2),
+  ('22222222-2222-2222-2222-222222222203', '55555555-5555-5555-5555-555555555505', 200, 'g', 1),
+  ('22222222-2222-2222-2222-222222222203', '55555555-5555-5555-5555-555555555506', 2, 'unite', 2),
+  ('22222222-2222-2222-2222-222222222204', '55555555-5555-5555-5555-555555555507', 2, 'unite', 1),
+  ('22222222-2222-2222-2222-222222222204', '55555555-5555-5555-5555-555555555508', 500, 'g', 2),
+  ('22222222-2222-2222-2222-222222222205', '55555555-5555-5555-5555-555555555509', 300, 'g', 1),
+  ('22222222-2222-2222-2222-222222222205', '55555555-5555-5555-5555-555555555510', 400, 'ml', 2)
+on conflict (recette_id, ingredient_id) do nothing;
+
+insert into recette_etapes (recette_id, numero, instruction) values
+  ('22222222-2222-2222-2222-222222222201', 1, 'Rincer et râper grossièrement les pommes de terre.'),
+  ('22222222-2222-2222-2222-222222222201', 2, 'Former des galettes et cuire au beurre 10 min de chaque côté.'),
+  ('22222222-2222-2222-2222-222222222202', 1, 'Frotter le caquelon avec la gousse d''ail.'),
+  ('22222222-2222-2222-2222-222222222202', 2, 'Faire fondre le fromage râpé avec le vin blanc à feu doux.'),
+  ('22222222-2222-2222-2222-222222222203', 1, 'Cuire le quinoa.'),
+  ('22222222-2222-2222-2222-222222222203', 2, 'Rotir les legumes 25 min au four, assembler et napper de sauce tahini.'),
+  ('22222222-2222-2222-2222-222222222204', 1, 'Griller le saumon 4 min de chaque cote.'),
+  ('22222222-2222-2222-2222-222222222204', 2, 'Cuire les asperges 8 min a la vapeur.'),
+  ('22222222-2222-2222-2222-222222222205', 1, 'Faire revenir les epices.'),
+  ('22222222-2222-2222-2222-222222222205', 2, 'Ajouter les lentilles et le lait de coco, mijoter 20 min.')
+on conflict (recette_id, numero) do nothing;
 
 -- COUR-11 : planning de la semaine + liste de courses associee, pour couvrir
 -- les 4 parcours minimaux demandes par le ticket (utilisateur, foyer,

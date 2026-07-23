@@ -44,15 +44,18 @@ check_table_exists() {
 }
 
 echo "--- Tables sans seed (juste presence) ---"
-for t in commandes notifications favoris swipes signalements rate_limits waitlist; do
+for t in commandes notifications favoris swipes signalements rate_limits waitlist unites_mesure; do
   check_table_exists "$t"
 done
 
-echo "--- Seed COUR-11 (nombre de lignes exact) ---"
+echo "--- Seed COUR-11/COUR-14 (nombre de lignes exact) ---"
 check_count profils 1
 check_count recettes 5
 check_count planning_repas 1
 check_count listes_courses 1
+check_count ingredients 10
+check_count recette_ingredients 10
+check_count recette_etapes 10
 
 if [ "$FAILED" -ne 0 ]; then
   echo ""
