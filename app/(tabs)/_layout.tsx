@@ -1,40 +1,19 @@
-/** Navigation par onglets — pastille corail (accentDark) sur l'icone active, façon moodboard. */
+/**
+ * Navigation par onglets — barre standard iOS (pleine largeur, ancree au bord,
+ * labels toujours visibles, icone+texte teintes en corail quand actif). Suite
+ * a la recommandation HIG/iOS 26 : eviter une tab bar flottante personnalisee
+ * avec effets de verre empiles, preferer la composition systeme simple.
+ */
 import React from 'react';
-import { Pressable, View, type PressableProps } from 'react-native';
+import { Pressable, type PressableProps } from 'react-native';
 import { Tabs } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Home, Calendar, ShoppingCart, TrendingDown, User, type LucideIcon } from 'lucide-react-native';
+import { Home, Calendar, ShoppingCart, TrendingDown, User } from 'lucide-react-native';
 import { useTheme } from '@/lib/theme-context';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useCoursesStore } from '@/stores/coursesStore';
-import { Caption } from '@/components/ui/Typography';
 import { ICON_SIZE } from '@/lib/icons';
-
-function TabIcon({ Icon, label, focused }: { Icon: LucideIcon; label: string; focused: boolean }) {
-  const { colors } = useTheme();
-
-  if (!focused) {
-    return <Icon size={ICON_SIZE.lg} color={colors.textMuted} />;
-  }
-
-  return (
-    <View
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        paddingVertical: 8,
-        paddingHorizontal: 14,
-        borderRadius: 9999,
-        backgroundColor: colors.accentDark,
-      }}
-    >
-      <Icon size={ICON_SIZE.lg} color="#FFFFFF" />
-      <Caption style={{ color: '#FFFFFF', fontWeight: '600' }}>{label}</Caption>
-    </View>
-  );
-}
 
 export default function TabsLayout() {
   const { colors, isDark } = useTheme();
@@ -46,24 +25,15 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarShowLabel: false,
-        tabBarItemStyle: { paddingTop: 8 },
+        tabBarActiveTintColor: colors.accentDark,
+        tabBarInactiveTintColor: colors.textMuted,
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600', marginTop: 2 },
         tabBarStyle: {
-          position: 'absolute',
-          left: 14,
-          right: 14,
-          bottom: Math.max(insets.bottom, 10),
-          height: 66,
-          borderRadius: 26,
-          borderTopWidth: 0,
-          borderWidth: 1,
-          borderColor: colors.border,
-          overflow: 'hidden',
+          height: 56 + insets.bottom,
+          paddingBottom: insets.bottom,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
           backgroundColor: 'transparent',
-          shadowColor: '#000',
-          shadowOpacity: isDark ? 0 : 0.14,
-          shadowRadius: 18,
-          shadowOffset: { width: 0, height: 8 },
         },
         tabBarBackground: () => (
           <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={{ flex: 1 }} />
@@ -75,27 +45,27 @@ export default function TabsLayout() {
     >
       <Tabs.Screen
         name="index"
-        options={{ title: 'Accueil', tabBarIcon: ({ focused }) => <TabIcon Icon={Home} label="Accueil" focused={focused} /> }}
+        options={{ title: 'Accueil', tabBarIcon: ({ color }) => <Home size={ICON_SIZE.lg} color={color} /> }}
       />
       <Tabs.Screen
         name="planifier"
-        options={{ title: 'Planifier', tabBarIcon: ({ focused }) => <TabIcon Icon={Calendar} label="Planifier" focused={focused} /> }}
+        options={{ title: 'Planifier', tabBarIcon: ({ color }) => <Calendar size={ICON_SIZE.lg} color={color} /> }}
       />
       <Tabs.Screen
         name="courses"
         options={{
           title: 'Courses',
-          tabBarIcon: ({ focused }) => <TabIcon Icon={ShoppingCart} label="Courses" focused={focused} />,
+          tabBarIcon: ({ color }) => <ShoppingCart size={ICON_SIZE.lg} color={color} />,
           tabBarBadge: nbItemsCourses > 0 ? nbItemsCourses : undefined,
         }}
       />
       <Tabs.Screen
         name="economies"
-        options={{ title: 'Économies', tabBarIcon: ({ focused }) => <TabIcon Icon={TrendingDown} label="Économies" focused={focused} /> }}
+        options={{ title: 'Économies', tabBarIcon: ({ color }) => <TrendingDown size={ICON_SIZE.lg} color={color} /> }}
       />
       <Tabs.Screen
         name="profil"
-        options={{ title: 'Profil', tabBarIcon: ({ focused }) => <TabIcon Icon={User} label="Profil" focused={focused} /> }}
+        options={{ title: 'Profil', tabBarIcon: ({ color }) => <User size={ICON_SIZE.lg} color={color} /> }}
       />
     </Tabs>
   );
