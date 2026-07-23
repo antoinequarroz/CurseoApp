@@ -42,23 +42,26 @@ npx supabase stop
 Arrête et supprime les conteneurs (ajouter `--no-backup` pour ne garder
 aucune donnée locale entre deux sessions).
 
-### ⚠️ Limite de cet environnement de développement
+### ✅ Vérifié en conditions réelles (2026-07-23)
 
-Docker Desktop est installé sur cette machine mais **le service ne démarre
-pas sans droits administrateur**, que je n'ai pas dans cet environnement.
-Je n'ai donc pas pu exécuter `supabase start`/`db reset` moi-même, ni
-vérifier la reconstruction "deux fois de suite" demandée par le critère de
-vérification du ticket.
+Docker Desktop ne peut pas être piloté depuis cet environnement automatisé
+(le service refuse de démarrer sans droits administrateur) — l'exécution
+réelle de `supabase start`/`db reset` a donc été faite manuellement sur la
+machine de développement. Ça a révélé 2 vrais bugs que la vérification par
+transaction annulée seule n'avait pas attrapés :
 
-**Ce qui est fait et vérifié** : les migrations elles-mêmes ont déjà été
-testées avec succès contre un schéma Postgres vierge lors de COUR-9 (via
-transaction annulée sur le projet distant) — la logique de création est
-donc éprouvée. Ce qui manque, c'est l'exécution réelle de `supabase start`
-sur une machine où Docker tourne.
+1. **Ordre chronologique des migrations** — `20260715080000` (historique)
+   activait RLS sur `waitlist`/`rate_limits` avant que ces tables ne soient
+   créées par la migration de recréation. Corrigé en renommant cette
+   dernière en `20260714000000` (avant l'historique).
+2. **Grant `service_role` manquant** — absent des migrations (COUR-9 ne
+   vérifiait que `anon`/`authenticated`), invisible sur le projet distant
+   déjà provisionné mais bloquant sur un environnement neuf (les Edge
+   Functions utilisent `service_role`). Ajouté.
 
-**Action demandée** : lancer `npx supabase start` (ou `db reset` si déjà
-démarré) **deux fois de suite** sur ta machine (ou en CI), confirmer que
-l'app se lance dessus, puis me dire si ça correspond au résultat attendu.
+Après ces deux corrections, `supabase db reset` a été relancé deux fois de
+suite avec succès (même résultat à chaque fois : 11 tables + seed).
+**Critère de vérification du ticket rempli.**
 
 ## Option B — Branche Supabase cloud (pas de Docker requis)
 
