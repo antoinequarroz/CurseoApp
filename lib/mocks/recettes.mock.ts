@@ -16,7 +16,7 @@ export const RECETTES_MOCK: Recette[] = [
     cout_estime: 12.5,
     calories: 620,
     portions: 4,
-    regime: ['vegetarien'],
+    regime: ['vegetarien', 'sans_noix'],
     allergenes: ['lactose', 'oeuf'],
     ingredients: [
       { nom: 'Pommes de terre', quantite: 1, unite: 'kg', rayon: 'Fruits & Legumes' },
@@ -43,7 +43,7 @@ export const RECETTES_MOCK: Recette[] = [
     cout_estime: 22,
     calories: 780,
     portions: 4,
-    regime: ['vegetarien'],
+    regime: ['vegetarien', 'sans_noix'],
     allergenes: ['lactose'],
     ingredients: [
       { nom: 'Gruyère', quantite: 400, unite: 'g', rayon: 'Produits laitiers' },
@@ -71,7 +71,7 @@ export const RECETTES_MOCK: Recette[] = [
     cout_estime: 14,
     calories: 540,
     portions: 4,
-    regime: ['sans_gluten'],
+    regime: ['sans_gluten', 'sans_noix'],
     allergenes: [],
     ingredients: [
       { nom: 'Blanc de poulet', quantite: 600, unite: 'g', rayon: 'Viandes' },
@@ -99,7 +99,7 @@ export const RECETTES_MOCK: Recette[] = [
     cout_estime: 11,
     calories: 420,
     portions: 4,
-    regime: ['vegetarien'],
+    regime: ['vegetarien', 'sans_noix'],
     allergenes: ['lactose'],
     ingredients: [
       { nom: 'Quinoa', quantite: 250, unite: 'g', rayon: 'Epicerie' },
@@ -125,7 +125,7 @@ export const RECETTES_MOCK: Recette[] = [
     cout_estime: 9,
     calories: 680,
     portions: 4,
-    regime: [],
+    regime: ['sans_noix'],
     allergenes: ['gluten', 'oeuf', 'lactose'],
     ingredients: [
       { nom: 'Spaghetti', quantite: 400, unite: 'g', rayon: 'Epicerie' },
@@ -151,7 +151,7 @@ export const RECETTES_MOCK: Recette[] = [
     cout_estime: 13,
     calories: 480,
     portions: 2,
-    regime: ['vegan', 'vegetarien', 'sans_gluten'],
+    regime: ['vegan', 'vegetarien', 'sans_gluten', 'sans_noix'],
     allergenes: [],
     ingredients: [
       { nom: 'Pois chiches', quantite: 400, unite: 'g', rayon: 'Conserves' },
@@ -177,7 +177,7 @@ export const RECETTES_MOCK: Recette[] = [
     cout_estime: 18,
     calories: 460,
     portions: 2,
-    regime: ['sans_gluten', 'sans_lactose'],
+    regime: ['sans_gluten', 'sans_lactose', 'sans_noix', 'poisson'],
     allergenes: ['poisson'],
     ingredients: [
       { nom: 'Pavé de saumon', quantite: 2, unite: 'unite', rayon: 'Viandes' },
@@ -202,7 +202,7 @@ export const RECETTES_MOCK: Recette[] = [
     cout_estime: 15,
     calories: 590,
     portions: 4,
-    regime: [],
+    regime: ['sans_noix'],
     allergenes: ['gluten'],
     ingredients: [
       { nom: 'Boeuf haché', quantite: 500, unite: 'g', rayon: 'Viandes' },
@@ -228,7 +228,7 @@ export const RECETTES_MOCK: Recette[] = [
     cout_estime: 7,
     calories: 210,
     portions: 4,
-    regime: ['vegan', 'vegetarien', 'sans_gluten'],
+    regime: ['vegan', 'vegetarien', 'sans_gluten', 'sans_noix'],
     allergenes: [],
     ingredients: [
       { nom: 'Potiron', quantite: 500, unite: 'g', rayon: 'Fruits & Legumes' },
@@ -254,7 +254,7 @@ export const RECETTES_MOCK: Recette[] = [
     cout_estime: 12,
     calories: 520,
     portions: 4,
-    regime: ['vegetarien', 'sans_gluten'],
+    regime: ['vegetarien', 'sans_gluten', 'sans_noix'],
     allergenes: ['lactose'],
     ingredients: [
       { nom: 'Riz arborio', quantite: 320, unite: 'g', rayon: 'Epicerie' },
@@ -280,7 +280,7 @@ export const RECETTES_MOCK: Recette[] = [
     cout_estime: 16,
     calories: 450,
     portions: 2,
-    regime: ['sans_lactose'],
+    regime: ['sans_lactose', 'sans_noix', 'poisson'],
     allergenes: ['poisson', 'soja'],
     ingredients: [
       { nom: 'Thon frais', quantite: 250, unite: 'g', rayon: 'Viandes' },
@@ -306,7 +306,7 @@ export const RECETTES_MOCK: Recette[] = [
     cout_estime: 8,
     calories: 390,
     portions: 4,
-    regime: ['vegan', 'vegetarien', 'sans_gluten'],
+    regime: ['vegan', 'vegetarien', 'sans_gluten', 'sans_noix'],
     allergenes: [],
     ingredients: [
       { nom: 'Lentilles corail', quantite: 300, unite: 'g', rayon: 'Epicerie' },
@@ -332,7 +332,7 @@ export const RECETTES_MOCK: Recette[] = [
     cout_estime: 13,
     calories: 640,
     portions: 4,
-    regime: [],
+    regime: ['sans_noix'],
     allergenes: ['gluten', 'oeuf'],
     ingredients: [
       { nom: 'Escalope de veau', quantite: 4, unite: 'unite', rayon: 'Viandes' },
@@ -358,7 +358,7 @@ export const RECETTES_MOCK: Recette[] = [
     cout_estime: 10,
     calories: 480,
     portions: 2,
-    regime: ['vegetarien'],
+    regime: ['vegetarien', 'sans_noix'],
     allergenes: ['gluten', 'lactose'],
     ingredients: [
       { nom: 'Halloumi', quantite: 200, unite: 'g', rayon: 'Produits laitiers' },
@@ -384,7 +384,7 @@ export const RECETTES_MOCK: Recette[] = [
     cout_estime: 19,
     calories: 610,
     portions: 6,
-    regime: [],
+    regime: ['sans_noix'],
     allergenes: [],
     ingredients: [
       { nom: 'Boeuf à braiser', quantite: 1, unite: 'kg', rayon: 'Viandes' },
@@ -410,7 +410,7 @@ export const RECETTES_MOCK: Recette[] = [
     cout_estime: 9,
     calories: 700,
     portions: 4,
-    regime: ['vegetarien'],
+    regime: ['vegetarien', 'sans_noix'],
     allergenes: ['gluten', 'lactose'],
     ingredients: [
       { nom: 'Farine', quantite: 500, unite: 'g', rayon: 'Epicerie' },
@@ -462,7 +462,7 @@ export const RECETTES_MOCK: Recette[] = [
     cout_estime: 8,
     calories: 480,
     portions: 6,
-    regime: ['vegetarien', 'sans_gluten'],
+    regime: ['vegetarien', 'sans_gluten', 'sans_noix'],
     allergenes: ['lactose'],
     ingredients: [
       { nom: 'Pommes de terre', quantite: 1.2, unite: 'kg', rayon: 'Fruits & Legumes' },
@@ -488,7 +488,7 @@ export const RECETTES_MOCK: Recette[] = [
     cout_estime: 12,
     calories: 510,
     portions: 4,
-    regime: ['sans_lactose'],
+    regime: ['sans_lactose', 'sans_noix'],
     allergenes: ['soja'],
     ingredients: [
       { nom: 'Filet de porc', quantite: 500, unite: 'g', rayon: 'Viandes' },
@@ -514,7 +514,7 @@ export const RECETTES_MOCK: Recette[] = [
     cout_estime: 9,
     calories: 390,
     portions: 8,
-    regime: ['vegetarien'],
+    regime: ['vegetarien', 'sans_noix'],
     allergenes: ['gluten', 'oeuf', 'lactose'],
     ingredients: [
       { nom: 'Pâte brisée', quantite: 1, unite: 'unite', rayon: 'Epicerie' },
@@ -540,7 +540,7 @@ export const RECETTES_MOCK: Recette[] = [
     cout_estime: 11,
     calories: 540,
     portions: 4,
-    regime: [],
+    regime: ['sans_noix'],
     allergenes: [],
     ingredients: [
       { nom: 'Poireaux', quantite: 1, unite: 'kg', rayon: 'Fruits & Legumes' },
@@ -566,7 +566,7 @@ export const RECETTES_MOCK: Recette[] = [
     cout_estime: 4,
     calories: 320,
     portions: 2,
-    regime: ['vegetarien'],
+    regime: ['vegetarien', 'sans_noix'],
     allergenes: ['lactose', 'gluten'],
     ingredients: [
       { nom: 'Flocons d\'avoine', quantite: 100, unite: 'g', rayon: 'Epicerie' },
@@ -592,7 +592,7 @@ export const RECETTES_MOCK: Recette[] = [
     cout_estime: 8.5,
     calories: 410,
     portions: 3,
-    regime: ['vegetarien', 'sans_gluten'],
+    regime: ['vegetarien', 'sans_gluten', 'sans_noix'],
     allergenes: ['lactose'],
     ingredients: [
       { nom: 'Quinoa', quantite: 200, unite: 'g', rayon: 'Epicerie' },
@@ -618,7 +618,7 @@ export const RECETTES_MOCK: Recette[] = [
     cout_estime: 7,
     calories: 260,
     portions: 4,
-    regime: ['vegetarien', 'vegan'],
+    regime: ['vegetarien', 'vegan', 'sans_noix'],
     allergenes: [],
     ingredients: [
       { nom: 'Courge butternut', quantite: 1, unite: 'kg', rayon: 'Fruits & Legumes' },

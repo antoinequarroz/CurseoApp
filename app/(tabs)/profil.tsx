@@ -15,6 +15,40 @@ import { ScreenScroll } from '@/components/ui/Screen';
 import { DisplayLG, Heading, Body, BodySm, Caption } from '@/components/ui/Typography';
 import { toast } from '@/lib/toast';
 import { t } from '@/lib/i18n';
+import type { Enseigne, Regime } from '@/types';
+
+const LABEL_REGIME: Record<Regime, string> = {
+  vegetarien: t('onboarding.regime_vegetarien'),
+  vegan: t('onboarding.regime_vegan'),
+  halal: t('onboarding.regime_halal'),
+  sans_gluten: t('onboarding.regime_sans_gluten'),
+  sans_lactose: t('onboarding.regime_sans_lactose'),
+  sans_noix: t('onboarding.regime_sans_noix'),
+  poisson: t('onboarding.regime_poisson'),
+};
+
+const LABEL_ENSEIGNE: Record<Enseigne, string> = {
+  coop: t('onboarding.enseigne_coop'),
+  migros: t('onboarding.enseigne_migros'),
+  lidl: t('onboarding.enseigne_lidl'),
+  aldi: t('onboarding.enseigne_aldi'),
+  ottos: t('onboarding.enseigne_ottos'),
+  manor_food: t('onboarding.enseigne_manor_food'),
+};
+
+function ChipsAffichage({ items }: { items: string[] }) {
+  const { colors } = useTheme();
+  if (items.length === 0) return null;
+  return (
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+      {items.map((item) => (
+        <View key={item} style={{ paddingVertical: 4, paddingHorizontal: 10, borderRadius: 9999, backgroundColor: colors.bgSecondary }}>
+          <Caption>{item}</Caption>
+        </View>
+      ))}
+    </View>
+  );
+}
 
 function LigneNotification({ label, valeur, onChange }: { label: string; valeur: boolean; onChange: (v: boolean) => void }) {
   const { colors } = useTheme();
@@ -245,7 +279,32 @@ export default function Profil() {
             <Caption>{t('profil.enseignes_favorites', { count: profilAffiche.enseignes_favorites.length || 0 })}</Caption>
           </View>
         </View>
-        <BodySm>{t('profil.preferences_message')}</BodySm>
+        {profilAffiche.regime.length === 0 &&
+        profilAffiche.allergies.length === 0 &&
+        profilAffiche.enseignes_favorites.length === 0 ? (
+          <BodySm>{t('profil.preferences_message')}</BodySm>
+        ) : (
+          <>
+            {profilAffiche.regime.length > 0 && (
+              <View style={{ gap: 6 }}>
+                <Caption>{t('onboarding.regime_titre')}</Caption>
+                <ChipsAffichage items={profilAffiche.regime.map((r) => LABEL_REGIME[r] ?? r)} />
+              </View>
+            )}
+            {profilAffiche.allergies.length > 0 && (
+              <View style={{ gap: 6 }}>
+                <Caption>{t('onboarding.regime_autres')}</Caption>
+                <ChipsAffichage items={profilAffiche.allergies} />
+              </View>
+            )}
+            {profilAffiche.enseignes_favorites.length > 0 && (
+              <View style={{ gap: 6 }}>
+                <Caption>{t('onboarding.enseignes_preferees')}</Caption>
+                <ChipsAffichage items={profilAffiche.enseignes_favorites.map((e) => LABEL_ENSEIGNE[e] ?? e)} />
+              </View>
+            )}
+          </>
+        )}
       </Card>
 
       <Pressable

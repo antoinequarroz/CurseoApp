@@ -53,6 +53,7 @@ export function RecapCommande({ recap, onValider }: { recap: RecapCommandeType; 
 
       <Button
         label={t('panier.valider_montant', { montant: formatPrix(recap.montant_total) })}
+        variant="success"
         onPress={() => {
           void haptics.heavy();
           onValider();

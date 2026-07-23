@@ -7,12 +7,29 @@ const PAGE_SIZE = 10;
 
 interface FiltresRecettes {
   regime?: Regime[];
+  allergies?: string[];
+}
+
+/** Normalise pour une comparaison tolerante (accents, casse, espaces) entre l'allergie saisie librement et les allergenes tagues sur les recettes. */
+function normaliserAllergie(v: string): string {
+  return v
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .trim()
+    .toLowerCase();
 }
 
 async function fetchRecettesPage(pageParam: number, filtres: FiltresRecettes): Promise<Recette[]> {
-  const filtrees = filtres.regime?.length
+  let filtrees = filtres.regime?.length
     ? RECETTES_MOCK.filter((r) => filtres.regime!.some((reg) => r.regime.includes(reg)))
     : RECETTES_MOCK;
+
+  if (filtres.allergies?.length) {
+    const allergiesNormalisees = filtres.allergies.map(normaliserAllergie);
+    filtrees = filtrees.filter(
+      (r) => !r.allergenes.some((a) => allergiesNormalisees.includes(normaliserAllergie(a))),
+    );
+  }
 
   return filtrees.slice(pageParam, pageParam + PAGE_SIZE);
 }

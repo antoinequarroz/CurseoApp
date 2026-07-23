@@ -77,7 +77,10 @@ export default function Planifier() {
   const [slotChoix, setSlotChoix] = useState<{ jour: JourSemaine; moment: 'midi' | 'soir' } | null>(null);
   const [portionsChoix, setPortionsChoix] = useState<number | null>(null);
 
-  const { data, isLoading, fetchNextPage, hasNextPage } = useRecettes({ regime: profil?.regime });
+  const { data, isLoading, fetchNextPage, hasNextPage } = useRecettes({
+    regime: profil?.regime,
+    allergies: profil?.allergies,
+  });
   const recettes = useMemo(() => data?.pages.flat() ?? [], [data]);
   const recetteActuelle = recettes[indexCourant];
   const recettesCommunaute = useMemo(() => RECETTES_MOCK.filter((r) => r.est_communautaire), []);

@@ -9,7 +9,7 @@ import { Subheading } from './Typography';
 interface ButtonProps {
   label: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'success';
   disabled?: boolean;
   loading?: boolean;
   accessibilityHint?: string;
@@ -26,9 +26,18 @@ export function Button({ label, onPress, variant = 'primary', disabled, loading,
 
   // accentDark (corail fonce, ~4.67:1 avec du blanc dans les deux themes) est le
   // CTA du moodboard — le corail vif (accent) seul ne passe pas AA avec du texte blanc.
+  // '#0F2D27' (vert foret fixe, ~14.7:1 avec du blanc) sert pour le variant "success"
+  // (ex. Valider mes courses) — colors.primary s'eclaircit en dark mode et ne
+  // passerait plus AA comme fond de bouton avec du texte blanc.
   const bg =
-    variant === 'primary' ? colors.accentDark : variant === 'secondary' ? colors.bgSecondary : 'transparent';
-  const textColor = variant === 'primary' ? '#FFFFFF' : colors.primary;
+    variant === 'primary'
+      ? colors.accentDark
+      : variant === 'success'
+        ? '#0F2D27'
+        : variant === 'secondary'
+          ? colors.bgSecondary
+          : 'transparent';
+  const textColor = variant === 'primary' || variant === 'success' ? '#FFFFFF' : colors.primary;
 
   return (
     <AnimatedPressable
@@ -54,8 +63,8 @@ export function Button({ label, onPress, variant = 'primary', disabled, loading,
           alignItems: 'center',
           justifyContent: 'center',
           opacity: disabled ? 0.5 : 1,
-          shadowColor: variant === 'primary' ? colors.accentDark : 'transparent',
-          shadowOpacity: variant === 'primary' ? 0.25 : 0,
+          shadowColor: variant === 'primary' ? colors.accentDark : variant === 'success' ? '#0F2D27' : 'transparent',
+          shadowOpacity: variant === 'primary' || variant === 'success' ? 0.25 : 0,
           shadowRadius: 12,
           shadowOffset: { width: 0, height: 4 },
         },
