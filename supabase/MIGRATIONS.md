@@ -1,5 +1,24 @@
 # Procédure — créer une nouvelle migration Supabase (COUR-9)
 
+## ⚠️ Leçon de COUR-10 : toujours tester l'ordre chronologique complet
+
+Ma première vérification (transaction annulée sur schéma vide) ne testait
+QUE mes nouveaux fichiers concaténés entre eux — pas rejoués dans l'ordre
+chronologique **avec les migrations déjà existantes**. Résultat : ça passait
+mes tests, mais `supabase db reset` en conditions réelles (première
+exécution avec Docker sur la machine du développeur) a échoué :
+`20260715080000_enable_rls_waitlist_rate_limits.sql` (RLS sur `waitlist`/
+`rate_limits`) s'exécutait **avant** `20260714000000_recreate_tables.sql`
+(qui crée ces tables) — sauf qu'à l'origine ce dernier fichier s'appelait
+`20260723150000...`, donc chronologiquement APRÈS le fichier de 2026-07-15.
+Renommé pour corriger l'ordre.
+
+**Retenir pour la prochaine fois** : toujours boucler sur `ls
+supabase/migrations/*.sql` dans l'ordre du nom de fichier (pas juste les
+fichiers qu'on vient d'écrire) pour la vérification par transaction annulée
+— c'est le seul moyen de reproduire fidèlement ce que `supabase db reset`
+fait vraiment.
+
 Depuis ce ticket, **`supabase/migrations/` est la source de vérité du schéma**.
 `supabase/schema.sql` est conservé pour l'historique mais ne doit plus être
 exécuté à la main — voir l'en-tête de ce fichier.
@@ -45,24 +64,21 @@ exécuté à la main — voir l'en-tête de ce fichier.
   `SUPABASE_ACCESS_TOKEN` en variable d'environnement (déjà présent dans
   `.env.development`).
 
-## Rattrapage effectué par ce ticket
+## Rattrapage effectué par ce ticket (COUR-9)
 
 Le schéma de production existait déjà en intégralité (voir
 `SCHEMA_INVENTORY.md`, COUR-8) mais une seule migration était versionnée.
-Les fichiers `20260723150000` à `20260723150500` recréent fidèlement l'état
-actuel (tables, vues, index, RLS, policies, grants, storage) de façon
-idempotente. Ils ont été **vérifiés par transaction annulée** (`begin` /
-`rollback`) contre la prod ET contre un schéma vide — voir le détail dans le
-message de commit — mais **jamais réellement exécutés contre la prod**.
+Les fichiers `20260714000000` (tables), `20260723150100` à `20260723150500`
+(vues, index, RLS, policies, grants, storage) recréent fidèlement l'état
+actuel de façon idempotente. Vérifiés par transaction annulée (`begin` /
+`rollback`) contre la prod et contre un schéma vide, **puis marqués comme
+déjà appliqués** côté distant via `supabase migration repair --status
+applied` (fait le 2026-07-23) — sans jamais avoir été réellement rejoués
+contre la prod, puisque les objets y existaient déjà.
 
-**Étape restante, à faire consciemment (pas automatisée par ce ticket)** :
-marquer ces migrations comme déjà appliquées côté distant, sans les
-ré-exécuter (puisque les objets existent déjà) :
-
-```bash
-npx supabase migration repair --status applied 20260723150000 20260723150100 \
-  20260723150200 20260723150300 20260723150400 20260723150500
-```
+`20260723160000` corrige une vraie divergence de sécurité trouvée en route
+(policy storage `images_write` trop permissive) et a été, elle, réellement
+exécutée contre la prod avant d'être marquée appliquée.
 
 Cette commande ne modifie que la table de suivi `supabase_migrations.schema_migrations`
 (bookkeeping), jamais le schéma ni les données — mais c'est une action contre
