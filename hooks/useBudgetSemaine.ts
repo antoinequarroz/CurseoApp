@@ -52,12 +52,18 @@ export function useBudgetSemaine(profilId: string | undefined) {
 
   // Enseigne la moins chere ce mois-ci, toutes commandes confondues — seule
   // metrique deductible des donnees existantes (pas de tracking par enseigne
-  // en base au-dela des paniers de chaque commande).
-  const maintenant = dates.maintenant();
+  // en base au-dela des paniers de chaque commande). Comparaison par plage de
+  // dates UTC (comme budgetConsomme ci-dessus) plutot que getMonth()/getFullYear()
+  // sur un Date "zone Zurich" : ces getters locaux reappliqueraient le decalage
+  // du fuseau systeme par-dessus celui deja applique par dates.maintenant(),
+  // ce qui pouvait mal classer une commande pres d'une frontiere de mois.
+  const debutMois = dates.versUTC(dates.debutMois(dates.maintenant()));
+  const finMois = new Date(debutMois);
+  finMois.setUTCMonth(finMois.getUTCMonth() + 1);
   const totauxParEnseigne = new Map<Enseigne, number>();
   for (const c of commandes) {
     const dateCommande = new Date(c.created_at);
-    if (dateCommande.getMonth() !== maintenant.getMonth() || dateCommande.getFullYear() !== maintenant.getFullYear()) continue;
+    if (dateCommande < debutMois || dateCommande >= finMois) continue;
     for (const panier of c.paniers) {
       totauxParEnseigne.set(panier.enseigne, (totauxParEnseigne.get(panier.enseigne) ?? 0) + panier.montant);
     }

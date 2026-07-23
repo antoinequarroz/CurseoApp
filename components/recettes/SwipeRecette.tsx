@@ -137,8 +137,14 @@ export function SwipeRecette({ recette, profilId, onSwiped, onTapDetail }: Swipe
       <GestureDetector gesture={gesture}>
         <Animated.View
           style={cardStyle}
+          accessible
           accessibilityRole={'button' as AccessibilityRole}
           accessibilityLabel={t('recettes.voir_detail_de', { titre: recette.titre })}
+          // Le geste Tap (react-native-gesture-handler) ne recoit pas les activations
+          // synthetiques de VoiceOver/TalkBack — sans onAccessibilityTap, un double-tap
+          // lecteur d'ecran sur la carte ne declenchait plus onTapDetail (regression
+          // introduite en remplacant le Pressable par un geste compose).
+          onAccessibilityTap={onTapDetail}
         >
           <Animated.View
             pointerEvents="none"

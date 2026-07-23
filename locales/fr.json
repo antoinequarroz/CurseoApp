@@ -53,6 +53,8 @@
     "enseigne_migros": "Migros",
     "enseigne_lidl": "Lidl",
     "enseigne_aldi": "Aldi",
+    "enseigne_ottos": "Otto's",
+    "enseigne_manor_food": "Manor Food",
     "ages_enfants_hint": "Âge de chaque enfant (influence les quantités et produits suggérés)",
     "age_enfant": "Enfant {{numero}}",
     "age_diminuer": "Diminuer l'âge de {{label}}",

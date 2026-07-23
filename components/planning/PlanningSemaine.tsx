@@ -118,6 +118,14 @@ export function PlanningSemaine({
   const { colors } = useTheme();
   const haptics = useHaptics();
   const [jourSelectionne, setJourSelectionne] = useState<JourSemaine>(jourInitial);
+  // jourInitial n'est lu qu'a l'initialisation par useState — sans ce useEffect,
+  // assigner/ignorer un repas ailleurs fait avancer le "prochain jour sans menu"
+  // cote parent sans jamais faire suivre le bandeau de jours ici.
+  const [jourInitialPrecedent, setJourInitialPrecedent] = useState(jourInitial);
+  if (jourInitial !== jourInitialPrecedent) {
+    setJourInitialPrecedent(jourInitial);
+    setJourSelectionne(jourInitial);
+  }
 
   const debutSemaine = dates.debutSemaine(dates.maintenant());
   const finSemaine = new Date(debutSemaine);

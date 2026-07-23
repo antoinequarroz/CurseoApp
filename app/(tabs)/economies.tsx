@@ -20,6 +20,8 @@ const NOM_ENSEIGNE: Record<string, string> = {
   migros: t('onboarding.enseigne_migros'),
   lidl: t('onboarding.enseigne_lidl'),
   aldi: t('onboarding.enseigne_aldi'),
+  ottos: t('onboarding.enseigne_ottos'),
+  manor_food: t('onboarding.enseigne_manor_food'),
 };
 
 function DonutBudget({ progression }: { progression: number }) {

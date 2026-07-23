@@ -18,6 +18,8 @@ const NOM_ENSEIGNE: Record<string, string> = {
   migros: t('onboarding.enseigne_migros'),
   lidl: t('onboarding.enseigne_lidl'),
   aldi: t('onboarding.enseigne_aldi'),
+  ottos: t('onboarding.enseigne_ottos'),
+  manor_food: t('onboarding.enseigne_manor_food'),
 };
 
 export function ComparateurPrix({ produit, onChoisirPalier }: { produit: string; onChoisirPalier: (p: NiveauAbonnement) => void }) {
