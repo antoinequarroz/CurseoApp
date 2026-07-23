@@ -9,12 +9,12 @@ drop policy if exists images_read on storage.objects;
 create policy images_read on storage.objects for select
   using (bucket_id = 'images');
 
--- ATTENTION (voir supabase/SCHEMA_INVENTORY.md §4) : cette policy insert n'a
--- aucune restriction constatee en production — n'importe quel role peut
--- uploader dans le bucket public sans verification de dossier. Reproduite
--- telle quelle pour representer fidelement l'etat actuel (COUR-9 = capturer
--- l'existant, pas le corriger) ; a durcir dans un ticket dedie si ce n'est
--- pas voulu.
+-- Historique : cette policy insert n'avait aucune restriction constatee en
+-- production au moment de ce ticket (n'importe quel role pouvait uploader
+-- dans le bucket public sans verification de dossier) — corrige juste apres
+-- par 20260723160000_restreindre_images_write.sql. Definie ici sans
+-- restriction pour representer fidelement l'etat historique ; la migration
+-- suivante la resserre.
 drop policy if exists images_write on storage.objects;
 create policy images_write on storage.objects for insert
   with check (bucket_id = 'images');
