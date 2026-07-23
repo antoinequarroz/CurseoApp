@@ -11,3 +11,32 @@ jobs:
       - run: npm run lint
       - run: npm run type-check
       - run: npm test -- --coverage
+
+  # COUR-12 : empeche qu'une migration cassee soit fusionnee. Initialise une
+  # base Postgres vierge (via le CLI Supabase, Docker deja disponible sur les
+  # runners GitHub Actions), applique TOUTES les migrations de
+  # supabase/migrations/ dans l'ordre chronologique + supabase/seed.sql, puis
+  # verifie que le schema/seed obtenu correspond bien a ce qui est attendu
+  # (pas juste "la commande n'a pas plante").
+  #
+  # Duree observee : ~2-3 min (telechargement des images Docker Supabase,
+  # deja mises en cache par les runners GitHub la plupart du temps, puis
+  # quelques secondes pour l'application des migrations elles-memes).
+  # Prerequis : aucun secret necessaire — la commande cible uniquement une
+  # base Postgres locale ephemere au runner, jamais la production.
+  supabase-migrations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Demarrer Supabase (applique migrations + seed automatiquement)
+        run: supabase start
+      - name: Verifier le schema et le seed obtenus
+        run: bash scripts/verify-supabase-seed.sh
+      - name: Arreter Supabase
+        if: always()
+        run: supabase stop --no-backup
