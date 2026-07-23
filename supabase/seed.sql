@@ -1,8 +1,10 @@
--- COUR-10 : donnees de seed non sensibles pour lancer l'app sur un
--- environnement Supabase local fraichement reconstruit. Execute
--- automatiquement par `supabase db reset`. Aucune donnee reelle/personnelle
--- — utilisateur et recettes fictifs, reproductibles a l'identique a chaque
--- reset.
+-- COUR-10/COUR-11 : donnees de seed minimales et anonymes pour developper et
+-- tester sans copier de donnees personnelles de production. Execute
+-- automatiquement par `supabase db reset`. Deterministe et reexecutable a
+-- l'identique (dates fixes, ids fixes, `on conflict do nothing`) : jamais de
+-- donnee reelle, jamais de `now()`/valeur aleatoire dans les donnees seedees
+-- elles-memes. Couvre les 4 parcours minimaux du ticket : un utilisateur
+-- fictif, un foyer (profil), un planning, une liste de courses.
 
 -- Utilisateur de demonstration (auth.users minimal pour dev local uniquement
 -- — ce flux n'existe pas en production, ou l'auth passe par Supabase Auth
@@ -93,3 +95,43 @@ insert into recettes (
     false
   )
 on conflict (id) do nothing;
+
+-- COUR-11 : planning de la semaine + liste de courses associee, pour couvrir
+-- les 4 parcours minimaux demandes par le ticket (utilisateur, foyer,
+-- planning, liste de courses). Semaine fixe (pas "la semaine courante") pour
+-- rester deterministe et reexecutable a l'identique a chaque reset.
+--
+-- Note : l'app ne lit/n'ecrit pas planning_repas aujourd'hui (le planning
+-- vit dans stores/planningStore.ts, cote client uniquement — voir
+-- SCHEMA_INVENTORY.md §"tables orphelines"). Le jsonb ci-dessous reference
+-- les recettes par id plutot que de les embarquer completement : plus sain
+-- pour une table encore sans lecteur/ecrivain reel, a adapter le jour ou
+-- le planning sera persiste cote serveur.
+insert into planning_repas (id, profil_id, semaine_debut, repas) values (
+  '33333333-3333-3333-3333-333333333301',
+  '11111111-1111-1111-1111-111111111111',
+  '2026-01-05',
+  '{
+    "lundi": {"midi": {"recette_id": "22222222-2222-2222-2222-222222222201"}},
+    "mardi": {"soir": {"recette_id": "22222222-2222-2222-2222-222222222203"}},
+    "mercredi": {"midiIgnore": true},
+    "jeudi": {"midi": {"recette_id": "22222222-2222-2222-2222-222222222204", "portions": 2}},
+    "vendredi": {},
+    "samedi": {"soir": {"recette_id": "22222222-2222-2222-2222-222222222202"}},
+    "dimanche": {}
+  }'::jsonb
+) on conflict (id) do nothing;
+
+-- Liste de courses generee a partir du planning ci-dessus (items denormalises,
+-- comme le fait reellement lib/generateurCourses.ts cote client).
+insert into listes_courses (id, profil_id, planning_id, items) values (
+  '44444444-4444-4444-4444-444444444401',
+  '11111111-1111-1111-1111-111111111111',
+  '33333333-3333-3333-3333-333333333301',
+  '[
+    {"id":"item-1","produit":"Pommes de terre","quantite":1,"unite":"kg","rayon":"Fruits & Legumes","coche":false,"recette_origine":"22222222-2222-2222-2222-222222222201"},
+    {"id":"item-2","produit":"Gruyère râpé","quantite":200,"unite":"g","rayon":"Produits laitiers","coche":false,"recette_origine":"22222222-2222-2222-2222-222222222201"},
+    {"id":"item-3","produit":"Quinoa","quantite":200,"unite":"g","rayon":"Epicerie","coche":true,"recette_origine":"22222222-2222-2222-2222-222222222203"},
+    {"id":"item-4","produit":"Papier toilette","quantite":1,"unite":"paquet","rayon":"Hygiene","coche":false}
+  ]'::jsonb
+) on conflict (id) do nothing;
