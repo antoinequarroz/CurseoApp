@@ -24,6 +24,13 @@ export interface OffrePrix {
   promotion: string | null;
   source: string;
   collecteLe: string;
+  /**
+   * COUR-21 : calcule cote base (vue `prix_courant`, table
+   * `regles_fraicheur_prix`) selon une duree de validite qui depend de la
+   * source — jamais recalcule cote client, pour eviter que le seuil de
+   * peremption diverge entre deux endroits du code.
+   */
+  expire: boolean;
 }
 
 export interface ComparatifPrixReel {
@@ -55,6 +62,7 @@ interface LigneOffreBrute {
   promotion: string | null;
   source: string;
   collecte_le: string;
+  expire: boolean;
 }
 
 /**
@@ -78,7 +86,7 @@ export async function fetchComparatifPrix(nomProduit: string): Promise<Comparati
 
   const { data: offresBrutes, error: errOffres } = await supabase
     .from('prix_courant')
-    .select('offre_id, enseigne_id, format, quantite, unite, prix, prix_unitaire, promotion, source, collecte_le')
+    .select('offre_id, enseigne_id, format, quantite, unite, prix, prix_unitaire, promotion, source, collecte_le, expire')
     .eq('produit_canonique_id', produit.id);
   if (errOffres) throw errOffres;
 
@@ -103,6 +111,7 @@ export async function fetchComparatifPrix(nomProduit: string): Promise<Comparati
       promotion: o.promotion,
       source: o.source,
       collecteLe: o.collecte_le,
+      expire: o.expire,
     }))
     .sort((a, b) => a.prixUnitaire - b.prixUnitaire);
 

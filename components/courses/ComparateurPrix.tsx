@@ -24,19 +24,13 @@ const NOM_ENSEIGNE: Record<string, string> = {
   manor_food: t('onboarding.enseigne_manor_food'),
 };
 
-// Cycle de promos hebdomadaire habituel en Suisse : au-dela de 14 jours, un
-// prix n'est plus considere comme fiable a coup sur — signale plutot que
-// montre comme s'il etait encore d'actualite.
-const JOURS_AVANT_PERIME = 14;
-
-function estPerime(collecteLe: string): boolean {
-  const jours = (Date.now() - new Date(collecteLe).getTime()) / (1000 * 60 * 60 * 24);
-  return jours > JOURS_AVANT_PERIME;
-}
-
 function LigneOffre({ offre, estMeilleurPrix }: { offre: OffrePrix; estMeilleurPrix: boolean }) {
   const { colors } = useTheme();
-  const perime = estPerime(offre.collecteLe);
+  // COUR-21 : `expire` vient de la vue `prix_courant` (duree de validite
+  // par source, table `regles_fraicheur_prix`) — jamais recalcule ici, pour
+  // ne jamais afficher un prix perime comme s'il etait encore d'actualite
+  // avec un seuil qui aurait pu diverger du seuil reel cote base.
+  const perime = offre.expire;
 
   return (
     <View

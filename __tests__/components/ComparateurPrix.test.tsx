@@ -66,11 +66,11 @@ describe('ComparateurPrix', () => {
       offres: [
         {
           offreId: 'o-1kg', enseigne: 'migros', format: '1kg', quantite: 1, unite: 'kg',
-          prix: 4.2, prixUnitaire: 4.2, promotion: null, source: 'saisie_manuelle', collecteLe: new Date().toISOString(),
+          prix: 4.2, prixUnitaire: 4.2, promotion: null, source: 'saisie_manuelle', collecteLe: new Date().toISOString(), expire: false,
         },
         {
           offreId: 'o-500g', enseigne: 'migros', format: '500g', quantite: 0.5, unite: 'kg',
-          prix: 2.3, prixUnitaire: 4.6, promotion: null, source: 'saisie_manuelle', collecteLe: new Date().toISOString(),
+          prix: 2.3, prixUnitaire: 4.6, promotion: null, source: 'saisie_manuelle', collecteLe: new Date().toISOString(), expire: false,
         },
       ],
       meilleurPrixUnitaire: 4.2,
@@ -90,13 +90,30 @@ describe('ComparateurPrix', () => {
       nom: 'Riz basmati',
       offres: [{
         offreId: 'o-1', enseigne: 'migros', format: '1kg', quantite: 1, unite: 'kg',
-        prix: 4.2, prixUnitaire: 4.2, promotion: '-7%', source: 'saisie_manuelle', collecteLe: new Date().toISOString(),
+        prix: 4.2, prixUnitaire: 4.2, promotion: '-7%', source: 'saisie_manuelle', collecteLe: new Date().toISOString(), expire: false,
       }],
       meilleurPrixUnitaire: 4.2,
     } satisfies ComparatifPrixReel);
 
     const { findByText } = await renderAvecProviders(<ComparateurPrix produit="Riz basmati" onChoisirPalier={jest.fn()} />);
     expect(await findByText('-7%')).toBeTruthy();
+  });
+
+  it('perime : un prix expire (COUR-21) est signale, jamais utilise silencieusement', async () => {
+    useProfilStore.getState().setProfil({ ...profilBase, abonnement: 'standard' });
+    fetchComparatifPrixMock.mockResolvedValue({
+      produitCanoniqueId: 'p-1',
+      nom: 'Riz basmati',
+      offres: [{
+        offreId: 'o-1', enseigne: 'migros', format: '1kg', quantite: 1, unite: 'kg',
+        prix: 4.2, prixUnitaire: 4.2, promotion: null, source: 'scraping',
+        collecteLe: new Date('2026-01-01').toISOString(), expire: true,
+      }],
+      meilleurPrixUnitaire: 4.2,
+    } satisfies ComparatifPrixReel);
+
+    const { findByText } = await renderAvecProviders(<ComparateurPrix produit="Riz basmati" onChoisirPalier={jest.fn()} />);
+    expect(await findByText(/peut-être dépassé/)).toBeTruthy();
   });
 
   it('egalite : le badge "meilleur prix" apparait sur toutes les offres ex-aequo', async () => {
@@ -107,11 +124,11 @@ describe('ComparateurPrix', () => {
       offres: [
         {
           offreId: 'o-a', enseigne: 'migros', format: '1kg', quantite: 1, unite: 'kg',
-          prix: 4.2, prixUnitaire: 4.2, promotion: null, source: 'saisie_manuelle', collecteLe: new Date().toISOString(),
+          prix: 4.2, prixUnitaire: 4.2, promotion: null, source: 'saisie_manuelle', collecteLe: new Date().toISOString(), expire: false,
         },
         {
           offreId: 'o-b', enseigne: 'coop', format: '1kg', quantite: 1, unite: 'kg',
-          prix: 4.2, prixUnitaire: 4.2, promotion: null, source: 'saisie_manuelle', collecteLe: new Date().toISOString(),
+          prix: 4.2, prixUnitaire: 4.2, promotion: null, source: 'saisie_manuelle', collecteLe: new Date().toISOString(), expire: false,
         },
       ],
       meilleurPrixUnitaire: 4.2,

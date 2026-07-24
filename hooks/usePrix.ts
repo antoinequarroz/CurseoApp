@@ -27,6 +27,7 @@ function depuisMock(nomProduit: string): ComparatifPrixReel | null {
       promotion: p.promotion ?? null,
       source: 'mock',
       collecteLe: new Date().toISOString(),
+      expire: false,
     })),
     meilleurPrixUnitaire: comparatif.prix.length > 0 ? Math.min(...comparatif.prix.map((p) => p.prix_unitaire)) : null,
   };

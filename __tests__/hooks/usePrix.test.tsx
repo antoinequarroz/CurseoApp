@@ -29,7 +29,7 @@ function offre(overrides: Partial<OffrePrix>): OffrePrix {
     prixUnitaire: 4.2,
     promotion: null,
     source: 'saisie_manuelle',
-    collecteLe: new Date().toISOString(),
+    collecteLe: new Date().toISOString(), expire: false,
     ...overrides,
   };
 }

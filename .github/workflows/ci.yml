@@ -45,6 +45,8 @@ jobs:
         run: bash scripts/verify-import-csv.sh
       - name: Verifier le catalogue initial de recettes (COUR-18)
         run: bash scripts/verify-catalogue.sh
+      - name: Verifier les regles de fraicheur et qualite des prix (COUR-21)
+        run: bash scripts/verify-qualite-prix.sh
       - name: Arreter Supabase
         if: always()
         run: supabase stop --no-backup
