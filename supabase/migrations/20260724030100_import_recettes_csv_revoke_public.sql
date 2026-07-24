@@ -1,0 +1,13 @@
+-- COUR-17 (correctif) : `fn_importer_recettes_csv` devait etre reservee a
+-- service_role. La migration precedente faisait `revoke ... from public`,
+-- ce qui ne suffit PAS sur ce projet : `pg_default_acl` montre que
+-- `ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS`
+-- accorde EXECUTE directement a anon/authenticated/service_role a la
+-- CREATION de toute fonction dans `public` — un grant individuel, pas via
+-- PUBLIC, donc invisible a `revoke ... from public`. Trouve en verifiant
+-- les grants reels en production (information_schema.routine_privileges),
+-- pas juste l'historique de migration : anon/authenticated avaient bien
+-- EXECUTE malgre le revoke precedent. Meme categorie de piege que le grant
+-- service_role manquant de COUR-10 : un defaut du projet deja provisionne,
+-- invisible tant qu'on ne verifie pas les privileges reels.
+revoke execute on function fn_importer_recettes_csv(jsonb, boolean) from anon, authenticated;
