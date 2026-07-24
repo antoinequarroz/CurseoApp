@@ -10,7 +10,7 @@ import { secureStorage } from './secureStorage';
 const extra = Constants.expoConfig?.extra ?? {};
 const supabaseUrl = (extra.supabaseUrl as string | undefined) ?? '';
 const supabaseAnonKey = (extra.supabaseAnonKey as string | undefined) ?? '';
-const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
+export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
 if (!isSupabaseConfigured) {
   // On ne throw pas : permet de lancer l'app en mode demo/mocks sans backend configure.

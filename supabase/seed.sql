@@ -85,6 +85,11 @@ insert into recettes (
 on conflict (id) do nothing;
 
 -- Catalogue d'ingredients (COUR-14) partage entre les recettes ci-dessus.
+-- 'Lait de coco' a part, `on conflict (nom)` : aussi cree par la migration
+-- COUR-18 (20260724040000, necessaire en production ou ce seed ne tourne
+-- jamais) — si elle a deja tourne avant ce seed, l'id fixe ci-dessous
+-- serait en conflit sur le nom (unique) sans jamais matcher le conflit
+-- (id), d'ou la resolution par nom pour cet ingredient precis.
 insert into ingredients (id, nom, rayon, unite_defaut) values
   ('55555555-5555-5555-5555-555555555501', 'Pommes de terre', 'Fruits & Legumes', 'kg'),
   ('55555555-5555-5555-5555-555555555502', 'Gruyère râpé', 'Produits laitiers', 'g'),
@@ -94,9 +99,12 @@ insert into ingredients (id, nom, rayon, unite_defaut) values
   ('55555555-5555-5555-5555-555555555506', 'Patate douce', 'Fruits & Legumes', 'unite'),
   ('55555555-5555-5555-5555-555555555507', 'Pave de saumon', 'Viandes', 'unite'),
   ('55555555-5555-5555-5555-555555555508', 'Asperges vertes', 'Fruits & Legumes', 'g'),
-  ('55555555-5555-5555-5555-555555555509', 'Lentilles corail', 'Epicerie', 'g'),
-  ('55555555-5555-5555-5555-555555555510', 'Lait de coco', 'Epicerie', 'ml')
+  ('55555555-5555-5555-5555-555555555509', 'Lentilles corail', 'Epicerie', 'g')
 on conflict (id) do nothing;
+
+insert into ingredients (id, nom, rayon, unite_defaut) values
+  ('55555555-5555-5555-5555-555555555510', 'Lait de coco', 'Epicerie', 'ml')
+on conflict (nom) do nothing;
 
 insert into recette_ingredients (recette_id, ingredient_id, quantite, unite, ordre) values
   ('22222222-2222-2222-2222-222222222201', '55555555-5555-5555-5555-555555555501', 1, 'kg', 1),
@@ -107,8 +115,11 @@ insert into recette_ingredients (recette_id, ingredient_id, quantite, unite, ord
   ('22222222-2222-2222-2222-222222222203', '55555555-5555-5555-5555-555555555506', 2, 'unite', 2),
   ('22222222-2222-2222-2222-222222222204', '55555555-5555-5555-5555-555555555507', 2, 'unite', 1),
   ('22222222-2222-2222-2222-222222222204', '55555555-5555-5555-5555-555555555508', 500, 'g', 2),
-  ('22222222-2222-2222-2222-222222222205', '55555555-5555-5555-5555-555555555509', 300, 'g', 1),
-  ('22222222-2222-2222-2222-222222222205', '55555555-5555-5555-5555-555555555510', 400, 'ml', 2)
+  ('22222222-2222-2222-2222-222222222205', '55555555-5555-5555-5555-555555555509', 300, 'g', 1)
+on conflict (recette_id, ingredient_id) do nothing;
+
+insert into recette_ingredients (recette_id, ingredient_id, quantite, unite, ordre)
+select '22222222-2222-2222-2222-222222222205', id, 400, 'ml', 2 from ingredients where nom = 'Lait de coco'
 on conflict (recette_id, ingredient_id) do nothing;
 
 insert into recette_etapes (recette_id, numero, instruction) values

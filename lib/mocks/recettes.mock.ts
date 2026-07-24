@@ -437,7 +437,7 @@ export const RECETTES_MOCK: Recette[] = [
     calories: 340,
     portions: 2,
     regime: ['vegetarien', 'sans_gluten'],
-    allergenes: ['fruits a coque'],
+    allergenes: ['fruits_a_coque'],
     ingredients: [
       { nom: 'Fruits rouges surgelés', quantite: 250, unite: 'g', rayon: 'Surgeles' },
       { nom: 'Banane', quantite: 2, unite: 'unite', rayon: 'Fruits & Legumes' },
