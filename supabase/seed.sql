@@ -85,41 +85,44 @@ insert into recettes (
 on conflict (id) do nothing;
 
 -- Catalogue d'ingredients (COUR-14) partage entre les recettes ci-dessus.
--- 'Lait de coco' a part, `on conflict (nom)` : aussi cree par la migration
--- COUR-18 (20260724040000, necessaire en production ou ce seed ne tourne
--- jamais) — si elle a deja tourne avant ce seed, l'id fixe ci-dessous
--- serait en conflit sur le nom (unique) sans jamais matcher le conflit
--- (id), d'ou la resolution par nom pour cet ingredient precis.
-insert into ingredients (id, nom, rayon, unite_defaut) values
-  ('55555555-5555-5555-5555-555555555501', 'Pommes de terre', 'Fruits & Legumes', 'kg'),
-  ('55555555-5555-5555-5555-555555555502', 'Gruyère râpé', 'Produits laitiers', 'g'),
-  ('55555555-5555-5555-5555-555555555503', 'Gruyère', 'Produits laitiers', 'g'),
-  ('55555555-5555-5555-5555-555555555504', 'Vacherin fribourgeois', 'Produits laitiers', 'g'),
-  ('55555555-5555-5555-5555-555555555505', 'Quinoa', 'Epicerie', 'g'),
-  ('55555555-5555-5555-5555-555555555506', 'Patate douce', 'Fruits & Legumes', 'unite'),
-  ('55555555-5555-5555-5555-555555555507', 'Pave de saumon', 'Viandes', 'unite'),
-  ('55555555-5555-5555-5555-555555555508', 'Asperges vertes', 'Fruits & Legumes', 'g'),
-  ('55555555-5555-5555-5555-555555555509', 'Lentilles corail', 'Epicerie', 'g')
-on conflict (id) do nothing;
-
-insert into ingredients (id, nom, rayon, unite_defaut) values
-  ('55555555-5555-5555-5555-555555555510', 'Lait de coco', 'Epicerie', 'ml')
+-- `on conflict (nom)`, pas `(id)` : ces 10 ingredients sont aussi crees par
+-- des migrations (COUR-18, 20260724040000/040100 -- necessaire en
+-- production, ou ce seed ne tourne jamais) qui peuvent s'executer avant ce
+-- seed et leur donner un id different. Resolution par nom partout en
+-- consequence (recette_ingredients ci-dessous), pas par id fixe.
+insert into ingredients (nom, rayon, unite_defaut) values
+  ('Pommes de terre', 'Fruits & Legumes', 'kg'),
+  ('Gruyère râpé', 'Produits laitiers', 'g'),
+  ('Gruyère', 'Produits laitiers', 'g'),
+  ('Vacherin fribourgeois', 'Produits laitiers', 'g'),
+  ('Quinoa', 'Epicerie', 'g'),
+  ('Patate douce', 'Fruits & Legumes', 'unite'),
+  ('Pave de saumon', 'Viandes', 'unite'),
+  ('Asperges vertes', 'Fruits & Legumes', 'g'),
+  ('Lentilles corail', 'Epicerie', 'g'),
+  ('Lait de coco', 'Epicerie', 'ml')
 on conflict (nom) do nothing;
 
-insert into recette_ingredients (recette_id, ingredient_id, quantite, unite, ordre) values
-  ('22222222-2222-2222-2222-222222222201', '55555555-5555-5555-5555-555555555501', 1, 'kg', 1),
-  ('22222222-2222-2222-2222-222222222201', '55555555-5555-5555-5555-555555555502', 200, 'g', 2),
-  ('22222222-2222-2222-2222-222222222202', '55555555-5555-5555-5555-555555555503', 400, 'g', 1),
-  ('22222222-2222-2222-2222-222222222202', '55555555-5555-5555-5555-555555555504', 400, 'g', 2),
-  ('22222222-2222-2222-2222-222222222203', '55555555-5555-5555-5555-555555555505', 200, 'g', 1),
-  ('22222222-2222-2222-2222-222222222203', '55555555-5555-5555-5555-555555555506', 2, 'unite', 2),
-  ('22222222-2222-2222-2222-222222222204', '55555555-5555-5555-5555-555555555507', 2, 'unite', 1),
-  ('22222222-2222-2222-2222-222222222204', '55555555-5555-5555-5555-555555555508', 500, 'g', 2),
-  ('22222222-2222-2222-2222-222222222205', '55555555-5555-5555-5555-555555555509', 300, 'g', 1)
-on conflict (recette_id, ingredient_id) do nothing;
-
 insert into recette_ingredients (recette_id, ingredient_id, quantite, unite, ordre)
-select '22222222-2222-2222-2222-222222222205', id, 400, 'ml', 2 from ingredients where nom = 'Lait de coco'
+select '22222222-2222-2222-2222-222222222201'::uuid, id, 1, 'kg', 1 from ingredients where nom = 'Pommes de terre'
+union all
+select '22222222-2222-2222-2222-222222222201'::uuid, id, 200, 'g', 2 from ingredients where nom = 'Gruyère râpé'
+union all
+select '22222222-2222-2222-2222-222222222202'::uuid, id, 400, 'g', 1 from ingredients where nom = 'Gruyère'
+union all
+select '22222222-2222-2222-2222-222222222202'::uuid, id, 400, 'g', 2 from ingredients where nom = 'Vacherin fribourgeois'
+union all
+select '22222222-2222-2222-2222-222222222203'::uuid, id, 200, 'g', 1 from ingredients where nom = 'Quinoa'
+union all
+select '22222222-2222-2222-2222-222222222203'::uuid, id, 2, 'unite', 2 from ingredients where nom = 'Patate douce'
+union all
+select '22222222-2222-2222-2222-222222222204'::uuid, id, 2, 'unite', 1 from ingredients where nom = 'Pave de saumon'
+union all
+select '22222222-2222-2222-2222-222222222204'::uuid, id, 500, 'g', 2 from ingredients where nom = 'Asperges vertes'
+union all
+select '22222222-2222-2222-2222-222222222205'::uuid, id, 300, 'g', 1 from ingredients where nom = 'Lentilles corail'
+union all
+select '22222222-2222-2222-2222-222222222205'::uuid, id, 400, 'ml', 2 from ingredients where nom = 'Lait de coco'
 on conflict (recette_id, ingredient_id) do nothing;
 
 insert into recette_etapes (recette_id, numero, instruction) values
@@ -145,15 +148,15 @@ on conflict (recette_id, numero) do nothing;
 -- "ingredient non catalogue" (absence de donnee, pas une garantie de
 -- securite, voir le commentaire sur ingredient_allergenes).
 insert into ingredient_allergenes (ingredient_id, allergene_id, certitude)
-select '55555555-5555-5555-5555-555555555502'::uuid, id, 'confirme' from allergenes where code = 'lactose'
+select i.id, a.id, 'confirme' from ingredients i, allergenes a where i.nom = 'Gruyère râpé' and a.code = 'lactose'
 union all
-select '55555555-5555-5555-5555-555555555503'::uuid, id, 'confirme' from allergenes where code = 'lactose'
+select i.id, a.id, 'confirme' from ingredients i, allergenes a where i.nom = 'Gruyère' and a.code = 'lactose'
 union all
-select '55555555-5555-5555-5555-555555555504'::uuid, id, 'confirme' from allergenes where code = 'lactose'
+select i.id, a.id, 'confirme' from ingredients i, allergenes a where i.nom = 'Vacherin fribourgeois' and a.code = 'lactose'
 union all
-select '55555555-5555-5555-5555-555555555507'::uuid, id, 'confirme' from allergenes where code = 'poisson'
+select i.id, a.id, 'confirme' from ingredients i, allergenes a where i.nom = 'Pave de saumon' and a.code = 'poisson'
 union all
-select '55555555-5555-5555-5555-555555555505'::uuid, id, 'possible' from allergenes where code = 'gluten'
+select i.id, a.id, 'possible' from ingredients i, allergenes a where i.nom = 'Quinoa' and a.code = 'gluten'
 on conflict (ingredient_id, allergene_id) do nothing;
 
 -- Allergenes EXPLICITEMENT declares par l'auteur (reprend les valeurs de
