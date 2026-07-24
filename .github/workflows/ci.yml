@@ -37,6 +37,8 @@ jobs:
         run: supabase start
       - name: Verifier le schema et le seed obtenus
         run: bash scripts/verify-supabase-seed.sh
+      - name: Verifier la matrice allergenes/regimes/synonymes (COUR-15)
+        run: bash scripts/verify-allergenes.sh
       - name: Arreter Supabase
         if: always()
         run: supabase stop --no-backup

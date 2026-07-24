@@ -34,6 +34,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      allergenes: {
+        Row: {
+          code: string
+          id: string
+          libelle: string
+        }
+        Insert: {
+          code: string
+          id?: string
+          libelle: string
+        }
+        Update: {
+          code?: string
+          id?: string
+          libelle?: string
+        }
+        Relationships: []
+      }
       commandes: {
         Row: {
           created_at: string | null
@@ -129,6 +147,39 @@ export type Database = {
             columns: ["recette_id"]
             isOneToOne: false
             referencedRelation: "recettes_a_moderer"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ingredient_allergenes: {
+        Row: {
+          allergene_id: string
+          certitude: string
+          ingredient_id: string
+        }
+        Insert: {
+          allergene_id: string
+          certitude: string
+          ingredient_id: string
+        }
+        Update: {
+          allergene_id?: string
+          certitude?: string
+          ingredient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ingredient_allergenes_allergene_id_fkey"
+            columns: ["allergene_id"]
+            isOneToOne: false
+            referencedRelation: "allergenes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ingredient_allergenes_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
             referencedColumns: ["id"]
           },
         ]
@@ -388,6 +439,43 @@ export type Database = {
         }
         Relationships: []
       }
+      recette_allergenes: {
+        Row: {
+          allergene_id: string
+          recette_id: string
+        }
+        Insert: {
+          allergene_id: string
+          recette_id: string
+        }
+        Update: {
+          allergene_id?: string
+          recette_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recette_allergenes_allergene_id_fkey"
+            columns: ["allergene_id"]
+            isOneToOne: false
+            referencedRelation: "allergenes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recette_allergenes_recette_id_fkey"
+            columns: ["recette_id"]
+            isOneToOne: false
+            referencedRelation: "recettes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recette_allergenes_recette_id_fkey"
+            columns: ["recette_id"]
+            isOneToOne: false
+            referencedRelation: "recettes_a_moderer"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recette_etapes: {
         Row: {
           id: string
@@ -483,9 +571,45 @@ export type Database = {
           },
         ]
       }
+      recette_regimes: {
+        Row: {
+          recette_id: string
+          regime_id: string
+        }
+        Insert: {
+          recette_id: string
+          regime_id: string
+        }
+        Update: {
+          recette_id?: string
+          regime_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recette_regimes_recette_id_fkey"
+            columns: ["recette_id"]
+            isOneToOne: false
+            referencedRelation: "recettes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recette_regimes_recette_id_fkey"
+            columns: ["recette_id"]
+            isOneToOne: false
+            referencedRelation: "recettes_a_moderer"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recette_regimes_regime_id_fkey"
+            columns: ["regime_id"]
+            isOneToOne: false
+            referencedRelation: "regimes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recettes: {
         Row: {
-          allergenes: string[] | null
           auteur_id: string | null
           blurhash: string | null
           calories: number | null
@@ -500,7 +624,6 @@ export type Database = {
           lipides_g: number | null
           portions: number | null
           proteines_g: number | null
-          regime: string[] | null
           source: string | null
           statut_publication: string
           temps_preparation: number | null
@@ -508,7 +631,6 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          allergenes?: string[] | null
           auteur_id?: string | null
           blurhash?: string | null
           calories?: number | null
@@ -523,7 +645,6 @@ export type Database = {
           lipides_g?: number | null
           portions?: number | null
           proteines_g?: number | null
-          regime?: string[] | null
           source?: string | null
           statut_publication?: string
           temps_preparation?: number | null
@@ -531,7 +652,6 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          allergenes?: string[] | null
           auteur_id?: string | null
           blurhash?: string | null
           calories?: number | null
@@ -546,7 +666,6 @@ export type Database = {
           lipides_g?: number | null
           portions?: number | null
           proteines_g?: number | null
-          regime?: string[] | null
           source?: string | null
           statut_publication?: string
           temps_preparation?: number | null
@@ -569,6 +688,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      regimes: {
+        Row: {
+          code: string
+          id: string
+          libelle: string
+        }
+        Insert: {
+          code: string
+          id?: string
+          libelle: string
+        }
+        Update: {
+          code?: string
+          id?: string
+          libelle?: string
+        }
+        Relationships: []
       }
       signalements: {
         Row: {
@@ -675,6 +812,32 @@ export type Database = {
             columns: ["recette_id"]
             isOneToOne: false
             referencedRelation: "recettes_a_moderer"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      synonymes_allergenes: {
+        Row: {
+          allergene_id: string
+          id: string
+          terme: string
+        }
+        Insert: {
+          allergene_id: string
+          id?: string
+          terme: string
+        }
+        Update: {
+          allergene_id?: string
+          id?: string
+          terme?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "synonymes_allergenes_allergene_id_fkey"
+            columns: ["allergene_id"]
+            isOneToOne: false
+            referencedRelation: "allergenes"
             referencedColumns: ["id"]
           },
         ]
@@ -789,9 +952,19 @@ export type Database = {
         }
         Relationships: []
       }
+      recette_allergenes_effectifs: {
+        Row: {
+          allergene_id: string | null
+          certitude: string | null
+          code: string | null
+          libelle: string | null
+          recette_id: string | null
+          source: string | null
+        }
+        Relationships: []
+      }
       recettes_a_moderer: {
         Row: {
-          allergenes: string[] | null
           auteur_id: string | null
           blurhash: string | null
           calories: number | null
@@ -804,7 +977,6 @@ export type Database = {
           image_url: string | null
           nb_signalements: number | null
           portions: number | null
-          regime: string[] | null
           statut_publication: string | null
           temps_preparation: number | null
           titre: string | null
@@ -828,7 +1000,15 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      fn_normaliser_terme: { Args: { terme: string }; Returns: string }
+      fn_resoudre_allergene: {
+        Args: { terme: string }
+        Returns: {
+          allergene_id: string
+          code: string
+          libelle: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

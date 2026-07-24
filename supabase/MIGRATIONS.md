@@ -107,6 +107,31 @@ Types TypeScript versionnes : `supabase/database.types.ts`, genere via
 l'environnement de validation local, a regenerer apres toute migration qui
 touche au schema.
 
+## COUR-15 : allergenes/regimes/synonymes structures
+
+`recettes.regime`/`allergenes` (text[]) remplaces par des tables : `allergenes`,
+`regimes` (referentiels), `synonymes_allergenes` (arachide/cacahuète et
+variantes — voir `fn_resoudre_allergene`), `ingredient_allergenes` (allergene
+porte par un ingredient du catalogue, avec `certitude` confirme/possible),
+`recette_allergenes`/`recette_regimes` (declarations explicites de l'auteur).
+La vue `recette_allergenes_effectifs` fait l'union declare+deduit : une ligne
+`certitude = 'possible'` n'est JAMAIS filtree ni requalifiee en 'confirme' —
+c'est ce qui garantit qu'un cas ambigu (ex. Quinoa → trace de gluten par
+contamination croisee) reste visible comme ambigu plutot que d'etre traite
+comme sur. Meme constat qu'en COUR-14 : `recettes` avait 0 ligne en
+production, changement destructif sans risque reel.
+
+Piege rencontre (bash/git-bash sur Windows) : passer un caractere accentue
+litteral (`è`) dans une commande `curl -d` transcode silencieusement l'UTF-8
+en un jeu de caracteres a un octet, ce qui casse le JSON cote PostgREST
+(`PGRST102`). Contournement dans `scripts/verify-allergenes.sh` : utiliser
+l'echappement JSON `\uXXXX` (ASCII pur, aucune ambiguite d'encodage) plutot
+que le caractere accentue directement dans les commandes shell.
+
+Tests de la matrice ingredients/synonymes/allergenes/regimes :
+`scripts/verify-allergenes.sh`, execute manuellement (verification du
+ticket) et par la CI (`supabase-migrations`, apres `verify-supabase-seed.sh`).
+
 ## ⚠️ Divergence de sécurité trouvée pendant ce ticket
 
 `supabase/schema.sql` (l'ancien fichier appliqué à la main) définit la policy

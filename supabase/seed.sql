@@ -34,14 +34,13 @@ insert into profils (
 ) on conflict (id) do nothing;
 
 -- 5 recettes reprises de lib/mocks/recettes.mock.ts, pour tester le
--- filtrage regime/allergies cote base (idx_recettes_regime/allergenes)
--- plutot que le mock client. COUR-14 : ingredients/etapes ne sont plus des
--- colonnes jsonb/text[] sur `recettes` mais des tables normalisees
--- (ingredients, recette_ingredients, recette_etapes) inserees juste apres.
+-- filtrage regime/allergies cote base plutot que le mock client. COUR-14 :
+-- ingredients/etapes en tables normalisees. COUR-15 : regime/allergenes
+-- egalement en tables normalisees (recette_regimes/recette_allergenes),
+-- plus en colonnes text[] sur `recettes`.
 insert into recettes (
   id, titre, description, image_url, blurhash, temps_preparation, difficulte,
-  cout_estime, calories, portions, regime, allergenes, source, statut_publication,
-  est_communautaire
+  cout_estime, calories, portions, source, statut_publication, est_communautaire
 ) values
   (
     '22222222-2222-2222-2222-222222222201',
@@ -49,7 +48,6 @@ insert into recettes (
     'Le classique suisse : röstis dorés, fromage fondant et oeuf au plat.',
     'https://images.unsplash.com/photo-1541592106381-b31e9677c0e5',
     'L6Pj0^jE.AyE_3t7t7R**0o#DgR4', 35, 'moyen', 12.5, 620, 4,
-    array['vegetarien', 'sans_noix']::text[], array['lactose', 'oeuf']::text[],
     'maison', 'publiee', false
   ),
   (
@@ -58,7 +56,6 @@ insert into recettes (
     'Fondue traditionnelle gruyère-vacherin, pain de campagne.',
     'https://images.unsplash.com/photo-1573821663912-6df460f9c684',
     'L5Q9_@of00WB~qofofof9Faz%2ay', 25, 'facile', 22, 780, 4,
-    array['vegetarien', 'sans_noix']::text[], array['lactose']::text[],
     'maison', 'publiee', false
   ),
   (
@@ -67,7 +64,6 @@ insert into recettes (
     'Bowl complet quinoa, legumes rotis et sauce tahini.',
     'https://images.unsplash.com/photo-1512621776951-a57141f2eefd',
     'L6Pj0^jE.AyE_3t7t7R**0o#DgR4', 30, 'facile', 14, 480, 2,
-    array['vegan', 'vegetarien', 'sans_gluten', 'sans_noix']::text[], array[]::text[],
     'maison', 'publiee', false
   ),
   (
@@ -76,7 +72,6 @@ insert into recettes (
     'Pave de saumon grille, asperges vertes vapeur, citron.',
     'https://images.unsplash.com/photo-1467003909585-2f8a72700288',
     'L6Pj0^jE.AyE_3t7t7R**0o#DgR4', 20, 'facile', 18, 410, 2,
-    array['sans_gluten', 'sans_lactose', 'sans_noix', 'poisson']::text[], array['poisson']::text[],
     'maison', 'publiee', false
   ),
   (
@@ -85,7 +80,6 @@ insert into recettes (
     'Curry de lentilles corail au lait de coco, riz basmati.',
     'https://images.unsplash.com/photo-1585937421612-70a008356fbe',
     'L6Pj0^jE.AyE_3t7t7R**0o#DgR4', 30, 'facile', 9, 520, 4,
-    array['vegan', 'vegetarien', 'sans_gluten', 'sans_noix']::text[], array[]::text[],
     'maison', 'publiee', false
   )
 on conflict (id) do nothing;
@@ -129,6 +123,52 @@ insert into recette_etapes (recette_id, numero, instruction) values
   ('22222222-2222-2222-2222-222222222205', 1, 'Faire revenir les epices.'),
   ('22222222-2222-2222-2222-222222222205', 2, 'Ajouter les lentilles et le lait de coco, mijoter 20 min.')
 on conflict (recette_id, numero) do nothing;
+
+-- COUR-15 : allergenes portes par les ingredients du catalogue (matrice de
+-- test). Gruyère/Gruyère râpé/Vacherin -> lactose CONFIRME (fromage). Pave
+-- de saumon -> poisson CONFIRME. Quinoa -> gluten POSSIBLE : risque de
+-- contamination croisee reel et courant (lignes de conditionnement
+-- partagees), cas volontairement ambigu pour prouver que la deduction ne le
+-- traite jamais comme "sans danger". Pommes de terre/Patate douce/Asperges
+-- vertes/Lentilles corail/Lait de coco : aucune ligne — illustre le cas
+-- "ingredient non catalogue" (absence de donnee, pas une garantie de
+-- securite, voir le commentaire sur ingredient_allergenes).
+insert into ingredient_allergenes (ingredient_id, allergene_id, certitude)
+select '55555555-5555-5555-5555-555555555502'::uuid, id, 'confirme' from allergenes where code = 'lactose'
+union all
+select '55555555-5555-5555-5555-555555555503'::uuid, id, 'confirme' from allergenes where code = 'lactose'
+union all
+select '55555555-5555-5555-5555-555555555504'::uuid, id, 'confirme' from allergenes where code = 'lactose'
+union all
+select '55555555-5555-5555-5555-555555555507'::uuid, id, 'confirme' from allergenes where code = 'poisson'
+union all
+select '55555555-5555-5555-5555-555555555505'::uuid, id, 'possible' from allergenes where code = 'gluten'
+on conflict (ingredient_id, allergene_id) do nothing;
+
+-- Allergenes EXPLICITEMENT declares par l'auteur (reprend les valeurs de
+-- l'ancien `recettes.allergenes` seede en COUR-11/14).
+insert into recette_allergenes (recette_id, allergene_id)
+select '22222222-2222-2222-2222-222222222201'::uuid, id from allergenes where code in ('lactose', 'oeuf')
+union all
+select '22222222-2222-2222-2222-222222222202'::uuid, id from allergenes where code = 'lactose'
+union all
+select '22222222-2222-2222-2222-222222222204'::uuid, id from allergenes where code = 'poisson'
+on conflict (recette_id, allergene_id) do nothing;
+-- 203 (Buddha bowl) et 205 (Curry) : aucune declaration explicite — leur
+-- seul allergene visible passera par la deduction (203 -> gluten possible,
+-- via le Quinoa ; 205 -> aucun, matrice de reference pour "rien a signaler").
+
+insert into recette_regimes (recette_id, regime_id)
+select '22222222-2222-2222-2222-222222222201'::uuid, id from regimes where code in ('vegetarien', 'sans_noix')
+union all
+select '22222222-2222-2222-2222-222222222202'::uuid, id from regimes where code in ('vegetarien', 'sans_noix')
+union all
+select '22222222-2222-2222-2222-222222222203'::uuid, id from regimes where code in ('vegan', 'vegetarien', 'sans_gluten', 'sans_noix')
+union all
+select '22222222-2222-2222-2222-222222222204'::uuid, id from regimes where code in ('sans_gluten', 'sans_lactose', 'sans_noix', 'poisson')
+union all
+select '22222222-2222-2222-2222-222222222205'::uuid, id from regimes where code in ('vegan', 'vegetarien', 'sans_gluten', 'sans_noix')
+on conflict (recette_id, regime_id) do nothing;
 
 -- COUR-11 : planning de la semaine + liste de courses associee, pour couvrir
 -- les 4 parcours minimaux demandes par le ticket (utilisateur, foyer,
