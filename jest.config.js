@@ -17,6 +17,7 @@ module.exports = {
     'stores/**/*.{ts,tsx}',
     'lib/**/*.{ts,tsx}',
     '!lib/supabase.ts',
+    '!lib/recettesRepository.ts',
     '!lib/secureStorage.ts',
     '!lib/queryClient.ts',
     '!lib/notifications.ts',
