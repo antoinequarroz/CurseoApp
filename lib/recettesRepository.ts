@@ -61,20 +61,44 @@ function versRecette(ligne: LigneRecetteBrute): Recette {
   };
 }
 
+const SELECT_RECETTE_COMPLETE = `id, titre, description, image_url, blurhash, temps_preparation, difficulte, cout_estime, calories, portions, est_communautaire,
+   recette_ingredients ( quantite, unite, ordre, ingredients ( nom, rayon ) ),
+   recette_etapes ( numero, instruction ),
+   recette_regimes ( regimes ( code ) ),
+   recette_allergenes ( allergenes ( code ) )`;
+
 /** Toutes les recettes publiées (statut_publication='publiee'), reconstruites dans la forme app. */
 export async function fetchRecettesPubliees(): Promise<Recette[]> {
   const { data, error } = await supabase
     .from('recettes')
-    .select(
-      `id, titre, description, image_url, blurhash, temps_preparation, difficulte, cout_estime, calories, portions, est_communautaire,
-       recette_ingredients ( quantite, unite, ordre, ingredients ( nom, rayon ) ),
-       recette_etapes ( numero, instruction ),
-       recette_regimes ( regimes ( code ) ),
-       recette_allergenes ( allergenes ( code ) )`,
-    )
+    .select(SELECT_RECETTE_COMPLETE)
     .eq('statut_publication', 'publiee')
     .order('created_at', { ascending: false });
 
   if (error) throw error;
   return ((data ?? []) as unknown as LigneRecetteBrute[]).map(versRecette);
+}
+
+/**
+ * Une recette par id (COUR-19) — pour l'ecran de detail
+ * (app/recette/[id].tsx), atteignable en deep-link direct sans etre passe
+ * par fetchRecettesPubliees avant. `null` si absente ou pas publiee (pas
+ * d'erreur : un lien perime/invalide est un cas normal, pas un incident).
+ */
+export async function fetchRecetteParId(id: string): Promise<Recette | null> {
+  const { data, error } = await supabase
+    .from('recettes')
+    .select(SELECT_RECETTE_COMPLETE)
+    .eq('id', id)
+    .eq('statut_publication', 'publiee')
+    .maybeSingle();
+
+  if (error) {
+    // 22P02 = format invalide (id qui n'est pas un uuid, ex. un ancien id
+    // de mock communautaire) : traite comme "introuvable", pas une erreur
+    // reseau — pas de retry a proposer pour un lien mal forme.
+    if (error.code === '22P02') return null;
+    throw error;
+  }
+  return data ? versRecette(data as unknown as LigneRecetteBrute) : null;
 }

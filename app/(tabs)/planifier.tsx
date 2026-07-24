@@ -77,7 +77,7 @@ export default function Planifier() {
   const [slotChoix, setSlotChoix] = useState<{ jour: JourSemaine; moment: 'midi' | 'soir' } | null>(null);
   const [portionsChoix, setPortionsChoix] = useState<number | null>(null);
 
-  const { data, isLoading, fetchNextPage, hasNextPage } = useRecettes({
+  const { data, isLoading, isError, isEmpty, refetch, fetchNextPage, hasNextPage } = useRecettes({
     regime: profil?.regime,
     allergies: profil?.allergies,
   });
@@ -114,6 +114,20 @@ export default function Planifier() {
         <View style={{ flex: 1, paddingHorizontal, paddingTop: 16, paddingBottom: 96, justifyContent: 'center' }}>
           {isLoading ? (
             <SkeletonRecetteCard />
+          ) : isError ? (
+            <EmptyState
+              illustration="recettes"
+              titre={t('planning.erreur_recettes_titre')}
+              sousTitre={t('planning.erreur_recettes_soustitre')}
+              ctaLabel={t('commun.reessayer')}
+              onCta={() => void refetch()}
+            />
+          ) : isEmpty ? (
+            <EmptyState
+              illustration="recettes"
+              titre={t('planning.empty_catalogue_titre')}
+              sousTitre={t('planning.empty_catalogue_soustitre')}
+            />
           ) : recetteActuelle ? (
             <SwipeRecette
               recette={recetteActuelle}

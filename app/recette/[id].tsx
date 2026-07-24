@@ -1,11 +1,14 @@
 /** Detail recette — deep-linkable via coursia://recette/[id] (partage social). */
 import React, { useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
 import { Flag } from 'lucide-react-native';
 import { useTheme } from '@/lib/theme-context';
 import { RECETTES_MOCK } from '@/lib/mocks/recettes.mock';
+import { fetchRecetteParId } from '@/lib/recettesRepository';
+import { isSupabaseConfigured } from '@/lib/supabase';
 import { Card } from '@/components/ui/Card';
 import { DisplayLG, Heading, Body, BodySm, Price, Data } from '@/components/ui/Typography';
 import { formatCalories, formatPrix, formatQuantite, formatTemps } from '@/lib/format';
@@ -15,7 +18,28 @@ export default function DetailRecette() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
   const [signalementVisible, setSignalementVisible] = useState(false);
-  const recette = RECETTES_MOCK.find((r) => r.id === id);
+
+  // RECETTES_MOCK reste la source pour les recettes communautaires (COUR-18 :
+  // hors perimetre du catalogue Supabase) et le dev sans backend — verifie
+  // en premier (synchrone). Sinon, la recette vient forcement du catalogue
+  // reel (COUR-19) : on va la chercher par id sur Supabase.
+  const recetteMock = RECETTES_MOCK.find((r) => r.id === id);
+  const requeteSupabase = useQuery({
+    queryKey: ['recette', id],
+    queryFn: () => fetchRecetteParId(id!),
+    enabled: !recetteMock && isSupabaseConfigured && Boolean(id),
+    staleTime: 1000 * 60 * 10,
+  });
+
+  const recette = recetteMock ?? requeteSupabase.data;
+
+  if (!recetteMock && requeteSupabase.isLoading) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator />
+      </View>
+    );
+  }
 
   if (!recette) {
     return (

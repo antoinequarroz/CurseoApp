@@ -1,10 +1,27 @@
 /**
- * React Query : récupération paginée des recettes. Source réelle
- * (Supabase, recettes publiées — COUR-18) si le backend est configuré et
- * répond avec au moins une recette ; sinon repli sur RECETTES_MOCK (dev
- * sans backend, ou catalogue distant momentanément vide).
+ * COUR-19 : catalogue de recettes 100% Supabase dans le parcours de
+ * production — RECETTES_MOCK n'est utilise QUE si Supabase n'est pas
+ * configure du tout (poste de dev sans backend), jamais comme repli
+ * silencieux sur une erreur reseau ou un catalogue distant vide : ces deux
+ * cas doivent rester visibles (isError / isEmpty) pour que l'UI les
+ * affiche explicitement plutot que de montrer de fausses donnees.
+ *
+ * Chargement/vide/erreur : portes par useQuery (isLoading/isError/error),
+ * pas re-invente a la main.
+ * Cache/rafraichissement : useQuery gere la deduplication et le cache par
+ * queryKey — un seul fetch reseau tant que staleTime n'est pas ecoule ou
+ * qu'un refetch() explicite n'est pas demande (pull-to-refresh).
+ * Mode degrade : networkMode 'offlineFirst' herite de lib/queryClient.ts
+ * (config globale) — en cas de perte reseau, les dernieres donnees en
+ * cache memoire restent affichees plutot qu'un ecran d'erreur brutal.
+ * Pagination/filtres : le catalogue reste petit (des dizaines de recettes,
+ * pas des milliers) — un seul fetch complet des recettes publiees, filtre
+ * et pagine cote client. Filtrage/pagination cote serveur (Supabase
+ * `.range()` + filtres sur les tables jointes) a envisager quand le
+ * catalogue depassera quelques centaines de lignes.
  */
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { RECETTES_MOCK } from '@/lib/mocks/recettes.mock';
 import { fetchRecettesPubliees } from '@/lib/recettesRepository';
 import { isSupabaseConfigured } from '@/lib/supabase';
@@ -26,45 +43,58 @@ function normaliserAllergie(v: string): string {
     .toLowerCase();
 }
 
-// Cache memoire simple, partage entre tous les appels de useRecettes : evite
-// de refaire l'appel reseau a chaque page paginee (le catalogue ne change
-// pas pendant une session).
-let sourcePromise: Promise<Recette[]> | null = null;
-function obtenirSourceRecettes(): Promise<Recette[]> {
-  if (!sourcePromise) {
-    sourcePromise = isSupabaseConfigured
-      ? fetchRecettesPubliees()
-          .then((reelles) => (reelles.length > 0 ? reelles : RECETTES_MOCK))
-          .catch(() => RECETTES_MOCK)
-      : Promise.resolve(RECETTES_MOCK);
-  }
-  return sourcePromise;
-}
+function filtrerRecettes(source: Recette[], regime: Regime[] | undefined, allergies: string[] | undefined): Recette[] {
+  let filtrees = regime?.length ? source.filter((r) => regime.some((reg) => r.regime.includes(reg))) : source;
 
-async function fetchRecettesPage(pageParam: number, filtres: FiltresRecettes): Promise<Recette[]> {
-  const source = await obtenirSourceRecettes();
-
-  let filtrees = filtres.regime?.length
-    ? source.filter((r) => filtres.regime!.some((reg) => r.regime.includes(reg)))
-    : source;
-
-  if (filtres.allergies?.length) {
-    const allergiesNormalisees = filtres.allergies.map(normaliserAllergie);
+  if (allergies?.length) {
+    const allergiesNormalisees = allergies.map(normaliserAllergie);
     filtrees = filtrees.filter(
       (r) => !r.allergenes.some((a) => allergiesNormalisees.includes(normaliserAllergie(a))),
     );
   }
 
-  return filtrees.slice(pageParam, pageParam + PAGE_SIZE);
+  return filtrees;
 }
 
 export function useRecettes(filtres: FiltresRecettes = {}) {
-  return useInfiniteQuery({
-    queryKey: ['recettes', filtres],
-    queryFn: ({ pageParam }) => fetchRecettesPage(pageParam, filtres),
-    getNextPageParam: (lastPage, pages) =>
-      lastPage.length === PAGE_SIZE ? pages.length * PAGE_SIZE : undefined,
-    initialPageParam: 0,
+  const source = useQuery({
+    queryKey: ['recettes-publiees'],
+    queryFn: () => (isSupabaseConfigured ? fetchRecettesPubliees() : Promise.resolve(RECETTES_MOCK)),
     staleTime: 1000 * 60 * 10,
   });
+
+  const recettesFiltrees = useMemo(
+    () => filtrerRecettes(source.data ?? [], filtres.regime, filtres.allergies),
+    [source.data, filtres.regime, filtres.allergies],
+  );
+
+  // Nombre de pages chargees par combinaison de filtres (pas un simple
+  // compteur global) : changer de filtre retombe naturellement sur 1 (cle
+  // absente de la map) sans effet ni ref a synchroniser pendant le rendu.
+  const filtresKey = `${filtres.regime?.join(',') ?? ''}|${filtres.allergies?.join(',') ?? ''}`;
+  const [pagesParFiltre, setPagesParFiltre] = useState<Record<string, number>>({});
+  const pagesChargees = pagesParFiltre[filtresKey] ?? 1;
+
+  const pages = useMemo(() => {
+    const resultat: Recette[][] = [];
+    for (let i = 0; i < pagesChargees; i++) {
+      resultat.push(recettesFiltrees.slice(i * PAGE_SIZE, (i + 1) * PAGE_SIZE));
+    }
+    return resultat;
+  }, [recettesFiltrees, pagesChargees]);
+
+  const hasNextPage = pagesChargees * PAGE_SIZE < recettesFiltrees.length;
+
+  return {
+    data: { pages },
+    isLoading: source.isLoading,
+    isError: source.isError,
+    error: source.error,
+    isEmpty: source.isSuccess && recettesFiltrees.length === 0,
+    isRefetching: source.isRefetching,
+    refetch: source.refetch,
+    fetchNextPage: () =>
+      setPagesParFiltre((prev) => ({ ...prev, [filtresKey]: (prev[filtresKey] ?? 1) + 1 })),
+    hasNextPage,
+  };
 }
