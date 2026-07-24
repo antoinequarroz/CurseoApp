@@ -132,6 +132,27 @@ Tests de la matrice ingredients/synonymes/allergenes/regimes :
 `scripts/verify-allergenes.sh`, execute manuellement (verification du
 ticket) et par la CI (`supabase-migrations`, apres `verify-supabase-seed.sh`).
 
+## COUR-16 : enseignes/produits/historique des prix
+
+`enseignes`, `produits_canoniques`, `offres_magasin` (format/quantite/unite
+par enseigne — unite CONTRAINTE a g/kg/ml/l/unite pour rester comparable,
+voir `offres_magasin_unite_comparable`), `prix_historique` (table
+d'evenements append-only : chaque observation est une nouvelle ligne, jamais
+une mise a jour — c'est ca "l'historique"). Vue `prix_courant` = derniere
+ligne par offre.
+
+Difference volontaire avec COUR-14/15 : RLS + grants sont restrictifs en
+ecriture (`grant select` seulement pour anon/authenticated, `grant all`
+uniquement pour service_role) — les prix viennent d'un pipeline de collecte
+automatise, pas d'une saisie utilisateur, donc pas de policy INSERT ouverte
+comme pour `ingredients`. C'est le sens du critere du ticket "RLS et acces
+Data API sont explicitement configures" : explicitement LECTURE SEULE cote
+client, pas juste "RLS activee par defaut".
+
+Tests : `scripts/verify-prix.sh` (comparaison de formats via
+`prix_unitaire`, prix courant = plus recent, historique conserve, ecriture
+anon refusee), execute manuellement et en CI.
+
 ## ⚠️ Divergence de sécurité trouvée pendant ce ticket
 
 `supabase/schema.sql` (l'ancien fichier appliqué à la main) définit la policy

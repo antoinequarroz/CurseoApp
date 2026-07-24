@@ -107,6 +107,24 @@ export type Database = {
           },
         ]
       }
+      enseignes: {
+        Row: {
+          code: string
+          id: string
+          nom: string
+        }
+        Insert: {
+          code: string
+          id?: string
+          nom: string
+        }
+        Update: {
+          code?: string
+          id?: string
+          nom?: string
+        }
+        Relationships: []
+      }
       favoris: {
         Row: {
           profil_id: string
@@ -307,6 +325,61 @@ export type Database = {
           },
         ]
       }
+      offres_magasin: {
+        Row: {
+          actif: boolean
+          code_barre: string | null
+          enseigne_id: string
+          format: string
+          id: string
+          produit_canonique_id: string
+          quantite: number
+          unite: string
+        }
+        Insert: {
+          actif?: boolean
+          code_barre?: string | null
+          enseigne_id: string
+          format: string
+          id?: string
+          produit_canonique_id: string
+          quantite: number
+          unite: string
+        }
+        Update: {
+          actif?: boolean
+          code_barre?: string | null
+          enseigne_id?: string
+          format?: string
+          id?: string
+          produit_canonique_id?: string
+          quantite?: number
+          unite?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offres_magasin_enseigne_id_fkey"
+            columns: ["enseigne_id"]
+            isOneToOne: false
+            referencedRelation: "enseignes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offres_magasin_produit_canonique_id_fkey"
+            columns: ["produit_canonique_id"]
+            isOneToOne: false
+            referencedRelation: "produits_canoniques"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offres_magasin_unite_fkey"
+            columns: ["unite"]
+            isOneToOne: false
+            referencedRelation: "unites_mesure"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       planning_repas: {
         Row: {
           created_at: string | null
@@ -342,6 +415,76 @@ export type Database = {
             columns: ["profil_id"]
             isOneToOne: false
             referencedRelation: "profils_actifs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prix_historique: {
+        Row: {
+          collecte_le: string
+          id: string
+          offre_id: string
+          prix: number
+          prix_unitaire: number
+          promotion: string | null
+          source: string
+        }
+        Insert: {
+          collecte_le?: string
+          id?: string
+          offre_id: string
+          prix: number
+          prix_unitaire: number
+          promotion?: string | null
+          source: string
+        }
+        Update: {
+          collecte_le?: string
+          id?: string
+          offre_id?: string
+          prix?: number
+          prix_unitaire?: number
+          promotion?: string | null
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prix_historique_offre_id_fkey"
+            columns: ["offre_id"]
+            isOneToOne: false
+            referencedRelation: "offres_magasin"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      produits_canoniques: {
+        Row: {
+          created_at: string
+          id: string
+          ingredient_id: string | null
+          nom: string
+          rayon: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ingredient_id?: string | null
+          nom: string
+          rayon?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ingredient_id?: string | null
+          nom?: string
+          rayon?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "produits_canoniques_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
             referencedColumns: ["id"]
           },
         ]
@@ -880,6 +1023,51 @@ export type Database = {
       }
     }
     Views: {
+      prix_courant: {
+        Row: {
+          collecte_le: string | null
+          enseigne_id: string | null
+          format: string | null
+          offre_id: string | null
+          prix: number | null
+          prix_unitaire: number | null
+          produit_canonique_id: string | null
+          promotion: string | null
+          quantite: number | null
+          source: string | null
+          unite: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offres_magasin_enseigne_id_fkey"
+            columns: ["enseigne_id"]
+            isOneToOne: false
+            referencedRelation: "enseignes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offres_magasin_produit_canonique_id_fkey"
+            columns: ["produit_canonique_id"]
+            isOneToOne: false
+            referencedRelation: "produits_canoniques"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offres_magasin_unite_fkey"
+            columns: ["unite"]
+            isOneToOne: false
+            referencedRelation: "unites_mesure"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "prix_historique_offre_id_fkey"
+            columns: ["offre_id"]
+            isOneToOne: false
+            referencedRelation: "offres_magasin"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profils_actifs: {
         Row: {
           abonnement: string | null

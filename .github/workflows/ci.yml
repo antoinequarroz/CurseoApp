@@ -39,6 +39,8 @@ jobs:
         run: bash scripts/verify-supabase-seed.sh
       - name: Verifier la matrice allergenes/regimes/synonymes (COUR-15)
         run: bash scripts/verify-allergenes.sh
+      - name: Verifier la comparaison de prix/formats/enseignes (COUR-16)
+        run: bash scripts/verify-prix.sh
       - name: Arreter Supabase
         if: always()
         run: supabase stop --no-backup

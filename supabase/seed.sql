@@ -209,3 +209,35 @@ insert into listes_courses (id, profil_id, planning_id, items) values (
     {"id":"item-4","produit":"Papier toilette","quantite":1,"unite":"paquet","rayon":"Hygiene","coche":false}
   ]'::jsonb
 ) on conflict (id) do nothing;
+
+-- COUR-16 : produit canonique "Riz basmati" (repris de lib/mocks/prix.mock.ts)
+-- suivi chez 2 enseignes, 3 offres (2 formats chez Migros pour tester la
+-- comparaison de formats demandee par la Verification du ticket), et un
+-- historique de prix avec plusieurs observations dans le temps pour l'offre
+-- Migros 1kg (pour tester "retrouver le prix courant ainsi que
+-- l'historique" — le courant est simplement le plus recent).
+insert into produits_canoniques (id, nom, rayon) values
+  ('77777777-7777-7777-7777-777777777701', 'Riz basmati', 'Epicerie')
+on conflict (id) do nothing;
+
+insert into offres_magasin (id, produit_canonique_id, enseigne_id, format, quantite, unite)
+select '88888888-8888-8888-8888-888888888801'::uuid, '77777777-7777-7777-7777-777777777701'::uuid, id, '1kg', 1, 'kg'
+from enseignes where code = 'migros'
+union all
+select '88888888-8888-8888-8888-888888888802'::uuid, '77777777-7777-7777-7777-777777777701'::uuid, id, '500g', 0.5, 'kg'
+from enseignes where code = 'migros'
+union all
+select '88888888-8888-8888-8888-888888888803'::uuid, '77777777-7777-7777-7777-777777777701'::uuid, id, '1kg', 1, 'kg'
+from enseignes where code = 'coop'
+on conflict (id) do nothing;
+
+-- Migros 1kg : 2 observations dans le temps (prix a baisse de 4.50 a 4.20/kg)
+-- -> le "prix courant" (vue prix_courant) doit retourner 4.20, pas 4.50.
+insert into prix_historique (id, offre_id, prix, prix_unitaire, promotion, source, collecte_le) values
+  ('99999999-9999-9999-9999-999999999901', '88888888-8888-8888-8888-888888888801', 4.50, 4.50, null, 'saisie_manuelle', '2026-07-01 08:00:00+00'),
+  ('99999999-9999-9999-9999-999999999902', '88888888-8888-8888-8888-888888888801', 4.20, 4.20, '-7%', 'saisie_manuelle', '2026-07-20 08:00:00+00'),
+  -- Migros 500g : prix unitaire plus eleve que le 1kg (petit format plus
+  -- cher au kilo, cas realiste) -> matrice de comparaison de formats.
+  ('99999999-9999-9999-9999-999999999903', '88888888-8888-8888-8888-888888888802', 2.30, 4.60, null, 'saisie_manuelle', '2026-07-20 08:00:00+00'),
+  ('99999999-9999-9999-9999-999999999904', '88888888-8888-8888-8888-888888888803', 4.35, 4.35, null, 'saisie_manuelle', '2026-07-20 08:00:00+00')
+on conflict (id) do nothing;
