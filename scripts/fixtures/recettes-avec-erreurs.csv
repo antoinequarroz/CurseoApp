@@ -1,0 +1,5 @@
+cle_externe,titre,description,image_url,temps_preparation,difficulte,cout_estime,calories,proteines_g,glucides_g,lipides_g,portions,source,statut_publication,regimes,allergenes,ingredients,etapes
+,,,,,tres_dur,,,,,,0,csv,publiee,regime_qui_n_existe_pas,,IngredientFantome:-1:unite_bizarre,
+csv-import-doublon,Premiere version,,,,facile,,,,,,2,csv,publiee,,,Quinoa:100:g,Etape 1.
+csv-import-doublon,Deuxieme ligne avec la meme cle,,,,facile,,,,,,2,csv,publiee,,,Quinoa:100:g,Etape 1.
+csv-import-mauvais-format,Format ingredient invalide,,,,facile,,,,,,2,csv,publiee,,,Quinoa-sans-les-deux-points,Etape 1.

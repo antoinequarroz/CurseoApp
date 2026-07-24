@@ -756,6 +756,7 @@ export type Database = {
           auteur_id: string | null
           blurhash: string | null
           calories: number | null
+          cle_externe: string | null
           cout_estime: number | null
           created_at: string | null
           description: string | null
@@ -777,6 +778,7 @@ export type Database = {
           auteur_id?: string | null
           blurhash?: string | null
           calories?: number | null
+          cle_externe?: string | null
           cout_estime?: number | null
           created_at?: string | null
           description?: string | null
@@ -798,6 +800,7 @@ export type Database = {
           auteur_id?: string | null
           blurhash?: string | null
           calories?: number | null
+          cle_externe?: string | null
           cout_estime?: number | null
           created_at?: string | null
           description?: string | null
@@ -1188,6 +1191,10 @@ export type Database = {
       }
     }
     Functions: {
+      fn_importer_recettes_csv: {
+        Args: { dry_run?: boolean; lignes: Json }
+        Returns: Json
+      }
       fn_normaliser_terme: { Args: { terme: string }; Returns: string }
       fn_resoudre_allergene: {
         Args: { terme: string }

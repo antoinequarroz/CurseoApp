@@ -41,6 +41,8 @@ jobs:
         run: bash scripts/verify-allergenes.sh
       - name: Verifier la comparaison de prix/formats/enseignes (COUR-16)
         run: bash scripts/verify-prix.sh
+      - name: Verifier le pipeline d'import CSV (COUR-17)
+        run: bash scripts/verify-import-csv.sh
       - name: Arreter Supabase
         if: always()
         run: supabase stop --no-backup

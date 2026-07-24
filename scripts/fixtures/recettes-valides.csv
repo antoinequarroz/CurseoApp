@@ -1,0 +1,3 @@
+cle_externe,titre,description,image_url,temps_preparation,difficulte,cout_estime,calories,proteines_g,glucides_g,lipides_g,portions,source,statut_publication,regimes,allergenes,ingredients,etapes
+csv-import-tarte-quinoa,Tarte au quinoa et legumes,Tarte salee rapide au quinoa et legumes de saison,,40,facile,8.5,410,12,45,14,4,csv,publiee,vegetarien|sans_noix,,Quinoa:200:g;Patate douce:1:unite,Cuire le quinoa.;Roter les legumes 20 min.;Assembler et enfourner 15 min.
+csv-import-bol-saumon,Bol de saumon et asperges,Bol complet saumon grille et asperges vertes,,25,facile,15,480,32,10,28,2,csv,publiee,sans_gluten|sans_lactose,poisson,Pave de saumon:1:unite;Asperges vertes:250:g,Griller le saumon.;Cuire les asperges a la vapeur.

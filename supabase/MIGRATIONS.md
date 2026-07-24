@@ -153,6 +153,28 @@ Tests : `scripts/verify-prix.sh` (comparaison de formats via
 `prix_unitaire`, prix courant = plus recent, historique conserve, ecriture
 anon refusee), execute manuellement et en CI.
 
+## COUR-17 : pipeline d'import CSV recettes
+
+`recettes.cle_externe` (nullable, unique) ajoutee comme cle d'idempotence.
+`fn_importer_recettes_csv(lignes jsonb, dry_run boolean)` porte TOUTE la
+validation (champs, unites, doublons, references) et l'ecriture atomique
+(upsert sur `cle_externe` + remplacement complet des lignes filles) —
+accessible uniquement a `service_role` (`revoke ... from public`), jamais
+a anon/authenticated : c'est un outil d'operateur, pas une fonctionnalite
+app. Le script Node (`scripts/import-recettes-csv.mjs`) ne fait QUE le
+parsing CSV -> JSON, aucune logique de decision cote Node — voir
+`supabase/IMPORT_RECETTES_CSV.md` pour le format et les regles.
+
+Piege rencontre : une variable PL/pgSQL nommee `code` entrait en conflit
+avec la colonne `regimes.code`/`allergenes.code` dans les memes requetes
+(`column reference "code" is ambiguous`) — renommee `v_code`. A eviter :
+nommer une variable PL/pgSQL comme une colonne frequemment utilisee dans
+la meme fonction.
+
+Tests : `scripts/verify-import-csv.sh` reproduit la Verification litterale
+du ticket (fichier valide importe deux fois -> idempotent, fichier avec
+erreurs connues -> tout rejete), execute manuellement et en CI.
+
 ## ⚠️ Divergence de sécurité trouvée pendant ce ticket
 
 `supabase/schema.sql` (l'ancien fichier appliqué à la main) définit la policy
