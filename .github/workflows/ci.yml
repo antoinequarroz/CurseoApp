@@ -49,6 +49,8 @@ jobs:
         run: bash scripts/verify-qualite-prix.sh
       - name: Verifier l'isolation RLS entre foyers (COUR-23)
         run: bash scripts/verify-foyers-membres.sh
+      - name: Verifier le CRUD membres du foyer avec un compte Famille (COUR-24)
+        run: bash scripts/verify-membres-foyer-crud.sh
       - name: Arreter Supabase
         if: always()
         run: supabase stop --no-backup

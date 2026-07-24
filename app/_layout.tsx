@@ -70,6 +70,7 @@ export default function RootLayout() {
                     <Stack.Screen name="(tabs)" />
                     <Stack.Screen name="recette/[id]" options={{ presentation: 'modal', headerShown: true, title: 'Recette' }} />
                     <Stack.Screen name="gouts" options={{ presentation: 'modal', headerShown: true, title: 'Vos goûts' }} />
+                    <Stack.Screen name="membres-foyer" options={{ presentation: 'modal', headerShown: true, title: 'Membres du foyer' }} />
                   </Stack>
                   <WhatsNewModal
                     visible={Boolean(profil) && shouldShowWhatsNew}

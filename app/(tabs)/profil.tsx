@@ -2,13 +2,14 @@
 import React, { useEffect, useState } from 'react';
 import { Pressable, Switch, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
-import { Bell, ChevronRight, Crown, Home, LogOut, MapPin, Palette, Sparkles, ShieldAlert, UserRound } from 'lucide-react-native';
+import { Bell, ChevronRight, Crown, Home, LogOut, MapPin, Palette, Sparkles, ShieldAlert, UserRound, Users } from 'lucide-react-native';
 import { useTheme, type ApparencePreference } from '@/lib/theme-context';
 import { useProfilStore } from '@/stores/profilStore';
 import { supabase } from '@/lib/supabase';
 import { resetUserStores } from '@/lib/resetSession';
 import { PALIERS_ABONNEMENT } from '@/lib/revenuecat';
-import { RegimeParPersonneTeaser } from '@/components/ui/RegimeParPersonneTeaser';
+import { useAbonnement } from '@/hooks/useAbonnement';
+import { PaywallModal } from '@/components/ui/PaywallModal';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { ScreenScroll } from '@/components/ui/Screen';
@@ -108,6 +109,8 @@ export default function Profil() {
   const [email, setEmail] = useState<string | null>(null);
   const [abonnementOuvert, setAbonnementOuvert] = useState(false);
   const [apparenceOuvert, setApparenceOuvert] = useState(false);
+  const [paywallFamilleVisible, setPaywallFamilleVisible] = useState(false);
+  const { estAuMoins } = useAbonnement();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? null));
@@ -327,7 +330,30 @@ export default function Profil() {
         </Card>
       </Pressable>
 
-      <RegimeParPersonneTeaser />
+      <Pressable
+        onPress={() => (estAuMoins('famille') ? router.push('/membres-foyer') : setPaywallFamilleVisible(true))}
+        accessibilityRole="button"
+        accessibilityLabel={t('famille.titre')}
+      >
+        <Card style={{ padding: 20, gap: 4, borderRadius: 28, borderTopLeftRadius: 28 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}>
+              <Users size={22} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Heading>{t('famille.titre')}</Heading>
+              <Caption>{t('famille.sous_titre')}</Caption>
+            </View>
+            <ChevronRight size={20} color={colors.textMuted} />
+          </View>
+        </Card>
+      </Pressable>
+      <PaywallModal
+        visible={paywallFamilleVisible}
+        onClose={() => setPaywallFamilleVisible(false)}
+        onChoisir={() => setPaywallFamilleVisible(false)}
+        featureOrigine="membres_foyer"
+      />
 
       <View
         style={{

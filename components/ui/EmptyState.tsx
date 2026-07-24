@@ -6,7 +6,7 @@ import { useTheme } from '@/lib/theme-context';
 import { Heading, BodySm } from './Typography';
 import { Button } from './Button';
 
-type TypeIllustration = 'recettes' | 'planning' | 'courses' | 'economies' | 'favoris' | 'recherche';
+type TypeIllustration = 'recettes' | 'planning' | 'courses' | 'economies' | 'favoris' | 'recherche' | 'famille';
 
 interface EmptyStateProps {
   illustration: TypeIllustration;
@@ -65,6 +65,15 @@ function Illustration({ type, color }: { type: TypeIllustration; color: string }
         <Svg {...props}>
           <Circle cx="52" cy="52" r="28" stroke={color} strokeWidth="4" fill="none" />
           <Path d="M72 72 L92 92" stroke={color} strokeWidth="5" strokeLinecap="round" />
+        </Svg>
+      );
+    case 'famille':
+      return (
+        <Svg {...props}>
+          <Circle cx="45" cy="42" r="15" stroke={color} strokeWidth="4" fill="none" />
+          <Path d="M20 95 a25 25 0 0 1 50 0" stroke={color} strokeWidth="4" fill="none" />
+          <Circle cx="82" cy="50" r="11" stroke={color} strokeWidth="4" fill="none" />
+          <Path d="M64 95 a18 18 0 0 1 36 0" stroke={color} strokeWidth="4" fill="none" />
         </Svg>
       );
   }

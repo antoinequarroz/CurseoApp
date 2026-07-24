@@ -60,3 +60,13 @@ export function SkeletonComparateur() {
     </View>
   );
 }
+
+export function SkeletonMembresFoyer() {
+  return (
+    <View style={{ gap: 12 }}>
+      {[0, 1, 2].map((i) => (
+        <SkeletonBlock key={i} width="100%" height={72} radius={20} />
+      ))}
+    </View>
+  );
+}

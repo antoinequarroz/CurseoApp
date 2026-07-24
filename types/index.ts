@@ -63,6 +63,21 @@ export interface Profil {
   cgvu_version_acceptee: string | null;
 }
 
+/**
+ * Membre du foyer (COUR-23/24, palier Famille) — restrictions alimentaires
+ * propres a une personne, distinctes des `Profil.regime`/`allergies`
+ * (foyer entier). Ne reprend pas `est_responsable`/`profil_id` cote client :
+ * cet ecran ne gere que les membres AUTRES que le responsable (voir
+ * `lib/membresFoyerRepository.ts`).
+ */
+export interface MembreFoyer {
+  id: string;
+  prenom: string;
+  age: number | null;
+  regime: Regime[];
+  allergies: string[];
+}
+
 export interface Ingredient {
   nom: string;
   quantite: number;
