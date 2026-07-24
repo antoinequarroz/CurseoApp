@@ -1,4 +1,15 @@
-/** Panier optimise par enseigne — calcule depuis la liste de courses + mode d'optimisation. */
+/**
+ * Panier optimise par enseigne — calcule depuis la liste de courses + mode
+ * d'optimisation.
+ *
+ * COUR-20 : reste volontairement sur lib/mocks/prix.mock.ts, hors perimetre
+ * de ce ticket (scope = "le comparateur", app/components/courses/ComparateurPrix.tsx
+ * + hooks/usePrix.ts). Brancher ce store sur les prix reels est un chantier
+ * different et plus large : `calculer()` devrait devenir asynchrone (une
+ * requete par produit de la liste), avec ses propres etats de chargement —
+ * pas une simple substitution d'import comme pour le comparateur. Candidat
+ * pour un futur ticket dedie.
+ */
 import { create } from 'zustand';
 import type { Enseigne, ItemCourse, ModeOptimisation, PanierEnseigne, PrixProduit, RecapCommande } from '@/types';
 import { PRODUITS_COMPARATIFS, trouverPrixProduit } from '@/lib/mocks/prix.mock';

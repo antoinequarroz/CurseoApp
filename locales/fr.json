@@ -251,7 +251,13 @@
   },
   "comparateur": {
     "debloquer": "Débloquer le comparateur de prix →",
-    "indisponible": "Prix indisponibles pour ce produit."
+    "indisponible": "Prix indisponibles pour ce produit.",
+    "non_trouve": "Ce produit n'est pas encore suivi par le comparateur.",
+    "aucun_prix": "Aucun prix collecté pour ce produit pour le moment.",
+    "prix_par_unite": "{{prix}}/{{unite}}",
+    "maj_le": "Mis à jour le {{date}}",
+    "prix_peut_etre_perime": "Prix du {{date}} — peut-être dépassé",
+    "source": "Source : {{source}}"
   },
   "erreurs": {
     "boundary_titre": "Une erreur est survenue",

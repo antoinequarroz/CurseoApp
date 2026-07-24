@@ -10,8 +10,10 @@ import { Badge } from '@/components/ui/Badge';
 import { SkeletonComparateur } from '@/components/ui/Skeleton';
 import { PaywallModal } from '@/components/ui/PaywallModal';
 import { formatPrix } from '@/lib/format';
+import { dates } from '@/lib/dates';
 import { t } from '@/lib/i18n';
 import type { NiveauAbonnement } from '@/types';
+import type { OffrePrix } from '@/lib/prixRepository';
 
 const NOM_ENSEIGNE: Record<string, string> = {
   coop: t('onboarding.enseigne_coop'),
@@ -21,6 +23,55 @@ const NOM_ENSEIGNE: Record<string, string> = {
   ottos: t('onboarding.enseigne_ottos'),
   manor_food: t('onboarding.enseigne_manor_food'),
 };
+
+// Cycle de promos hebdomadaire habituel en Suisse : au-dela de 14 jours, un
+// prix n'est plus considere comme fiable a coup sur — signale plutot que
+// montre comme s'il etait encore d'actualite.
+const JOURS_AVANT_PERIME = 14;
+
+function estPerime(collecteLe: string): boolean {
+  const jours = (Date.now() - new Date(collecteLe).getTime()) / (1000 * 60 * 60 * 24);
+  return jours > JOURS_AVANT_PERIME;
+}
+
+function LigneOffre({ offre, estMeilleurPrix }: { offre: OffrePrix; estMeilleurPrix: boolean }) {
+  const { colors } = useTheme();
+  const perime = estPerime(offre.collecteLe);
+
+  return (
+    <View
+      style={{
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        borderRadius: 10,
+        backgroundColor: colors.bgSecondary,
+        gap: 4,
+      }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 }}>
+          <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: enseigneColors[offre.enseigne] }} />
+          <Body>{NOM_ENSEIGNE[offre.enseigne] ?? offre.enseigne}</Body>
+          {offre.format ? <Caption>{offre.format}</Caption> : null}
+          {offre.promotion ? <Badge label={offre.promotion} variant="warning" /> : null}
+          {estMeilleurPrix ? <Badge label={t('courses.meilleur_prix')} variant="meilleurPrix" /> : null}
+        </View>
+        <View style={{ alignItems: 'flex-end' }}>
+          <Price>{formatPrix(offre.prix)}</Price>
+          <Caption>{t('comparateur.prix_par_unite', { prix: formatPrix(offre.prixUnitaire), unite: offre.unite })}</Caption>
+        </View>
+      </View>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+        <Caption style={perime ? { color: colors.warning } : undefined}>
+          {perime
+            ? t('comparateur.prix_peut_etre_perime', { date: dates.formatCourt(new Date(offre.collecteLe)) })
+            : t('comparateur.maj_le', { date: dates.formatCourt(new Date(offre.collecteLe)) })}
+        </Caption>
+        <Caption>{t('comparateur.source', { source: offre.source })}</Caption>
+      </View>
+    </View>
+  );
+}
 
 export function ComparateurPrix({ produit, onChoisirPalier }: { produit: string; onChoisirPalier: (p: NiveauAbonnement) => void }) {
   const { colors } = useTheme();
@@ -45,31 +96,18 @@ export function ComparateurPrix({ produit, onChoisirPalier }: { produit: string;
   }
 
   if (isLoading) return <SkeletonComparateur />;
-  if (isError || !comparatif) return <Caption>{t('comparateur.indisponible')}</Caption>;
+  if (isError) return <Caption>{t('comparateur.indisponible')}</Caption>;
+  if (!comparatif) return <Caption>{t('comparateur.non_trouve')}</Caption>;
+  if (comparatif.offres.length === 0) return <Caption>{t('comparateur.aucun_prix')}</Caption>;
 
   return (
     <View style={{ gap: 8 }}>
-      {comparatif.prix.map((p) => (
-        <View
-          key={p.enseigne}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingVertical: 8,
-            paddingHorizontal: 12,
-            borderRadius: 10,
-            backgroundColor: colors.bgSecondary,
-          }}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: enseigneColors[p.enseigne] }} />
-            <Body>{NOM_ENSEIGNE[p.enseigne] ?? p.enseigne}</Body>
-            {p.promotion ? <Badge label={p.promotion} variant="warning" /> : null}
-            {p.enseigne === comparatif.meilleur_prix ? <Badge label={t('courses.meilleur_prix')} variant="meilleurPrix" /> : null}
-          </View>
-          <Price>{formatPrix(p.prix_unitaire)}</Price>
-        </View>
+      {comparatif.offres.map((offre) => (
+        <LigneOffre
+          key={offre.offreId}
+          offre={offre}
+          estMeilleurPrix={offre.prixUnitaire === comparatif.meilleurPrixUnitaire}
+        />
       ))}
     </View>
   );
