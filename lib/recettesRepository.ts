@@ -3,13 +3,17 @@
  * COUR-14/15) et les reconstruit dans la forme `Recette` attendue par le
  * reste de l'app (ingredients/etapes/regime/allergenes embarqués), pour ne
  * rien changer aux composants d'affichage. `allergenes` reprend les
- * déclarations explicites de l'auteur (`recette_allergenes`), pas les
- * allergènes déduits des ingrédients (`recette_allergenes_effectifs`,
- * COUR-15) — ce dernier mélange volontairement du "possible", pas adapté à
- * un simple tag d'affichage/filtrage.
+ * déclarations explicites de l'auteur (`recette_allergenes`) — reste un tag
+ * d'affichage simple.
+ *
+ * COUR-22 : `allergenesEffectifs` complète ça avec les allergènes déclarés
+ * ET déduits des ingrédients (vue `recette_allergenes_effectifs`, COUR-15),
+ * avec leur `certitude` — c'est ce que `hooks/useRecettes.ts` utilise pour
+ * le filtrage/signalement réel, `allergenes` seul étant insuffisant pour ne
+ * jamais proposer une recette incompatible comme sûre.
  */
 import { supabase } from './supabase';
-import type { Recette, Regime } from '@/types';
+import type { AllergeneEffectif, Recette, Regime } from '@/types';
 
 interface LigneRecetteBrute {
   id: string;
@@ -34,7 +38,7 @@ interface LigneRecetteBrute {
   recette_allergenes: { allergenes: { code: string } | null }[];
 }
 
-function versRecette(ligne: LigneRecetteBrute): Recette {
+function versRecette(ligne: LigneRecetteBrute, allergenesEffectifs: AllergeneEffectif[]): Recette {
   return {
     id: ligne.id,
     titre: ligne.titre,
@@ -48,6 +52,7 @@ function versRecette(ligne: LigneRecetteBrute): Recette {
     portions: ligne.portions,
     regime: ligne.recette_regimes.map((r) => r.regimes?.code).filter((c): c is Regime => Boolean(c)),
     allergenes: ligne.recette_allergenes.map((a) => a.allergenes?.code).filter((c): c is string => Boolean(c)),
+    allergenesEffectifs,
     ingredients: [...ligne.recette_ingredients]
       .sort((a, b) => a.ordre - b.ordre)
       .map((ri) => ({
@@ -67,6 +72,39 @@ const SELECT_RECETTE_COMPLETE = `id, titre, description, image_url, blurhash, te
    recette_regimes ( regimes ( code ) ),
    recette_allergenes ( allergenes ( code ) )`;
 
+interface LigneAllergeneEffectif {
+  recette_id: string;
+  code: string;
+  libelle: string;
+  source: 'declare' | 'deduit';
+  certitude: 'confirme' | 'possible';
+}
+
+/**
+ * Allergènes effectifs (déclarés + déduits, COUR-15) pour un lot de
+ * recettes. Requête séparée plutôt qu'un embed PostgREST : la vue
+ * `recette_allergenes_effectifs` n'est pas une relation FK que PostgREST
+ * sait embarquer automatiquement depuis `recettes`.
+ */
+async function fetchAllergenesEffectifs(recetteIds: string[]): Promise<Map<string, AllergeneEffectif[]>> {
+  const parRecette = new Map<string, AllergeneEffectif[]>();
+  if (recetteIds.length === 0) return parRecette;
+
+  const { data, error } = await supabase
+    .from('recette_allergenes_effectifs')
+    .select('recette_id, code, libelle, source, certitude')
+    .in('recette_id', recetteIds);
+
+  if (error) throw error;
+
+  for (const ligne of (data ?? []) as LigneAllergeneEffectif[]) {
+    const liste = parRecette.get(ligne.recette_id) ?? [];
+    liste.push({ code: ligne.code, libelle: ligne.libelle, source: ligne.source, certitude: ligne.certitude });
+    parRecette.set(ligne.recette_id, liste);
+  }
+  return parRecette;
+}
+
 /** Toutes les recettes publiées (statut_publication='publiee'), reconstruites dans la forme app. */
 export async function fetchRecettesPubliees(): Promise<Recette[]> {
   const { data, error } = await supabase
@@ -76,7 +114,9 @@ export async function fetchRecettesPubliees(): Promise<Recette[]> {
     .order('created_at', { ascending: false });
 
   if (error) throw error;
-  return ((data ?? []) as unknown as LigneRecetteBrute[]).map(versRecette);
+  const lignes = (data ?? []) as unknown as LigneRecetteBrute[];
+  const allergenesEffectifs = await fetchAllergenesEffectifs(lignes.map((l) => l.id));
+  return lignes.map((ligne) => versRecette(ligne, allergenesEffectifs.get(ligne.id) ?? []));
 }
 
 /**
@@ -100,5 +140,8 @@ export async function fetchRecetteParId(id: string): Promise<Recette | null> {
     if (error.code === '22P02') return null;
     throw error;
   }
-  return data ? versRecette(data as unknown as LigneRecetteBrute) : null;
+  if (!data) return null;
+  const ligne = data as unknown as LigneRecetteBrute;
+  const allergenesEffectifs = await fetchAllergenesEffectifs([ligne.id]);
+  return versRecette(ligne, allergenesEffectifs.get(ligne.id) ?? []);
 }

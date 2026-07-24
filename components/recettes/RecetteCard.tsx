@@ -9,7 +9,9 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { TitreRecetteCard, DescriptionRecetteCard, Caption, Price } from '@/components/ui/Typography';
 import { formatPrix, formatTemps } from '@/lib/format';
+import { t } from '@/lib/i18n';
 import type { Recette } from '@/types';
+import type { AlerteAllergene } from '@/hooks/useRecettes';
 
 const COULEUR_DIFFICULTE: Record<Recette['difficulte'], 'success' | 'warning' | 'error'> = {
   facile: 'success',
@@ -17,7 +19,16 @@ const COULEUR_DIFFICULTE: Record<Recette['difficulte'], 'success' | 'warning' | 
   difficile: 'error',
 };
 
-export function RecetteCard({ recette, variant = 'default' }: { recette: Recette; variant?: 'default' | 'hero' }) {
+export function RecetteCard({
+  recette,
+  variant = 'default',
+  alerteAllergenes,
+}: {
+  recette: Recette;
+  variant?: 'default' | 'hero';
+  /** COUR-22 : allergene de l'utilisateur possiblement present (deduction ambigue) — jamais une exclusion automatique, toujours affiche pour que la recette ne soit jamais percue comme sure a tort. */
+  alerteAllergenes?: AlerteAllergene[];
+}) {
   const { colors, isDark } = useTheme();
   const { isSmall } = useResponsive();
   const imageHeight = variant === 'hero' ? (isSmall ? 220 : 260) : isSmall ? 180 : 200;
@@ -54,6 +65,12 @@ export function RecetteCard({ recette, variant = 'default' }: { recette: Recette
       </View>
       <View style={{ padding: variant === 'hero' ? 20 : 16, gap: 8 }}>
         <TitreRecetteCard>{recette.titre}</TitreRecetteCard>
+        {alerteAllergenes && alerteAllergenes.length > 0 && (
+          <Badge
+            label={t('recettes.allergene_possible', { allergenes: alerteAllergenes.map((a) => a.libelle).join(', ') })}
+            variant="warning"
+          />
+        )}
         <DescriptionRecetteCard>{recette.description}</DescriptionRecetteCard>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12 }}>
           <Price>{formatPrix(recette.cout_estime)}</Price>

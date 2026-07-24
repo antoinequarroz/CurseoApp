@@ -295,6 +295,7 @@ export default function Profil() {
               <View style={{ gap: 6 }}>
                 <Caption>{t('onboarding.regime_autres')}</Caption>
                 <ChipsAffichage items={profilAffiche.allergies} />
+                <Caption>{t('planning.disclaimer_medical')}</Caption>
               </View>
             )}
             {profilAffiche.enseignes_favorites.length > 0 && (

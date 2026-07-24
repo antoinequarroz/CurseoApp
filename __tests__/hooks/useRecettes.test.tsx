@@ -3,9 +3,11 @@ import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useRecettes } from '@/hooks/useRecettes';
 import * as recettesRepository from '@/lib/recettesRepository';
-import type { Recette } from '@/types';
+import * as allergenesRepository from '@/lib/allergenesRepository';
+import type { AllergeneEffectif, Recette } from '@/types';
 
 jest.mock('@/lib/recettesRepository');
+jest.mock('@/lib/allergenesRepository');
 // Force isSupabaseConfigured=true pour ce fichier : ces tests couvrent le
 // vrai parcours "backend joignable" (succes/vide/erreur/refetch/filtres).
 // Le cas "Supabase non configure -> repli sur RECETTES_MOCK" est teste a
@@ -21,6 +23,25 @@ jest.mock('@/lib/supabase', () => ({
 }));
 
 const fetchRecettesPublieesMock = recettesRepository.fetchRecettesPubliees as jest.Mock;
+const fetchSynonymesAllergenesMock = allergenesRepository.fetchSynonymesAllergenes as jest.Mock;
+
+// Referentiel de synonymes (COUR-15) minimal pour les tests COUR-22 : reprend
+// quelques entrees reelles du seed (accents, pluriels, termes composes).
+const SYNONYMES_TEST = [
+  { terme: 'arachide', code: 'arachide' },
+  { terme: 'cacahuete', code: 'arachide' },
+  { terme: 'cacahuetes', code: 'arachide' },
+  { terme: 'fruits_a_coque', code: 'fruits_a_coque' },
+  { terme: 'noix de cajou', code: 'fruits_a_coque' },
+  { terme: 'noisette', code: 'fruits_a_coque' },
+  { terme: 'gluten', code: 'gluten' },
+  { terme: 'ble', code: 'gluten' },
+  { terme: 'lactose', code: 'lactose' },
+];
+
+function effectif(overrides: Partial<AllergeneEffectif>): AllergeneEffectif {
+  return { code: 'gluten', libelle: 'Gluten', source: 'declare', certitude: 'confirme', ...overrides };
+}
 
 function recette(overrides: Partial<Recette>): Recette {
   return {
@@ -50,6 +71,8 @@ function wrapper({ children }: { children: React.ReactNode }) {
 describe('useRecettes', () => {
   beforeEach(() => {
     fetchRecettesPublieesMock.mockReset();
+    fetchSynonymesAllergenesMock.mockReset();
+    fetchSynonymesAllergenesMock.mockResolvedValue(SYNONYMES_TEST);
   });
 
   it('succes : expose les recettes publiees une fois chargees', async () => {
@@ -123,5 +146,96 @@ describe('useRecettes', () => {
     await waitFor(() => expect(result.current.data.pages).toHaveLength(2));
     expect(result.current.data.pages.flat()).toHaveLength(12);
     expect(result.current.hasNextPage).toBe(false);
+  });
+
+  describe('COUR-22 : filtrage allergies robuste', () => {
+    it('correspondance exacte (code canonique) confirmee : la recette est exclue', async () => {
+      fetchRecettesPublieesMock.mockResolvedValue([
+        recette({ id: 'r-gluten', allergenesEffectifs: [effectif({ code: 'gluten', certitude: 'confirme' })] }),
+        recette({ id: 'r-safe', allergenesEffectifs: [] }),
+      ]);
+
+      const { result } = await renderHook(() => useRecettes({ allergies: ['gluten'] }), { wrapper });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      expect(result.current.data.pages.flat().map((r) => r.id)).toEqual(['r-safe']);
+    });
+
+    it('synonyme + accent + casse ("Cacahuète") resout vers arachide et exclut la recette', async () => {
+      fetchRecettesPublieesMock.mockResolvedValue([
+        recette({ id: 'r-arachide', allergenesEffectifs: [effectif({ code: 'arachide', libelle: 'Arachides', certitude: 'confirme' })] }),
+        recette({ id: 'r-safe', allergenesEffectifs: [] }),
+      ]);
+
+      const { result } = await renderHook(() => useRecettes({ allergies: ['Cacahuète'] }), { wrapper });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      expect(result.current.data.pages.flat().map((r) => r.id)).toEqual(['r-safe']);
+      expect(result.current.allergiesNonReconnues).toEqual([]);
+    });
+
+    it('pluriel non seede explicitement ("noisettes") se resout via le repli singulier du referentiel', async () => {
+      fetchRecettesPublieesMock.mockResolvedValue([
+        recette({ id: 'r-noisette', allergenesEffectifs: [effectif({ code: 'fruits_a_coque', certitude: 'confirme' })] }),
+      ]);
+
+      const { result } = await renderHook(() => useRecettes({ allergies: ['noisettes'] }), { wrapper });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      expect(result.current.data.pages.flat()).toHaveLength(0);
+      expect(result.current.allergiesNonReconnues).toEqual([]);
+    });
+
+    it('terme compose ("noix de cajou") resout vers fruits_a_coque et exclut la recette', async () => {
+      fetchRecettesPublieesMock.mockResolvedValue([
+        recette({ id: 'r-cajou', allergenesEffectifs: [effectif({ code: 'fruits_a_coque', certitude: 'confirme' })] }),
+        recette({ id: 'r-safe', allergenesEffectifs: [] }),
+      ]);
+
+      const { result } = await renderHook(() => useRecettes({ allergies: ['noix de cajou'] }), { wrapper });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      expect(result.current.data.pages.flat().map((r) => r.id)).toEqual(['r-safe']);
+    });
+
+    it('match "possible" seulement (deduction ambigue) : jamais exclue, mais toujours signalee', async () => {
+      fetchRecettesPublieesMock.mockResolvedValue([
+        recette({ id: 'r-ambigu', allergenesEffectifs: [effectif({ code: 'gluten', libelle: 'Gluten', source: 'deduit', certitude: 'possible' })] }),
+      ]);
+
+      const { result } = await renderHook(() => useRecettes({ allergies: ['gluten'] }), { wrapper });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      expect(result.current.data.pages.flat().map((r) => r.id)).toEqual(['r-ambigu']);
+      expect(result.current.alertesParRecette['r-ambigu']).toEqual([{ code: 'gluten', libelle: 'Gluten' }]);
+    });
+
+    it('allergie saisie non reconnue par le referentiel : signalee explicitement, ne filtre aucune recette pour ce terme', async () => {
+      fetchRecettesPublieesMock.mockResolvedValue([
+        recette({ id: 'r-1', allergenesEffectifs: [] }),
+        recette({ id: 'r-2', allergenesEffectifs: [effectif({ code: 'gluten', certitude: 'confirme' })] }),
+      ]);
+
+      const { result } = await renderHook(() => useRecettes({ allergies: ['terme_inconnu_xyz'] }), { wrapper });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      expect(result.current.allergiesNonReconnues).toEqual(['terme_inconnu_xyz']);
+      expect(result.current.data.pages.flat().map((r) => r.id)).toEqual(['r-1', 'r-2']);
+    });
+
+    it('ingredient catalogue (allergenesEffectifs) exclut meme sans declaration explicite sur allergenes', async () => {
+      fetchRecettesPublieesMock.mockResolvedValue([
+        recette({
+          id: 'r-deduit',
+          allergenes: [],
+          allergenesEffectifs: [effectif({ code: 'lactose', libelle: 'Lait / lactose', source: 'deduit', certitude: 'confirme' })],
+        }),
+      ]);
+
+      const { result } = await renderHook(() => useRecettes({ allergies: ['lactose'] }), { wrapper });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      expect(result.current.data.pages.flat()).toHaveLength(0);
+    });
   });
 });

@@ -112,6 +112,8 @@
     "empty_catalogue_soustitre": "Le catalogue est vide pour le moment, reviens plus tard.",
     "erreur_recettes_titre": "Impossible de charger les recettes",
     "erreur_recettes_soustitre": "Vérifie ta connexion et réessaie.",
+    "allergies_non_reconnues": "Allergie(s) non reconnue(s) par notre référentiel : {{allergies}} — non prise(s) en compte dans le filtrage.",
+    "disclaimer_medical": "Coursia t'aide à repérer des risques connus, mais ne remplace pas l'avis d'un professionnel de santé.",
     "voir_planning": "Voir mon planning",
     "generer_semaine_ia": "Générer la semaine avec l'IA",
     "empty_communaute_titre": "Aucune recette communautaire",
@@ -273,7 +275,8 @@
     "je_passe": "Je passe cette recette",
     "voir_detail": "Voir le détail de la recette",
     "jaime": "J'aime cette recette",
-    "retirer_favoris": "Retirer des favoris"
+    "retirer_favoris": "Retirer des favoris",
+    "allergene_possible": "Contient peut-être : {{allergenes}}"
   },
   "gouts": {
     "titre": "On cerne vos goûts",

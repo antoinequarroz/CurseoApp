@@ -70,6 +70,14 @@ export interface Ingredient {
   rayon?: Rayon;
 }
 
+/** Allergene effectif d'une recette (COUR-22) — declare par l'auteur OU deduit des ingredients catalogues (voir vue Supabase `recette_allergenes_effectifs`, COUR-15). `certitude: 'possible'` = risque de contamination croisee ou deduction non systematique, jamais a traiter comme sur. Optionnel : absent pour les recettes du catalogue mock (mode sans Supabase), qui n'ont que `allergenes` (declares uniquement). */
+export interface AllergeneEffectif {
+  code: string;
+  libelle: string;
+  source: 'declare' | 'deduit';
+  certitude: 'confirme' | 'possible';
+}
+
 export interface Recette {
   id: string;
   titre: string;
@@ -83,6 +91,7 @@ export interface Recette {
   portions: number;
   regime: Regime[];
   allergenes: string[];
+  allergenesEffectifs?: AllergeneEffectif[];
   ingredients: Ingredient[];
   etapes: string[];
   est_communautaire: boolean;

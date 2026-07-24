@@ -77,7 +77,7 @@ export default function Planifier() {
   const [slotChoix, setSlotChoix] = useState<{ jour: JourSemaine; moment: 'midi' | 'soir' } | null>(null);
   const [portionsChoix, setPortionsChoix] = useState<number | null>(null);
 
-  const { data, isLoading, isError, isEmpty, refetch, fetchNextPage, hasNextPage } = useRecettes({
+  const { data, isLoading, isError, isEmpty, refetch, fetchNextPage, hasNextPage, alertesParRecette, allergiesNonReconnues } = useRecettes({
     regime: profil?.regime,
     allergies: profil?.allergies,
   });
@@ -129,16 +129,25 @@ export default function Planifier() {
               sousTitre={t('planning.empty_catalogue_soustitre')}
             />
           ) : recetteActuelle ? (
-            <SwipeRecette
-              recette={recetteActuelle}
-              profilId={profil?.id ?? 'demo-user'}
-              onTapDetail={() => router.push(`/recette/${recetteActuelle.id}`)}
-              onSwiped={(aime) => {
-                if (aime) setRecettesAimees((prev) => [...prev, recetteActuelle]);
-                if (indexCourant + 2 >= recettes.length && hasNextPage) void fetchNextPage();
-                setIndexCourant((i) => i + 1);
-              }}
-            />
+            <View style={{ gap: 10 }}>
+              {allergiesNonReconnues.length > 0 && (
+                <Caption style={{ color: colors.warning, textAlign: 'center' }}>
+                  {t('planning.allergies_non_reconnues', { allergies: allergiesNonReconnues.join(', ') })}
+                </Caption>
+              )}
+              <SwipeRecette
+                recette={recetteActuelle}
+                profilId={profil?.id ?? 'demo-user'}
+                alerteAllergenes={alertesParRecette[recetteActuelle.id]}
+                onTapDetail={() => router.push(`/recette/${recetteActuelle.id}`)}
+                onSwiped={(aime) => {
+                  if (aime) setRecettesAimees((prev) => [...prev, recetteActuelle]);
+                  if (indexCourant + 2 >= recettes.length && hasNextPage) void fetchNextPage();
+                  setIndexCourant((i) => i + 1);
+                }}
+              />
+              {profil?.allergies?.length ? <Caption style={{ textAlign: 'center' }}>{t('planning.disclaimer_medical')}</Caption> : null}
+            </View>
           ) : (
             <EmptyState
               illustration="recettes"
