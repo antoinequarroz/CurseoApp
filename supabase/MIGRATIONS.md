@@ -187,3 +187,35 @@ périmètre de ce ticket ("récupérer l'existant", pas le corriger) — mais ç
 ressemble à une régression accidentelle plutôt qu'à un choix voulu. **Décision
 à prendre séparément** : restaurer la policy restrictive d'origine, ou
 confirmer que l'ouverture est intentionnelle.
+
+## COUR-23 : foyers et membres du foyer
+
+`foyers` (id, `responsable_id` -> `profils(id)`, unique — un compte
+authentifié est responsable d'au plus un foyer) et `membres_foyer` (id,
+`foyer_id`, `profil_id` nullable, `prenom`, `est_responsable`, `age`,
+`regime`/`allergies`/`objectifs` en `text[]`, champs `gouts_*` repris du
+sondage local `stores/goutsStore.ts`). `profil_id` nullable **exprès** :
+un membre sans compte de connexion (ex. jeune enfant) doit exister comme
+ligne à part entière, protégée comme les autres par `foyer_id` — jamais par
+sa propre identité puisqu'il n'en a pas. `profils.regime/allergies/objectifs`
+(agrégés, foyer entier) restent inchangés : ce ticket est un ajout de schéma
+pur, pas un branchement client — voir COUR-24/COUR-25 (bloqués par ce
+ticket) pour l'UI.
+
+Isolation RLS : clé = `foyer_id` via `foyers.responsable_id = auth.uid()`,
+jamais `profil_id` seul (sinon un membre sans compte ne serait protégé par
+rien). Le responsable a un accès total (`for all`) sur les membres de son
+foyer ; un membre avec son propre compte peut en plus lire (jamais modifier)
+sa propre ligne via une deuxième policy `for select` — Postgres combine les
+policies `for select` en OR, ça s'ajoute donc à l'accès du responsable sans
+le remplacer.
+
+Contrairement aux `verify-*.sh` précédents (anon vs service_role),
+`scripts/verify-foyers-membres.sh` crée deux **vrais comptes authentifiés
+distincts** via l'API Admin GoTrue (`/auth/v1/admin/users` + `/auth/v1/token
+?grant_type=password`) pour tester une isolation RLS réellement keyed sur
+`auth.uid()` — aucun script précédent ne testait la RLS entre deux comptes
+distincts, seulement anon/service_role. Reproduit la Vérification littérale
+du ticket : deux foyers créés, isolation démontrée (foyer B invisible et non
+modifiable par l'utilisateur A, membre sans compte visible uniquement par le
+responsable de son propre foyer), exécuté manuellement et en CI.

@@ -47,6 +47,8 @@ jobs:
         run: bash scripts/verify-catalogue.sh
       - name: Verifier les regles de fraicheur et qualite des prix (COUR-21)
         run: bash scripts/verify-qualite-prix.sh
+      - name: Verifier l'isolation RLS entre foyers (COUR-23)
+        run: bash scripts/verify-foyers-membres.sh
       - name: Arreter Supabase
         if: always()
         run: supabase stop --no-backup

@@ -169,6 +169,39 @@ export type Database = {
           },
         ]
       }
+      foyers: {
+        Row: {
+          created_at: string
+          id: string
+          responsable_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          responsable_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          responsable_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "foyers_responsable_id_fkey"
+            columns: ["responsable_id"]
+            isOneToOne: true
+            referencedRelation: "profils"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "foyers_responsable_id_fkey"
+            columns: ["responsable_id"]
+            isOneToOne: true
+            referencedRelation: "profils_actifs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ingredient_allergenes: {
         Row: {
           allergene_id: string
@@ -275,6 +308,76 @@ export type Database = {
             foreignKeyName: "listes_courses_profil_id_fkey"
             columns: ["profil_id"]
             isOneToOne: false
+            referencedRelation: "profils_actifs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      membres_foyer: {
+        Row: {
+          age: number | null
+          allergies: string[]
+          created_at: string
+          est_responsable: boolean
+          foyer_id: string
+          gouts_frequence_poisson: string | null
+          gouts_frequence_viande: string | null
+          gouts_produits_favoris: string[]
+          id: string
+          objectifs: string[]
+          prenom: string
+          profil_id: string | null
+          regime: string[]
+        }
+        Insert: {
+          age?: number | null
+          allergies?: string[]
+          created_at?: string
+          est_responsable?: boolean
+          foyer_id: string
+          gouts_frequence_poisson?: string | null
+          gouts_frequence_viande?: string | null
+          gouts_produits_favoris?: string[]
+          id?: string
+          objectifs?: string[]
+          prenom: string
+          profil_id?: string | null
+          regime?: string[]
+        }
+        Update: {
+          age?: number | null
+          allergies?: string[]
+          created_at?: string
+          est_responsable?: boolean
+          foyer_id?: string
+          gouts_frequence_poisson?: string | null
+          gouts_frequence_viande?: string | null
+          gouts_produits_favoris?: string[]
+          id?: string
+          objectifs?: string[]
+          prenom?: string
+          profil_id?: string | null
+          regime?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "membres_foyer_foyer_id_fkey"
+            columns: ["foyer_id"]
+            isOneToOne: false
+            referencedRelation: "foyers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "membres_foyer_profil_id_fkey"
+            columns: ["profil_id"]
+            isOneToOne: true
+            referencedRelation: "profils"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "membres_foyer_profil_id_fkey"
+            columns: ["profil_id"]
+            isOneToOne: true
             referencedRelation: "profils_actifs"
             referencedColumns: ["id"]
           },
@@ -853,6 +956,24 @@ export type Database = {
         }
         Relationships: []
       }
+      regles_fraicheur_prix: {
+        Row: {
+          description: string
+          duree_validite_jours: number
+          source: string
+        }
+        Insert: {
+          description: string
+          duree_validite_jours: number
+          source: string
+        }
+        Update: {
+          description?: string
+          duree_validite_jours?: number
+          source?: string
+        }
+        Relationships: []
+      }
       signalements: {
         Row: {
           created_at: string | null
@@ -1026,10 +1147,31 @@ export type Database = {
       }
     }
     Views: {
+      prix_anomalies: {
+        Row: {
+          collecte_le: string | null
+          id: string | null
+          offre_id: string | null
+          prix: number | null
+          prix_unitaire: number | null
+          prix_unitaire_precedent: number | null
+          variation_extreme: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prix_historique_offre_id_fkey"
+            columns: ["offre_id"]
+            isOneToOne: false
+            referencedRelation: "offres_magasin"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prix_courant: {
         Row: {
           collecte_le: string | null
           enseigne_id: string | null
+          expire: boolean | null
           format: string | null
           offre_id: string | null
           prix: number | null
@@ -1062,6 +1204,24 @@ export type Database = {
             referencedRelation: "unites_mesure"
             referencedColumns: ["code"]
           },
+          {
+            foreignKeyName: "prix_historique_offre_id_fkey"
+            columns: ["offre_id"]
+            isOneToOne: false
+            referencedRelation: "offres_magasin"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prix_doublons_suspects: {
+        Row: {
+          jour: string | null
+          nb_observations: number | null
+          offre_id: string | null
+          prix: number | null
+          prix_unitaire: number | null
+        }
+        Relationships: [
           {
             foreignKeyName: "prix_historique_offre_id_fkey"
             columns: ["offre_id"]
@@ -1140,6 +1300,17 @@ export type Database = {
           objectifs?: string[] | null
           prenom?: string | null
           regime?: string[] | null
+        }
+        Relationships: []
+      }
+      rapport_fraicheur_prix_par_enseigne: {
+        Row: {
+          age_max_jours: number | null
+          age_moyen_jours: number | null
+          enseigne: string | null
+          nb_offres: number | null
+          nb_offres_avec_prix: number | null
+          nb_offres_expirees: number | null
         }
         Relationships: []
       }
