@@ -219,3 +219,55 @@ distincts, seulement anon/service_role. Reproduit la Vérification littérale
 du ticket : deux foyers créés, isolation démontrée (foyer B invisible et non
 modifiable par l'utilisateur A, membre sans compte visible uniquement par le
 responsable de son propre foyer), exécuté manuellement et en CI.
+
+## COUR-26 : planning daté multi-semaines (`repas_planifies`)
+
+Remplace la "semaine courante implicite" (`planning_repas`, table
+provisionnée en COUR-9 mais **jamais lue par l'app** — le planning vivait
+uniquement dans `stores/planningStore.ts`, un objet local keyé par nom de
+jour, sans date réelle) par `repas_planifies` : une ligne par créneau réel
+(`profil_id`, `date_repas`, `moment`).
+
+`planning_repas` n'est **pas supprimée** : `listes_courses.planning_id` la
+référence encore et `listes_courses` est utilisée en production (contraire
+à `planning_repas`) — toucher cette FK sort du périmètre de ce ticket. La
+décision de retirer `planning_repas` reste un choix produit séparé, déjà
+noté comme tel dans `SCHEMA_INVENTORY.md`.
+
+Comportement temporel (critère du ticket) : une ligne n'existe que pour un
+créneau **décidé** (recette assignée OU explicitement ignorée via
+`ignore=true`) — "pas encore décidé" reste l'absence de ligne, jamais un
+troisième état stocké. Contrainte `repas_planifies_coherence` qui
+l'impose : `ignore` et `recette_id` ne sont jamais tous les deux
+vrais/renseignés, ni tous les deux faux/vides.
+
+`unique (profil_id, date_repas, moment)` = le "doublon impossible" du
+critère. Index composé `(profil_id, date_repas)` pour les requêtes par
+intervalle (chargement multi-semaines, `date_repas=gte...&date_repas=lte...`).
+RLS identique au pattern `planning_own` existant : `auth.uid() = profil_id`.
+
+`membre_ids uuid[]` (COUR-25) : tableau simple sans intégrité référentielle
+(Postgres ne permet pas de FK sur les éléments d'un array), même niveau de
+rigueur que `profils.regime`/`allergies`.
+
+Migration des données existantes : 0 ligne en production au moment
+d'écrire cette migration (revérifié via l'API Management, même démarche que
+COUR-14/15/16) — le bloc `INSERT ... SELECT` de
+`20260725000400_repas_planifies_migration_donnees.sql` s'exécute donc sans
+effet réel aujourd'hui, mais reste correct et idempotent
+(`on conflict do nothing`) si rejoué sur un environnement contenant des
+lignes. Comme `planning_repas.repas` (jsonb) n'a jamais été écrite par
+l'app, sa forme exacte n'est garantie par aucun contrat réel ; la migration
+suppose la forme miroir de l'ancien store local
+(`{"lundi": {"midi": {"recette_id":...,"portions":...}, "soirIgnore":bool}, ...}`)
+et ignore silencieusement toute ligne qui ne correspond pas à cette forme.
+Vérifiée manuellement via `docker exec ... psql` avec une ligne
+`planning_repas` synthétique de cette forme (voir historique de la
+session) — pas testable via les scripts `verify-*.sh` (REST uniquement, pas
+d'exécution SQL arbitraire).
+
+Tests : `scripts/verify-repas-planifies.sh` reproduit la Vérification
+littérale du ticket (plusieurs semaines chargées sans collision, requête
+par intervalle correcte), plus doublon rejeté, cohérence ignore/recette
+rejetée dans les deux sens, isolation RLS entre deux comptes réels (même
+technique que COUR-23/24) — exécuté manuellement et en CI.

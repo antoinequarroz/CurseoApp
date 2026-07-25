@@ -974,6 +974,71 @@ export type Database = {
         }
         Relationships: []
       }
+      repas_planifies: {
+        Row: {
+          created_at: string
+          date_repas: string
+          id: string
+          ignore: boolean
+          membre_ids: string[]
+          moment: string
+          portions: number | null
+          profil_id: string
+          recette_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          date_repas: string
+          id?: string
+          ignore?: boolean
+          membre_ids?: string[]
+          moment: string
+          portions?: number | null
+          profil_id: string
+          recette_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          date_repas?: string
+          id?: string
+          ignore?: boolean
+          membre_ids?: string[]
+          moment?: string
+          portions?: number | null
+          profil_id?: string
+          recette_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repas_planifies_profil_id_fkey"
+            columns: ["profil_id"]
+            isOneToOne: false
+            referencedRelation: "profils"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repas_planifies_profil_id_fkey"
+            columns: ["profil_id"]
+            isOneToOne: false
+            referencedRelation: "profils_actifs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repas_planifies_recette_id_fkey"
+            columns: ["recette_id"]
+            isOneToOne: false
+            referencedRelation: "recettes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repas_planifies_recette_id_fkey"
+            columns: ["recette_id"]
+            isOneToOne: false
+            referencedRelation: "recettes_a_moderer"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       signalements: {
         Row: {
           created_at: string | null
