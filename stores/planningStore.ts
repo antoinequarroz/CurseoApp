@@ -14,8 +14,12 @@ const PLANNING_VIDE: PlanningHebdomadaire = {
 
 interface PlanningState {
   planning: PlanningHebdomadaire;
-  /** portions : nombre de personnes pour ce repas precis si different du foyer (invites). */
-  assignerRecette: (jour: JourSemaine, moment: 'midi' | 'soir', recette: Recette, portions?: number) => void;
+  /**
+   * portions : nombre de personnes pour ce repas precis si different du
+   * foyer (invites). membreIds (COUR-25) : membres du foyer concernes,
+   * pilote le filtrage recette et peut deriver `portions` (voir appelant).
+   */
+  assignerRecette: (jour: JourSemaine, moment: 'midi' | 'soir', recette: Recette, portions?: number, membreIds?: string[]) => void;
   retirerRecette: (jour: JourSemaine, moment: 'midi' | 'soir') => void;
   /** Marque explicitement "rien prevu" pour ce jour/moment (distinct de "pas encore decide"). */
   ignorerRepas: (jour: JourSemaine, moment: 'midi' | 'soir') => void;
@@ -25,13 +29,13 @@ interface PlanningState {
 
 export const usePlanningStore = create<PlanningState>((set) => ({
   planning: PLANNING_VIDE,
-  assignerRecette: (jour, moment, recette, portions) =>
+  assignerRecette: (jour, moment, recette, portions, membreIds) =>
     set((state) => ({
       planning: {
         ...state.planning,
         [jour]: {
           ...state.planning[jour],
-          [moment]: { recette, portions },
+          [moment]: { recette, portions, membreIds },
           [`${moment}Ignore`]: false,
         },
       },

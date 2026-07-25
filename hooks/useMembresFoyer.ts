@@ -23,17 +23,26 @@ import {
  */
 export const LIMITE_MEMBRES_FAMILLE = 6;
 
-export function useMembresFoyer() {
+/**
+ * `enabled` (COUR-25) : desactive completement le chargement (et surtout la
+ * creation a la volee du foyer) quand appele depuis un contexte qui ne doit
+ * pas forcer un foyer a exister pour tout le monde — ex. le picker de
+ * membres dans l'ecran de planning, qui ne doit interroger/creer un foyer
+ * que pour les abonnes Famille. Par defaut true (comportement COUR-24
+ * inchange pour l'ecran de gestion des membres).
+ */
+export function useMembresFoyer(enabled: boolean = true) {
   const foyerQuery = useQuery({
     queryKey: ['foyer-id'],
     queryFn: fetchOuCreerFoyerId,
     staleTime: Infinity,
+    enabled,
   });
 
   const membresQuery = useQuery({
     queryKey: ['membres-foyer', foyerQuery.data],
     queryFn: () => fetchMembresFoyer(foyerQuery.data as string),
-    enabled: Boolean(foyerQuery.data),
+    enabled: enabled && Boolean(foyerQuery.data),
   });
 
   const [mutationEnCours, setMutationEnCours] = useState(false);

@@ -6,6 +6,9 @@ import { useTheme } from '@/lib/theme-context';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useResponsive } from '@/hooks/useResponsive';
 import { useRecettes } from '@/hooks/useRecettes';
+import { useAbonnement } from '@/hooks/useAbonnement';
+import { useMembresFoyer } from '@/hooks/useMembresFoyer';
+import { useCompatibiliteMembres } from '@/hooks/useCompatibiliteMembres';
 import { useProfilStore } from '@/stores/profilStore';
 import { usePlanningStore } from '@/stores/planningStore';
 import { RECETTES_MOCK } from '@/lib/mocks/recettes.mock';
@@ -76,6 +79,10 @@ export default function Planifier() {
   const [recettesAimees, setRecettesAimees] = useState<Recette[]>([]);
   const [slotChoix, setSlotChoix] = useState<{ jour: JourSemaine; moment: 'midi' | 'soir' } | null>(null);
   const [portionsChoix, setPortionsChoix] = useState<number | null>(null);
+  // COUR-25 : membres du foyer concernes par le repas en cours d'assignation
+  // — vide = comportement historique (portions manuelles, aucun filtrage
+  // supplementaire par rapport au foyer entier deja applique ci-dessus).
+  const [membresChoisisIds, setMembresChoisisIds] = useState<string[]>([]);
 
   const { data, isLoading, isError, isEmpty, refetch, fetchNextPage, hasNextPage, alertesParRecette, allergiesNonReconnues } = useRecettes({
     regime: profil?.regime,
@@ -86,9 +93,25 @@ export default function Planifier() {
   const recettesCommunaute = useMemo(() => RECETTES_MOCK.filter((r) => r.est_communautaire), []);
   const prochainSlot = useMemo(() => trouverProchainSlot(planning), [planning]);
 
+  // Le picker de membres n'a de sens que pour le palier Famille (COUR-24) —
+  // enabled=false ailleurs pour ne jamais forcer la creation d'un foyer.
+  const { estAuMoins } = useAbonnement();
+  const { membres } = useMembresFoyer(estAuMoins('famille'));
+  const membresChoisis = useMemo(() => membres.filter((m) => membresChoisisIds.includes(m.id)), [membres, membresChoisisIds]);
+  const {
+    recettes: recettesAimeesCompatibles,
+    alertesParRecette: alertesMembresParRecette,
+    allergiesNonReconnues: allergiesMembresNonReconnues,
+  } = useCompatibiliteMembres(recettesAimees, membresChoisis);
+
   const ouvrirChoixSlot = (jour: JourSemaine, moment: 'midi' | 'soir') => {
     setSlotChoix({ jour, moment });
     setPortionsChoix(profil?.nb_personnes ?? 1);
+    setMembresChoisisIds([]);
+  };
+
+  const toggleMembreChoisi = (membreId: string) => {
+    setMembresChoisisIds((actuel) => (actuel.includes(membreId) ? actuel.filter((id) => id !== membreId) : [...actuel, membreId]));
   };
 
   const genererSemaineIA = () => {
@@ -208,49 +231,94 @@ export default function Planifier() {
         <ScreenScroll contentContainerStyle={{ gap: 12 }} tabBar={false}>
           <DisplayLG>{t('planning.choisir_recette')}</DisplayLG>
 
+          {estAuMoins('famille') && membres.length > 0 && (
+            <View style={{ gap: 6 }}>
+              <BodySm style={{ fontWeight: '600' }}>{t('planning.membres_titre')}</BodySm>
+              <Caption>{t('planning.membres_hint')}</Caption>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {membres.map((m) => (
+                  <Pressable
+                    key={m.id}
+                    onPress={() => toggleMembreChoisi(m.id)}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: membresChoisisIds.includes(m.id) }}
+                    accessibilityLabel={m.prenom}
+                    style={{
+                      paddingVertical: 8,
+                      paddingHorizontal: 14,
+                      borderRadius: 9999,
+                      backgroundColor: membresChoisisIds.includes(m.id) ? colors.primary : colors.bgSecondary,
+                    }}
+                  >
+                    <BodySm style={{ color: membresChoisisIds.includes(m.id) ? '#FFFFFF' : colors.textPrimary }}>{m.prenom}</BodySm>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          )}
+
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <View>
               <BodySm style={{ fontWeight: '600' }}>{t('planning.portions_invites_titre')}</BodySm>
-              <Caption>{t('planning.portions_invites_hint')}</Caption>
+              <Caption>
+                {membresChoisisIds.length > 0 ? t('planning.portions_derivees_hint') : t('planning.portions_invites_hint')}
+              </Caption>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-              <Pressable
-                onPress={() => setPortionsChoix((p) => Math.max(1, (p ?? 1) - 1))}
-                accessibilityRole="button"
-                accessibilityLabel={t('onboarding.age_diminuer', { label: t('planning.portions_invites_titre') })}
-                hitSlop={8}
-                style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}
-              >
-                <BodySm>–</BodySm>
-              </Pressable>
-              <BodySm style={{ minWidth: 24, textAlign: 'center' }}>{portionsChoix ?? profil?.nb_personnes ?? 1}</BodySm>
-              <Pressable
-                onPress={() => setPortionsChoix((p) => Math.min(20, (p ?? 1) + 1))}
-                accessibilityRole="button"
-                accessibilityLabel={t('onboarding.age_augmenter', { label: t('planning.portions_invites_titre') })}
-                hitSlop={8}
-                style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}
-              >
-                <BodySm>+</BodySm>
-              </Pressable>
-            </View>
+            {membresChoisisIds.length > 0 ? (
+              <BodySm style={{ minWidth: 24, textAlign: 'center' }}>{membresChoisisIds.length}</BodySm>
+            ) : (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+                <Pressable
+                  onPress={() => setPortionsChoix((p) => Math.max(1, (p ?? 1) - 1))}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('onboarding.age_diminuer', { label: t('planning.portions_invites_titre') })}
+                  hitSlop={8}
+                  style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <BodySm>–</BodySm>
+                </Pressable>
+                <BodySm style={{ minWidth: 24, textAlign: 'center' }}>{portionsChoix ?? profil?.nb_personnes ?? 1}</BodySm>
+                <Pressable
+                  onPress={() => setPortionsChoix((p) => Math.min(20, (p ?? 1) + 1))}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('onboarding.age_augmenter', { label: t('planning.portions_invites_titre') })}
+                  hitSlop={8}
+                  style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <BodySm>+</BodySm>
+                </Pressable>
+              </View>
+            )}
           </View>
+
+          {allergiesMembresNonReconnues.length > 0 && (
+            <Caption style={{ color: colors.warning }}>
+              {t('planning.allergies_non_reconnues', { allergies: allergiesMembresNonReconnues.join(', ') })}
+            </Caption>
+          )}
 
           {recettesAimees.length === 0 ? (
             <EmptyState illustration="favoris" titre={t('planning.empty_favoris_titre')} sousTitre={t('planning.empty_favoris_soustitre')} />
+          ) : recettesAimeesCompatibles.length === 0 ? (
+            <EmptyState
+              illustration="favoris"
+              titre={t('planning.aucune_recette_compatible_titre')}
+              sousTitre={t('planning.aucune_recette_compatible_soustitre')}
+            />
           ) : (
-            recettesAimees.map((r) => (
+            recettesAimeesCompatibles.map((r) => (
               <Pressable
                 key={r.id}
                 onPress={() => {
                   if (slotChoix) {
                     const portionsFoyer = profil?.nb_personnes ?? 1;
-                    const portionsFinales = portionsChoix ?? portionsFoyer;
+                    const portionsFinales = membresChoisisIds.length > 0 ? membresChoisisIds.length : (portionsChoix ?? portionsFoyer);
                     assignerRecette(
                       slotChoix.jour,
                       slotChoix.moment,
                       r,
                       portionsFinales !== portionsFoyer ? portionsFinales : undefined,
+                      membresChoisisIds.length > 0 ? membresChoisisIds : undefined,
                     );
                   }
                   setSlotChoix(null);
@@ -258,7 +326,7 @@ export default function Planifier() {
                 accessibilityRole="button"
                 accessibilityLabel={t('planning.assigner_label', { titre: r.titre })}
               >
-                <RecetteCard recette={r} />
+                <RecetteCard recette={r} alerteAllergenes={alertesMembresParRecette[r.id]} />
               </Pressable>
             ))
           )}

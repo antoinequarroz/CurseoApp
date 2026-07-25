@@ -31,4 +31,16 @@ describe('planningStore', () => {
     usePlanningStore.getState().retirerRecette('lundi', 'midi');
     expect(usePlanningStore.getState().planning.lundi.midi).toBeUndefined();
   });
+
+  it('COUR-25 : conserve les membres du foyer concernes par le repas (portions derivees en amont)', () => {
+    usePlanningStore.getState().assignerRecette('lundi', 'soir', recette, 2, ['m-1', 'm-2']);
+    const repas = usePlanningStore.getState().planning.lundi.soir;
+    expect(repas?.membreIds).toEqual(['m-1', 'm-2']);
+    expect(repas?.portions).toBe(2);
+  });
+
+  it('COUR-25 : sans membre selectionne, membreIds reste absent (comportement historique)', () => {
+    usePlanningStore.getState().assignerRecette('lundi', 'midi', recette);
+    expect(usePlanningStore.getState().planning.lundi.midi?.membreIds).toBeUndefined();
+  });
 });

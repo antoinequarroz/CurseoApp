@@ -120,4 +120,13 @@ describe('useMembresFoyer', () => {
     expect(result.current.membres).toHaveLength(LIMITE_MEMBRES_FAMILLE);
     expect(result.current.limiteAtteinte).toBe(true);
   });
+
+  it('COUR-25 : enabled=false ne charge/cree rien (contexte non-Famille, ex. picker de planning)', async () => {
+    const { result } = await renderHook(() => useMembresFoyer(false), { wrapper });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(fetchOuCreerFoyerIdMock).not.toHaveBeenCalled();
+    expect(fetchMembresFoyerMock).not.toHaveBeenCalled();
+    expect(result.current.membres).toEqual([]);
+  });
 });

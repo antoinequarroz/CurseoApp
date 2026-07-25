@@ -131,6 +131,14 @@ export interface RepasPlanifie {
   recette: Recette;
   /** Nombre de personnes pour ce repas precis (invites), si different du foyer. */
   portions?: number;
+  /**
+   * COUR-25 : membres du foyer (membres_foyer.id) concernes par ce repas —
+   * pilote a la fois le filtrage recette (regime/allergies unis de ces
+   * membres) et, si defini, le nombre de portions (un membre = une portion).
+   * Absent/vide = comportement historique : tout le foyer, `portions` reste
+   * un simple nombre saisi manuellement (voir Profil.nb_personnes).
+   */
+  membreIds?: string[];
 }
 
 export interface RepasJour {

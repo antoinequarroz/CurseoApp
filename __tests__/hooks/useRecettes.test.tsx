@@ -148,6 +148,18 @@ describe('useRecettes', () => {
     expect(result.current.hasNextPage).toBe(false);
   });
 
+  it('COUR-25 : plusieurs regimes requis (profil multi-restrictions) exige TOUS les tags, pas juste un en commun', async () => {
+    fetchRecettesPublieesMock.mockResolvedValue([
+      recette({ id: 'vegetarien-seul', regime: ['vegetarien'] }),
+      recette({ id: 'vegetarien-et-sans-gluten', regime: ['vegetarien', 'sans_gluten'] }),
+    ]);
+
+    const { result } = await renderHook(() => useRecettes({ regime: ['vegetarien', 'sans_gluten'] }), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.data.pages.flat().map((r) => r.id)).toEqual(['vegetarien-et-sans-gluten']);
+  });
+
   describe('COUR-22 : filtrage allergies robuste', () => {
     it('correspondance exacte (code canonique) confirmee : la recette est exclue', async () => {
       fetchRecettesPublieesMock.mockResolvedValue([

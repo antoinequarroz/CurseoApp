@@ -142,7 +142,12 @@
     "tout_planifie_titre": "Semaine complète !",
     "tout_planifie_soustitre": "Tous les repas de la semaine sont planifiés ou marqués comme non prévus.",
     "portions_invites_titre": "Nombre de personnes pour ce repas",
-    "portions_invites_hint": "Différent du foyer si tu as des invités"
+    "portions_invites_hint": "Différent du foyer si tu as des invités",
+    "portions_derivees_hint": "Déduit du nombre de membres sélectionnés",
+    "membres_titre": "Qui mange ce repas ?",
+    "membres_hint": "Optionnel — filtre les recettes compatibles et ajuste les portions.",
+    "aucune_recette_compatible_titre": "Aucune recette compatible",
+    "aucune_recette_compatible_soustitre": "Aucune de tes recettes aimées ne convient à tous les membres sélectionnés."
   },
   "courses": {
     "meilleur_prix": "Meilleur prix",
