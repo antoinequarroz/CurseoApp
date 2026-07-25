@@ -120,6 +120,22 @@ export async function fetchRecettesPubliees(): Promise<Recette[]> {
 }
 
 /**
+ * Un lot de recettes par id (COUR-27) — utilise par
+ * `repasPlanifiesRepository.ts` pour reconstruire les recettes assignees
+ * dans le planning d'une semaine en un seul aller-retour, plutot qu'un
+ * fetch par repas.
+ */
+export async function fetchRecettesParIds(ids: string[]): Promise<Recette[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase.from('recettes').select(SELECT_RECETTE_COMPLETE).in('id', ids);
+
+  if (error) throw error;
+  const lignes = (data ?? []) as unknown as LigneRecetteBrute[];
+  const allergenesEffectifs = await fetchAllergenesEffectifs(lignes.map((l) => l.id));
+  return lignes.map((ligne) => versRecette(ligne, allergenesEffectifs.get(ligne.id) ?? []));
+}
+
+/**
  * Une recette par id (COUR-19) — pour l'ecran de detail
  * (app/recette/[id].tsx), atteignable en deep-link direct sans etre passe
  * par fetchRecettesPubliees avant. `null` si absente ou pas publiee (pas

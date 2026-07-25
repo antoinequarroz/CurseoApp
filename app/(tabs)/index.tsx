@@ -5,9 +5,9 @@ import { router } from 'expo-router';
 import { Bell, ChefHat } from 'lucide-react-native';
 import { useTheme } from '@/lib/theme-context';
 import { useProfilStore } from '@/stores/profilStore';
-import { usePlanningStore } from '@/stores/planningStore';
 import { useCoursesStore } from '@/stores/coursesStore';
 import { useBudgetSemaine } from '@/hooks/useBudgetSemaine';
+import { useRepasSemaine } from '@/hooks/useRepasSemaine';
 import { SemaineStrip } from '@/components/accueil/SemaineStrip';
 import { InspirationsCarousel } from '@/components/accueil/InspirationsCarousel';
 import { Card } from '@/components/ui/Card';
@@ -16,12 +16,16 @@ import { ScreenScroll } from '@/components/ui/Screen';
 import { DisplayLG, Heading, BodySm, Price, Savings, Caption } from '@/components/ui/Typography';
 import { formatPrix } from '@/lib/format';
 import { analytics } from '@/lib/analytics';
+import { dates } from '@/lib/dates';
 import { t } from '@/lib/i18n';
 
 export default function Accueil() {
   const { colors } = useTheme();
   const profil = useProfilStore((s) => s.profil);
-  const planning = usePlanningStore((s) => s.planning);
+  // COUR-27 : Accueil montre toujours LA semaine en cours (pas de
+  // navigation ici) — sa propre entree de cache, independante de celle que
+  // l'onglet Planifier peut afficher a un instant donne.
+  const { planning } = useRepasSemaine(profil?.id, dates.debutSemaine(dates.maintenant()));
   const genererDepuisPlanning = useCoursesStore((s) => s.genererDepuisPlanning);
   const { budgetConsomme, economiesCumulees } = useBudgetSemaine(profil?.id);
   const budgetHebdo = profil?.budget_hebdo ?? 150;

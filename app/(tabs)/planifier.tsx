@@ -9,24 +9,27 @@ import { useRecettes } from '@/hooks/useRecettes';
 import { useAbonnement } from '@/hooks/useAbonnement';
 import { useMembresFoyer } from '@/hooks/useMembresFoyer';
 import { useCompatibiliteMembres } from '@/hooks/useCompatibiliteMembres';
+import { useRepasSemaine } from '@/hooks/useRepasSemaine';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { useProfilStore } from '@/stores/profilStore';
-import { usePlanningStore } from '@/stores/planningStore';
 import { RECETTES_MOCK } from '@/lib/mocks/recettes.mock';
 import { SwipeRecette } from '@/components/recettes/SwipeRecette';
 import { RecetteCard } from '@/components/recettes/RecetteCard';
 import { PlanningSemaine } from '@/components/planning/PlanningSemaine';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { SkeletonRecetteCard } from '@/components/ui/Skeleton';
+import { OfflineBanner } from '@/components/ui/OfflineBanner';
+import { SkeletonRecetteCard, SkeletonPlanningJour } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/Button';
 import { Screen, ScreenScroll } from '@/components/ui/Screen';
 import { DisplayLG, Subheading, Caption, BodySm } from '@/components/ui/Typography';
+import { toast } from '@/lib/toast';
 import { analytics } from '@/lib/analytics';
 import { dates } from '@/lib/dates';
 import { t } from '@/lib/i18n';
-import { JOURS_SEMAINE, type JourSemaine, type Recette } from '@/types';
+import { JOURS_SEMAINE, type JourSemaine, type PlanningHebdomadaire, type Recette } from '@/types';
 
 /** Premier jour/moment ni planifie ni explicitement ignore — undefined si la semaine est complete. */
-function trouverProchainSlot(planning: ReturnType<typeof usePlanningStore.getState>['planning']) {
+function trouverProchainSlot(planning: PlanningHebdomadaire) {
   for (const jour of JOURS_SEMAINE) {
     const repas = planning[jour];
     if (!repas.midi && !repas.midiIgnore) return { jour, moment: 'midi' as const };
@@ -72,8 +75,8 @@ export default function Planifier() {
   const haptics = useHaptics();
   const { colors } = useTheme();
   const { paddingHorizontal } = useResponsive();
+  const { estHorsLigne } = useNetworkStatus();
   const profil = useProfilStore((s) => s.profil);
-  const { planning, assignerRecette, ignorerRepas } = usePlanningStore();
   const [sousOnglet, setSousOnglet] = useState<SousOnglet>('recettes');
   const [indexCourant, setIndexCourant] = useState(0);
   const [recettesAimees, setRecettesAimees] = useState<Recette[]>([]);
@@ -83,6 +86,10 @@ export default function Planifier() {
   // — vide = comportement historique (portions manuelles, aucun filtrage
   // supplementaire par rapport au foyer entier deja applique ci-dessus).
   const [membresChoisisIds, setMembresChoisisIds] = useState<string[]>([]);
+  // COUR-27 : lundi de la semaine affichee dans l'onglet Planning — chaque
+  // semaine a sa propre entree de cache (voir useRepasSemaine), changer de
+  // semaine ne melange jamais les repas d'une autre.
+  const [semaineAffichee, setSemaineAffichee] = useState(() => dates.debutSemaine(dates.maintenant()));
 
   const { data, isLoading, isError, isEmpty, refetch, fetchNextPage, hasNextPage, alertesParRecette, allergiesNonReconnues } = useRecettes({
     regime: profil?.regime,
@@ -91,7 +98,18 @@ export default function Planifier() {
   const recettes = useMemo(() => data?.pages.flat() ?? [], [data]);
   const recetteActuelle = recettes[indexCourant];
   const recettesCommunaute = useMemo(() => RECETTES_MOCK.filter((r) => r.est_communautaire), []);
+
+  const {
+    planning,
+    isLoading: planningEnChargement,
+    isError: planningEnErreur,
+    refetch: rafraichirPlanning,
+    mutationEnCours: planningMutationEnCours,
+    assigner,
+    ignorer,
+  } = useRepasSemaine(profil?.id, semaineAffichee);
   const prochainSlot = useMemo(() => trouverProchainSlot(planning), [planning]);
+  const semaineActuelle = dates.estMemeSemaine(semaineAffichee, dates.maintenant());
 
   // Le picker de membres n'a de sens que pour le palier Famille (COUR-24) —
   // enabled=false ailleurs pour ne jamais forcer la creation d'un foyer.
@@ -114,12 +132,16 @@ export default function Planifier() {
     setMembresChoisisIds((actuel) => (actuel.includes(membreId) ? actuel.filter((id) => id !== membreId) : [...actuel, membreId]));
   };
 
-  const genererSemaineIA = () => {
+  const genererSemaineIA = async () => {
+    if (estHorsLigne) {
+      toast.erreur(t('planning.action_hors_ligne'));
+      return;
+    }
     void haptics.success();
-    JOURS_SEMAINE.forEach((jour, i) => {
-      const recette = recettesAimees[i % Math.max(recettesAimees.length, 1)];
-      if (recette) assignerRecette(jour, 'midi', recette);
-    });
+    for (const jour of JOURS_SEMAINE) {
+      const recette = recettesAimees[JOURS_SEMAINE.indexOf(jour) % Math.max(recettesAimees.length, 1)];
+      if (recette) await assigner(jour, 'midi', { recette });
+    }
     analytics.planningGenerated();
   };
 
@@ -185,19 +207,41 @@ export default function Planifier() {
 
       {sousOnglet === 'planning' && (
         <ScreenScroll style={{ flex: 1 }} contentContainerStyle={{ gap: 20 }} padded>
-          <Button label={t('planning.generer_semaine_ia')} onPress={genererSemaineIA} />
-          {!prochainSlot && (
-            <EmptyState illustration="favoris" titre={t('planning.tout_planifie_titre')} sousTitre={t('planning.tout_planifie_soustitre')} />
+          {estHorsLigne && <OfflineBanner />}
+          <Button label={t('planning.generer_semaine_ia')} onPress={() => void genererSemaineIA()} disabled={estHorsLigne || planningMutationEnCours} />
+          {planningEnChargement ? (
+            <SkeletonPlanningJour />
+          ) : planningEnErreur ? (
+            <EmptyState
+              illustration="planning"
+              titre={t('planning.erreur_planning_titre')}
+              sousTitre={t('planning.erreur_planning_soustitre')}
+              ctaLabel={t('commun.reessayer')}
+              onCta={() => void rafraichirPlanning()}
+            />
+          ) : (
+            <>
+              {!prochainSlot && (
+                <EmptyState illustration="favoris" titre={t('planning.tout_planifie_titre')} sousTitre={t('planning.tout_planifie_soustitre')} />
+              )}
+              <PlanningSemaine
+                planning={planning}
+                semaineDebut={semaineAffichee}
+                jourInitial={prochainSlot?.jour ?? (semaineActuelle ? dates.jourSemaine(dates.maintenant()) : 'lundi')}
+                onPressSlot={(jour, moment) => ouvrirChoixSlot(jour, moment)}
+                onIgnorer={(jour, moment) => {
+                  if (estHorsLigne) {
+                    toast.erreur(t('planning.action_hors_ligne'));
+                    return;
+                  }
+                  void haptics.selection();
+                  void ignorer(jour, moment);
+                }}
+                onChangerSemaine={(delta) => setSemaineAffichee((s) => dates.ajouterSemaines(s, delta))}
+                onRetourAujourdhui={() => setSemaineAffichee(dates.debutSemaine(dates.maintenant()))}
+              />
+            </>
           )}
-          <PlanningSemaine
-            planning={planning}
-            jourInitial={prochainSlot?.jour ?? dates.jourSemaine(dates.maintenant())}
-            onPressSlot={(jour, moment) => ouvrirChoixSlot(jour, moment)}
-            onIgnorer={(jour, moment) => {
-              void haptics.selection();
-              ignorerRepas(jour, moment);
-            }}
-          />
         </ScreenScroll>
       )}
 
@@ -310,16 +354,18 @@ export default function Planifier() {
               <Pressable
                 key={r.id}
                 onPress={() => {
+                  if (estHorsLigne) {
+                    toast.erreur(t('planning.action_hors_ligne'));
+                    return;
+                  }
                   if (slotChoix) {
                     const portionsFoyer = profil?.nb_personnes ?? 1;
                     const portionsFinales = membresChoisisIds.length > 0 ? membresChoisisIds.length : (portionsChoix ?? portionsFoyer);
-                    assignerRecette(
-                      slotChoix.jour,
-                      slotChoix.moment,
-                      r,
-                      portionsFinales !== portionsFoyer ? portionsFinales : undefined,
-                      membresChoisisIds.length > 0 ? membresChoisisIds : undefined,
-                    );
+                    void assigner(slotChoix.jour, slotChoix.moment, {
+                      recette: r,
+                      portions: portionsFinales !== portionsFoyer ? portionsFinales : undefined,
+                      membreIds: membresChoisisIds.length > 0 ? membresChoisisIds : undefined,
+                    });
                   }
                   setSlotChoix(null);
                 }}
