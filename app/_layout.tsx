@@ -71,6 +71,9 @@ export default function RootLayout() {
                     <Stack.Screen name="recette/[id]" options={{ presentation: 'modal', headerShown: true, title: 'Recette' }} />
                     <Stack.Screen name="gouts" options={{ presentation: 'modal', headerShown: true, title: 'Vos goûts' }} />
                     <Stack.Screen name="membres-foyer" options={{ presentation: 'modal', headerShown: true, title: 'Membres du foyer' }} />
+                    <Stack.Screen name="mon-foyer" options={{ presentation: 'modal', headerShown: true, title: 'Mon foyer' }} />
+                    <Stack.Screen name="adresses" options={{ presentation: 'modal', headerShown: true, title: 'Adresses de livraison' }} />
+                    <Stack.Screen name="aide" options={{ presentation: 'modal', headerShown: true, title: 'Aide & support' }} />
                   </Stack>
                   <WhatsNewModal
                     visible={Boolean(profil) && shouldShowWhatsNew}

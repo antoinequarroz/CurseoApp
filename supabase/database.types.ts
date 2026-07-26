@@ -34,6 +34,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      adresses_livraison: {
+        Row: {
+          complement: string | null
+          created_at: string
+          est_defaut: boolean
+          id: string
+          libelle: string
+          npa: string
+          profil_id: string
+          rue: string
+          ville: string
+        }
+        Insert: {
+          complement?: string | null
+          created_at?: string
+          est_defaut?: boolean
+          id?: string
+          libelle: string
+          npa: string
+          profil_id: string
+          rue: string
+          ville: string
+        }
+        Update: {
+          complement?: string | null
+          created_at?: string
+          est_defaut?: boolean
+          id?: string
+          libelle?: string
+          npa?: string
+          profil_id?: string
+          rue?: string
+          ville?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "adresses_livraison_profil_id_fkey"
+            columns: ["profil_id"]
+            isOneToOne: false
+            referencedRelation: "profils"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "adresses_livraison_profil_id_fkey"
+            columns: ["profil_id"]
+            isOneToOne: false
+            referencedRelation: "profils_actifs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       allergenes: {
         Row: {
           code: string

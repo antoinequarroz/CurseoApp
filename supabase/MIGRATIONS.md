@@ -271,3 +271,27 @@ littérale du ticket (plusieurs semaines chargées sans collision, requête
 par intervalle correcte), plus doublon rejeté, cohérence ignore/recette
 rejetée dans les deux sens, isolation RLS entre deux comptes réels (même
 technique que COUR-23/24) — exécuté manuellement et en CI.
+
+## COUR-28 : adresses de livraison (`adresses_livraison`)
+
+Ticket mobile/profile/ux sans label backend, mais "Adresses de livraison
+possède ajout, modification, suppression et validation" implique une vraie
+persistance — recherche confirmée : aucune notion d'adresse n'existait nulle
+part dans le schéma (contrairement à `repas_planifies`, provisionné avant
+d'être branché, ici c'est un concept entièrement nouveau).
+
+`npa` contraint par un `check` regex (`^[0-9]{4}$`, NPA suisse) en plus de
+la validation Zod côté client (`lib/validation.ts`, `AdresseSchema`) — la
+même règle des deux côtés, jamais une seule couche de défense. Une seule
+adresse par défaut par profil via un index unique partiel
+(`adresses_livraison_un_seul_defaut`) plutôt qu'un simple boolean sans
+contrainte : le repository (`lib/adressesRepository.ts`) retire d'abord le
+flag des autres adresses avant d'en poser un nouveau, sinon la contrainte
+rejetterait l'écriture.
+
+RLS identique au pattern `planning_own`/`repas_planifies_own` :
+`auth.uid() = profil_id`.
+
+Tests : `scripts/verify-adresses-livraison.sh` (CRUD complet, NPA invalide
+rejeté, double défaut rejeté, isolation RLS) — exécuté manuellement et en
+CI.

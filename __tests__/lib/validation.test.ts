@@ -1,4 +1,4 @@
-import { ProfilSchema, EmailSchema } from '@/lib/validation';
+import { ProfilSchema, EmailSchema, AdresseSchema } from '@/lib/validation';
 
 describe('ProfilSchema', () => {
   const base = {
@@ -34,5 +34,32 @@ describe('EmailSchema', () => {
   });
   it('refuse un email invalide', () => {
     expect(EmailSchema.safeParse('pas-un-email').success).toBe(false);
+  });
+});
+
+describe('AdresseSchema (COUR-28)', () => {
+  const base = { libelle: 'Domicile', rue: 'Rue du Rhône 12', npa: '1000', ville: 'Lausanne', estDefaut: false };
+
+  it('accepte une adresse valide', () => {
+    expect(AdresseSchema.safeParse(base).success).toBe(true);
+  });
+
+  it('accepte un complement optionnel absent', () => {
+    expect(AdresseSchema.safeParse(base).success).toBe(true);
+  });
+
+  it('refuse un NPA qui n\'est pas 4 chiffres', () => {
+    expect(AdresseSchema.safeParse({ ...base, npa: '123' }).success).toBe(false);
+    expect(AdresseSchema.safeParse({ ...base, npa: '12345' }).success).toBe(false);
+    expect(AdresseSchema.safeParse({ ...base, npa: 'abcd' }).success).toBe(false);
+  });
+
+  it('refuse une rue ou une ville vide', () => {
+    expect(AdresseSchema.safeParse({ ...base, rue: '' }).success).toBe(false);
+    expect(AdresseSchema.safeParse({ ...base, ville: '' }).success).toBe(false);
+  });
+
+  it('refuse un libelle vide', () => {
+    expect(AdresseSchema.safeParse({ ...base, libelle: '' }).success).toBe(false);
   });
 });

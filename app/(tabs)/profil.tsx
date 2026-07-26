@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Pressable, Switch, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
-import { Bell, ChevronRight, Crown, Home, LogOut, MapPin, Palette, Sparkles, ShieldAlert, UserRound, Users } from 'lucide-react-native';
+import { Bell, ChevronRight, Crown, HelpCircle, LogOut, MapPin, Palette, Sparkles, ShieldAlert, UserRound, Users } from 'lucide-react-native';
 import { useTheme, type ApparencePreference } from '@/lib/theme-context';
 import { useProfilStore } from '@/stores/profilStore';
 import { supabase } from '@/lib/supabase';
@@ -16,40 +16,6 @@ import { ScreenScroll } from '@/components/ui/Screen';
 import { DisplayLG, Heading, Body, BodySm, Caption } from '@/components/ui/Typography';
 import { toast } from '@/lib/toast';
 import { t } from '@/lib/i18n';
-import type { Enseigne, Regime } from '@/types';
-
-const LABEL_REGIME: Record<Regime, string> = {
-  vegetarien: t('onboarding.regime_vegetarien'),
-  vegan: t('onboarding.regime_vegan'),
-  halal: t('onboarding.regime_halal'),
-  sans_gluten: t('onboarding.regime_sans_gluten'),
-  sans_lactose: t('onboarding.regime_sans_lactose'),
-  sans_noix: t('onboarding.regime_sans_noix'),
-  poisson: t('onboarding.regime_poisson'),
-};
-
-const LABEL_ENSEIGNE: Record<Enseigne, string> = {
-  coop: t('onboarding.enseigne_coop'),
-  migros: t('onboarding.enseigne_migros'),
-  lidl: t('onboarding.enseigne_lidl'),
-  aldi: t('onboarding.enseigne_aldi'),
-  ottos: t('onboarding.enseigne_ottos'),
-  manor_food: t('onboarding.enseigne_manor_food'),
-};
-
-function ChipsAffichage({ items }: { items: string[] }) {
-  const { colors } = useTheme();
-  if (items.length === 0) return null;
-  return (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-      {items.map((item) => (
-        <View key={item} style={{ paddingVertical: 4, paddingHorizontal: 10, borderRadius: 9999, backgroundColor: colors.bgSecondary }}>
-          <Caption>{item}</Caption>
-        </View>
-      ))}
-    </View>
-  );
-}
 
 function LigneNotification({ label, valeur, onChange }: { label: string; valeur: boolean; onChange: (v: boolean) => void }) {
   const { colors } = useTheme();
@@ -189,31 +155,20 @@ export default function Profil() {
         </View>
       </View>
 
-      <Card style={{ padding: 20, gap: 14, borderRadius: 28, borderTopLeftRadius: 28 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}>
-            <UserRound size={22} color={colors.primary} />
+      <Pressable onPress={() => router.push('/mon-foyer')} accessibilityRole="button" accessibilityLabel={t('mon_foyer.titre')}>
+        <Card style={{ padding: 20, gap: 4, borderRadius: 28, borderTopLeftRadius: 28 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}>
+              <UserRound size={22} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Heading>{t('mon_foyer.titre')}</Heading>
+              <Caption>{t('profil.personnes_enfants', { nb_personnes: profilAffiche.nb_personnes, nb_enfants: profilAffiche.nb_enfants })}</Caption>
+            </View>
+            <ChevronRight size={20} color={colors.textMuted} />
           </View>
-          <View>
-            <Heading>{t('profil.infos_foyer')}</Heading>
-            <Caption>{t('profil.infos_foyer_desc')}</Caption>
-          </View>
-        </View>
-        <TextInput
-          value={profilAffiche.prenom}
-          onChangeText={(v) => mettreAJourPreferences({ prenom: v })}
-          accessibilityLabel={t('profil.prenom_label')}
-          style={{
-            color: colors.textPrimary,
-            borderWidth: 1,
-            borderColor: colors.border,
-            borderRadius: 12,
-            paddingHorizontal: 12,
-            paddingVertical: 10,
-          }}
-        />
-        <BodySm>{t('profil.personnes_enfants', { nb_personnes: profilAffiche.nb_personnes, nb_enfants: profilAffiche.nb_enfants })}</BodySm>
-      </Card>
+        </Card>
+      </Pressable>
 
       <RowRepliable
         Icon={Crown}
@@ -272,45 +227,6 @@ export default function Profil() {
         <LigneNotification label={t('profil.notif_bilan')} valeur={profilAffiche.notifications_bilan} onChange={(v) => mettreAJourPreferences({ notifications_bilan: v })} />
       </Card>
 
-      <Card style={{ padding: 20, gap: 8, borderRadius: 28, borderTopLeftRadius: 28 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}>
-            <Home size={22} color={colors.primary} />
-          </View>
-          <View>
-            <Heading>{t('profil.preferences_foyer')}</Heading>
-            <Caption>{t('profil.enseignes_favorites', { count: profilAffiche.enseignes_favorites.length || 0 })}</Caption>
-          </View>
-        </View>
-        {profilAffiche.regime.length === 0 &&
-        profilAffiche.allergies.length === 0 &&
-        profilAffiche.enseignes_favorites.length === 0 ? (
-          <BodySm>{t('profil.preferences_message')}</BodySm>
-        ) : (
-          <>
-            {profilAffiche.regime.length > 0 && (
-              <View style={{ gap: 6 }}>
-                <Caption>{t('onboarding.regime_titre')}</Caption>
-                <ChipsAffichage items={profilAffiche.regime.map((r) => LABEL_REGIME[r] ?? r)} />
-              </View>
-            )}
-            {profilAffiche.allergies.length > 0 && (
-              <View style={{ gap: 6 }}>
-                <Caption>{t('onboarding.regime_autres')}</Caption>
-                <ChipsAffichage items={profilAffiche.allergies} />
-                <Caption>{t('planning.disclaimer_medical')}</Caption>
-              </View>
-            )}
-            {profilAffiche.enseignes_favorites.length > 0 && (
-              <View style={{ gap: 6 }}>
-                <Caption>{t('onboarding.enseignes_preferees')}</Caption>
-                <ChipsAffichage items={profilAffiche.enseignes_favorites.map((e) => LABEL_ENSEIGNE[e] ?? e)} />
-              </View>
-            )}
-          </>
-        )}
-      </Card>
-
       <Pressable
         onPress={() => router.push('/gouts')}
         accessibilityRole="button"
@@ -355,25 +271,35 @@ export default function Profil() {
         featureOrigine="membres_foyer"
       />
 
-      <View
-        style={{
-          borderRadius: 14,
-          borderWidth: 1,
-          borderColor: colors.border,
-          borderStyle: 'dashed',
-          padding: 14,
-          gap: 4,
-          opacity: 0.6,
-        }}
-        accessibilityRole="text"
-        accessibilityLabel={t('profil.adresses_livraison_a11y')}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <MapPin size={14} color={colors.textMuted} />
-          <Body>{t('profil.adresses_livraison_titre')}</Body>
-        </View>
-        <BodySm>{t('profil.adresses_livraison_description')}</BodySm>
-      </View>
+      <Pressable onPress={() => router.push('/adresses')} accessibilityRole="button" accessibilityLabel={t('adresses.titre')}>
+        <Card style={{ padding: 20, gap: 4, borderRadius: 28, borderTopLeftRadius: 28 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}>
+              <MapPin size={22} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Heading>{t('adresses.titre')}</Heading>
+              <Caption>{t('adresses.sous_titre')}</Caption>
+            </View>
+            <ChevronRight size={20} color={colors.textMuted} />
+          </View>
+        </Card>
+      </Pressable>
+
+      <Pressable onPress={() => router.push('/aide')} accessibilityRole="button" accessibilityLabel={t('aide.titre')}>
+        <Card style={{ padding: 20, gap: 4, borderRadius: 28, borderTopLeftRadius: 28 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}>
+              <HelpCircle size={22} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Heading>{t('aide.titre')}</Heading>
+              <Caption>{t('aide.sous_titre')}</Caption>
+            </View>
+            <ChevronRight size={20} color={colors.textMuted} />
+          </View>
+        </Card>
+      </Pressable>
 
       <Pressable
         onPress={() => void seDeconnecter()}

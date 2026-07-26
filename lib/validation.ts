@@ -30,3 +30,15 @@ export type ProfilFormValues = z.infer<typeof ProfilSchema>;
 
 export const EmailSchema = z.string().email('Adresse email invalide');
 export const MotDePasseSchema = z.string().min(8, 'Minimum 8 caractères');
+
+/** COUR-28 : NPA suisse = exactement 4 chiffres (meme regle que la contrainte DB `adresses_livraison`). */
+export const AdresseSchema = z.object({
+  libelle: z.string().min(1, 'Le libellé est requis').max(50),
+  rue: z.string().min(1, 'La rue est requise').max(100),
+  npa: z.string().regex(/^[0-9]{4}$/, 'NPA suisse invalide (4 chiffres)'),
+  ville: z.string().min(1, 'La ville est requise').max(50),
+  complement: z.string().max(100).optional(),
+  estDefaut: z.boolean(),
+});
+
+export type AdresseFormValues = z.infer<typeof AdresseSchema>;

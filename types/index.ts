@@ -78,6 +78,17 @@ export interface MembreFoyer {
   allergies: string[];
 }
 
+/** Adresse de livraison (COUR-28) — `npa` valide au format suisse (4 chiffres), impose aussi par contrainte DB. */
+export interface AdresseLivraison {
+  id: string;
+  libelle: string;
+  rue: string;
+  npa: string;
+  ville: string;
+  complement: string | null;
+  estDefaut: boolean;
+}
+
 export interface Ingredient {
   nom: string;
   quantite: number;
