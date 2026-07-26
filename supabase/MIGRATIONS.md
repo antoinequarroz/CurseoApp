@@ -295,3 +295,50 @@ RLS identique au pattern `planning_own`/`repas_planifies_own` :
 Tests : `scripts/verify-adresses-livraison.sh` (CRUD complet, NPA invalide
 rejeté, double défaut rejeté, isolation RLS) — exécuté manuellement et en
 CI.
+
+## COUR-29 : backend recettes communautaires + modération minimale
+
+`recettes.statut_publication` n'autorisait jusqu'ici que `brouillon`,
+`publiee`, `archivee`. Contrainte élargie (drop + re-create, Postgres n'a
+pas d'`alter check` direct) à `en_attente` et `refusee` — les deux états de
+modération du ticket — sans retirer `archivee`, toujours utilisé par le
+pipeline d'import CSV (COUR-17, non touché).
+
+Champs obligatoires avant soumission (source, droits sur l'image, au moins
+un allergène déclaré) imposés par un trigger `before insert or update`
+(`fn_verifier_recette_soumissible`), pas par un simple `check` : la règle
+dépend d'une autre table (`recette_allergenes`) et ne s'applique qu'à la
+transition `brouillon -> en_attente/publiee`, jamais à la création (une
+recette communautaire naît toujours en brouillon — le trigger interdit
+explicitement un INSERT direct dans un état post-brouillon). `droits_image`
+est un champ texte libre (pas d'enum fermé : photo perso, banque libre de
+droits, autorisation d'un tiers ne se prêtent pas à une liste fixe). Un
+code allergène sentinelle `aucun` a été ajouté au référentiel (COUR-15) pour
+qu'un auteur sans allergène réel à déclarer puisse quand même satisfaire la
+règle "au moins une ligne déclarée" de bonne foi.
+
+RLS de `recettes` resserrée : `recettes_read` limite désormais la lecture
+aux recettes publiées, aux siennes, ou à celles vues par un modérateur
+(auparavant `using (true)`, lisible par n'importe qui y compris les
+brouillons). Le bloc unique `recettes_write for all` est éclaté en
+`recettes_insert` (communautaire + auteur uniquement — jamais le catalogue
+officiel, réservé à `service_role` via l'import CSV), `recettes_update`
+(auteur ou modérateur) et `recettes_delete` (auteur seul).
+
+Modérateur = `profils.est_admin`, colonne existante depuis COUR-9 mais
+jamais reliée à une règle RLS jusqu'ici. Choix délibéré de ne pas créer de
+table de rôles dédiée : périmètre minimal demandé par le ticket. Nouvelles
+policies `signalement_read_moderateur` / `signalement_update_moderateur`
+donnant à un modérateur la visibilité et le droit de traiter TOUS les
+signalements (pas seulement les siens comme `signalement_read_own`).
+`signalements` gagne `moderateur_id` et `traite_le` pour tracer qui a
+traité un signalement et quand.
+
+Tests : `scripts/verify-recettes-communautaires.sh` — trois comptes réels
+(auteur, autre utilisateur, modérateur avec `est_admin=true`) : soumission
+rejetée sans champs obligatoires puis acceptée une fois complète,
+visibilité RLS (brouillon/en_attente invisibles pour l'autre utilisateur,
+visibles pour le modérateur, publique une fois publiée), modification
+bloquée pour l'autre utilisateur, retrait par l'auteur, signalement visible
+seulement par son auteur et le modérateur, modification du signalement
+réservée au modérateur.

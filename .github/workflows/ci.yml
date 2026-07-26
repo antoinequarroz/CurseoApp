@@ -55,6 +55,8 @@ jobs:
         run: bash scripts/verify-repas-planifies.sh
       - name: Verifier les adresses de livraison (COUR-28)
         run: bash scripts/verify-adresses-livraison.sh
+      - name: Verifier le backend recettes communautaires et la moderation (COUR-29)
+        run: bash scripts/verify-recettes-communautaires.sh
       - name: Arreter Supabase
         if: always()
         run: supabase stop --no-backup

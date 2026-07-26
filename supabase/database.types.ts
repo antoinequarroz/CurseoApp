@@ -915,6 +915,7 @@ export type Database = {
           created_at: string | null
           description: string | null
           difficulte: string | null
+          droits_image: string | null
           est_communautaire: boolean | null
           glucides_g: number | null
           id: string
@@ -937,6 +938,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           difficulte?: string | null
+          droits_image?: string | null
           est_communautaire?: boolean | null
           glucides_g?: number | null
           id?: string
@@ -959,6 +961,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           difficulte?: string | null
+          droits_image?: string | null
           est_communautaire?: boolean | null
           glucides_g?: number | null
           id?: string
@@ -1095,30 +1098,50 @@ export type Database = {
           created_at: string | null
           detail: string | null
           id: string
+          moderateur_id: string | null
           raison: string
           recette_id: string | null
           signale_par: string | null
           statut: string | null
+          traite_le: string | null
         }
         Insert: {
           created_at?: string | null
           detail?: string | null
           id?: string
+          moderateur_id?: string | null
           raison: string
           recette_id?: string | null
           signale_par?: string | null
           statut?: string | null
+          traite_le?: string | null
         }
         Update: {
           created_at?: string | null
           detail?: string | null
           id?: string
+          moderateur_id?: string | null
           raison?: string
           recette_id?: string | null
           signale_par?: string | null
           statut?: string | null
+          traite_le?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "signalements_moderateur_id_fkey"
+            columns: ["moderateur_id"]
+            isOneToOne: false
+            referencedRelation: "profils"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signalements_moderateur_id_fkey"
+            columns: ["moderateur_id"]
+            isOneToOne: false
+            referencedRelation: "profils_actifs"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "signalements_recette_id_fkey"
             columns: ["recette_id"]
