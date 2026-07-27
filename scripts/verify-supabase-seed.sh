@@ -56,7 +56,7 @@ check_count listes_courses 1
 check_count ingredients 64
 check_count recette_ingredients 10
 check_count recette_etapes 10
-check_count allergenes 14
+check_count allergenes 15
 check_count regimes 7
 check_count enseignes 6
 check_count produits_canoniques 1
