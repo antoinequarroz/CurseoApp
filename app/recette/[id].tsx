@@ -10,9 +10,11 @@ import { RECETTES_MOCK } from '@/lib/mocks/recettes.mock';
 import { fetchRecetteParId } from '@/lib/recettesRepository';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
 import { DisplayLG, Heading, Body, BodySm, Price, Data } from '@/components/ui/Typography';
 import { formatCalories, formatPrix, formatQuantite, formatTemps } from '@/lib/format';
 import { SignalerRecetteModal } from '@/components/recettes/SignalerRecetteModal';
+import { t } from '@/lib/i18n';
 
 export default function DetailRecette() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -60,7 +62,8 @@ export default function DetailRecette() {
         accessibilityLabel={`Photo de ${recette.titre}`}
       />
       <View style={{ padding: 20, gap: 16 }}>
-        <View>
+        <View style={{ gap: 6 }}>
+          {recette.est_communautaire && <Badge label={t('recettes.badge_communautaire')} variant="neutral" />}
           <DisplayLG>{recette.titre}</DisplayLG>
           <Body style={{ color: colors.textSecondary, marginTop: 4 }}>{recette.description}</Body>
         </View>

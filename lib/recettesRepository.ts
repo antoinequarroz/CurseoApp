@@ -120,6 +120,27 @@ export async function fetchRecettesPubliees(): Promise<Recette[]> {
 }
 
 /**
+ * COUR-30 : recettes communautaires publiées (`est_communautaire=true`),
+ * pour l'onglet Communauté — la RLS (COUR-29) filtre déjà la visibilité par
+ * `auth.uid()`/modérateur, mais un filtre explicite reste nécessaire ici
+ * pour ne jamais mélanger le catalogue officiel avec le contenu utilisateur
+ * dans le même flux.
+ */
+export async function fetchRecettesCommunautairesPubliees(): Promise<Recette[]> {
+  const { data, error } = await supabase
+    .from('recettes')
+    .select(SELECT_RECETTE_COMPLETE)
+    .eq('est_communautaire', true)
+    .eq('statut_publication', 'publiee')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  const lignes = (data ?? []) as unknown as LigneRecetteBrute[];
+  const allergenesEffectifs = await fetchAllergenesEffectifs(lignes.map((l) => l.id));
+  return lignes.map((ligne) => versRecette(ligne, allergenesEffectifs.get(ligne.id) ?? []));
+}
+
+/**
  * Un lot de recettes par id (COUR-27) — utilise par
  * `repasPlanifiesRepository.ts` pour reconstruire les recettes assignees
  * dans le planning d'une semaine en un seul aller-retour, plutot qu'un

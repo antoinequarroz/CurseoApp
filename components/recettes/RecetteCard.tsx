@@ -56,6 +56,12 @@ export function RecetteCard({
           />
         )}
         <View style={{ position: 'absolute', inset: 0, backgroundColor: isDark ? 'rgba(0,0,0,0.28)' : 'rgba(0,0,0,0.16)' }} />
+        {/* COUR-30 : critere d'acceptation "la fiche identifie clairement le contenu communautaire" */}
+        {recette.est_communautaire && (
+          <View style={{ position: 'absolute', top: 12, left: 12 }}>
+            <Badge label={t('recettes.badge_communautaire')} variant="neutral" />
+          </View>
+        )}
         <View style={{ position: 'absolute', bottom: 12, left: 12 }}>
           <Badge label={recette.difficulte} variant={COULEUR_DIFFICULTE[recette.difficulte] ?? 'neutral'} />
         </View>

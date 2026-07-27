@@ -1,18 +1,18 @@
 /** Planifier — onglets Recettes | Planning | Communauté. */
 import React, { useMemo, useState } from 'react';
-import { Modal, Pressable, View } from 'react-native';
+import { Modal, Pressable, RefreshControl, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTheme } from '@/lib/theme-context';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useResponsive } from '@/hooks/useResponsive';
 import { useRecettes } from '@/hooks/useRecettes';
+import { useRecettesCommunautaires } from '@/hooks/useRecettesCommunautaires';
 import { useAbonnement } from '@/hooks/useAbonnement';
 import { useMembresFoyer } from '@/hooks/useMembresFoyer';
 import { useCompatibiliteMembres } from '@/hooks/useCompatibiliteMembres';
 import { useRepasSemaine } from '@/hooks/useRepasSemaine';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { useProfilStore } from '@/stores/profilStore';
-import { RECETTES_MOCK } from '@/lib/mocks/recettes.mock';
 import { SwipeRecette } from '@/components/recettes/SwipeRecette';
 import { RecetteCard } from '@/components/recettes/RecetteCard';
 import { PlanningSemaine } from '@/components/planning/PlanningSemaine';
@@ -97,7 +97,18 @@ export default function Planifier() {
   });
   const recettes = useMemo(() => data?.pages.flat() ?? [], [data]);
   const recetteActuelle = recettes[indexCourant];
-  const recettesCommunaute = useMemo(() => RECETTES_MOCK.filter((r) => r.est_communautaire), []);
+
+  const {
+    recettes: recettesCommunaute,
+    total: totalRecettesCommunaute,
+    isLoading: communauteEnChargement,
+    isError: communauteEnErreur,
+    isEmpty: communauteEstVide,
+    isRefetching: communauteEnRafraichissement,
+    refetch: rafraichirCommunaute,
+    fetchNextPage: chargerPlusCommunaute,
+    hasNextPage: communauteAPlus,
+  } = useRecettesCommunautaires();
 
   const {
     planning,
@@ -246,8 +257,25 @@ export default function Planifier() {
       )}
 
       {sousOnglet === 'communaute' && (
-        <ScreenScroll style={{ flex: 1 }} contentContainerStyle={{ gap: 16 }} padded>
-          {recettesCommunaute.length === 0 ? (
+        <ScreenScroll
+          style={{ flex: 1 }}
+          contentContainerStyle={{ gap: 16 }}
+          padded
+          refreshControl={
+            <RefreshControl refreshing={communauteEnRafraichissement} onRefresh={() => void rafraichirCommunaute()} tintColor={colors.primary} />
+          }
+        >
+          {communauteEnChargement ? (
+            <SkeletonRecetteCard />
+          ) : communauteEnErreur ? (
+            <EmptyState
+              illustration="recherche"
+              titre={t('planning.erreur_communaute_titre')}
+              sousTitre={t('planning.erreur_communaute_soustitre')}
+              ctaLabel={t('commun.reessayer')}
+              onCta={() => void rafraichirCommunaute()}
+            />
+          ) : communauteEstVide ? (
             <EmptyState
               illustration="recherche"
               titre={t('planning.empty_communaute_titre')}
@@ -255,7 +283,7 @@ export default function Planifier() {
             />
           ) : (
             <>
-              <BodySm>{t('planning.communaute_intro', { count: recettesCommunaute.length })}</BodySm>
+              <BodySm>{t('planning.communaute_intro', { count: totalRecettesCommunaute })}</BodySm>
               {recettesCommunaute.map((r) => (
                 <Pressable
                   key={r.id}
@@ -266,6 +294,9 @@ export default function Planifier() {
                   <RecetteCard recette={r} />
                 </Pressable>
               ))}
+              {communauteAPlus && (
+                <Button label={t('planning.charger_plus_communaute')} variant="secondary" onPress={() => chargerPlusCommunaute()} />
+              )}
             </>
           )}
         </ScreenScroll>

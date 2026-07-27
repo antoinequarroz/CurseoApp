@@ -118,7 +118,10 @@
     "generer_semaine_ia": "Générer la semaine avec l'IA",
     "empty_communaute_titre": "Aucune recette communautaire",
     "empty_communaute_soustitre": "Les recettes partagées par d'autres foyers apparaîtront ici.",
+    "erreur_communaute_titre": "Impossible de charger la communauté",
+    "erreur_communaute_soustitre": "Vérifie ta connexion et réessaie.",
     "communaute_intro": "{{count}} recette(s) partagée(s) par d'autres foyers Coursia.",
+    "charger_plus_communaute": "Voir plus de recettes",
     "choisir_recette": "Choisir une recette",
     "empty_favoris_titre": "Pas encore de favoris",
     "empty_favoris_soustitre": "Swipe vers la droite sur les recettes que tu aimes.",
@@ -287,7 +290,8 @@
     "voir_detail": "Voir le détail de la recette",
     "jaime": "J'aime cette recette",
     "retirer_favoris": "Retirer des favoris",
-    "allergene_possible": "Contient peut-être : {{allergenes}}"
+    "allergene_possible": "Contient peut-être : {{allergenes}}",
+    "badge_communautaire": "Communauté"
   },
   "gouts": {
     "titre": "On cerne vos goûts",
