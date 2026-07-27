@@ -114,6 +114,19 @@ export async function restaurerAchats(): Promise<NiveauAbonnement> {
   return niveauDepuisCustomerInfo(customerInfo);
 }
 
+/**
+ * COUR-35 : palier minimal requis par fonctionnalite, pour que le paywall
+ * explique clairement au tap "cette fonctionnalite necessite le palier X"
+ * (critere d'acceptation) plutot que de presenter les 4 paliers sans dire
+ * lequel debloque l'action en cours. Cle = `featureOrigine` passe a
+ * &lt;PaywallModal&gt; par chaque appelant (voir grep sur featureOrigine).
+ */
+export const FEATURE_PALIER_MINIMAL: Record<string, Exclude<NiveauAbonnement, 'gratuit'>> = {
+  comparateur_prix: 'standard',
+  courses: 'standard',
+  membres_foyer: 'famille',
+};
+
 export const PALIERS_ABONNEMENT = [
   {
     id: 'gratuit' as const,

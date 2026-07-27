@@ -26,4 +26,18 @@ describe('PaywallModal', () => {
     fireEvent.press(getByLabelText('Fermer'));
     expect(onClose).toHaveBeenCalled();
   });
+
+  it('COUR-35 : explique le palier requis pour une fonctionnalite Famille', async () => {
+    const { getByText } = await renderWithTheme(
+      <PaywallModal visible onClose={jest.fn()} onChoisir={jest.fn()} featureOrigine="membres_foyer" />,
+    );
+    expect(getByText('Cette fonctionnalité nécessite le palier Famille.')).toBeTruthy();
+  });
+
+  it("COUR-35 : n'affiche aucun palier requis sans featureOrigine connue", async () => {
+    const { queryByText } = await renderWithTheme(
+      <PaywallModal visible onClose={jest.fn()} onChoisir={jest.fn()} />,
+    );
+    expect(queryByText(/nécessite le palier/)).toBeNull();
+  });
 });

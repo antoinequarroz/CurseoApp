@@ -5,7 +5,7 @@ import { Check, X } from 'lucide-react-native';
 import { useTheme } from '@/lib/theme-context';
 import { useHaptics } from '@/hooks/useHaptics';
 import { t } from '@/lib/i18n';
-import { PALIERS_ABONNEMENT, fetchOffreCourante, acheterPackage } from '@/lib/revenuecat';
+import { PALIERS_ABONNEMENT, FEATURE_PALIER_MINIMAL, fetchOffreCourante, acheterPackage } from '@/lib/revenuecat';
 import { useProfilStore } from '@/stores/profilStore';
 import { toast } from '@/lib/toast';
 import { analytics } from '@/lib/analytics';
@@ -31,7 +31,12 @@ function trouverPackage(offres: PurchasesPackage[], palierId: NiveauAbonnement):
 export function PaywallModal({ visible, onClose, onChoisir, featureOrigine }: PaywallModalProps) {
   const { colors } = useTheme();
   const haptics = useHaptics();
-  const [palierSelectionne, setPalierSelectionne] = React.useState<NiveauAbonnement>(PALIER_DEFAUT);
+  // COUR-35 : le palier requis par la fonctionnalite qui a ouvert le
+  // paywall (ex. "membres_foyer" -> famille) est presectionne et explique
+  // explicitement — plutot que de toujours proposer Standard par defaut
+  // quel que soit ce qui a declenche l'ouverture.
+  const palierRequis = featureOrigine ? FEATURE_PALIER_MINIMAL[featureOrigine] : undefined;
+  const [palierSelectionne, setPalierSelectionne] = React.useState<NiveauAbonnement>(palierRequis ?? PALIER_DEFAUT);
   const [offres, setOffres] = React.useState<PurchasesPackage[]>([]);
   const [achatEnCours, setAchatEnCours] = React.useState(false);
   // Reinitialise la selection a chaque reouverture — ajustement pendant le
@@ -39,7 +44,7 @@ export function PaywallModal({ visible, onClose, onChoisir, featureOrigine }: Pa
   const [visiblePrecedent, setVisiblePrecedent] = React.useState(visible);
   if (visible !== visiblePrecedent) {
     setVisiblePrecedent(visible);
-    if (visible) setPalierSelectionne(PALIER_DEFAUT);
+    if (visible) setPalierSelectionne(palierRequis ?? PALIER_DEFAUT);
   }
 
   React.useEffect(() => {
@@ -103,6 +108,11 @@ export function PaywallModal({ visible, onClose, onChoisir, featureOrigine }: Pa
           </View>
 
           <ScrollView contentContainerStyle={{ padding: 20, gap: 12 }}>
+            {palierRequis && (
+              <BodySm style={{ color: colors.textSecondary }}>
+                {t('paywall.palier_requis', { nom: PALIERS_ABONNEMENT.find((p) => p.id === palierRequis)?.nom ?? '' })}
+              </BodySm>
+            )}
             {PALIERS_ABONNEMENT.map((palier) => {
               // COUR-32 critere 1 : prix/periode reels du store des qu'un
               // produit est configure pour ce palier, sinon repli sur le

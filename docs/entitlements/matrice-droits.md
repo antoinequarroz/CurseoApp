@@ -24,15 +24,19 @@ Les product ids et prix annuels sont une **proposition** : aucun produit annuel 
 | Recettes communautaires — lecture et soumission (COUR-29/30) | Gratuit | RLS `recettes_read`/`recettes_insert`, aucune garde de palier | Implémenté (non restreint par palier) |
 | Quota de 25 recettes/mois (catalogue) | Gratuit (limite au-delà) | ⚠️ Aucun compteur — texte marketing uniquement (`PALIERS_ABONNEMENT`, `lib/revenuecat.ts`) | **Non implémenté** — à trancher : soit implémenter un quota mensuel réel, soit retirer/reformuler ce texte |
 | Assistant IA | Standard | `supabase/functions/ai-assistant` : `profil.abonnement !== 'gratuit'`, rate-limité 20 req/h/utilisateur | Implémenté |
-| Comparateur de prix multi-enseignes | Standard | `estAuMoins('standard')` — `components/courses/ComparateurPrix.tsx` | Implémenté |
+| Comparateur de prix multi-enseignes | Standard | `estAuMoins('standard')` — `components/courses/ComparateurPrix.tsx` — **client uniquement**, voir note ci-dessous | Implémenté |
 | Modes d'optimisation panier (équilibré, « premium », bio, santé) | Standard | `estAuMoins('standard')` — `app/(tabs)/courses.tsx` | Implémenté — ⚠️ voir note nommage ci-dessous |
 | Objectifs nutritionnels | Premium | ❌ Aucune garde de code | **Non implémenté** |
 | Historique | Premium | ❌ Aucune garde de code | **Non implémenté** |
 | Paniers automatiques | Premium | ❌ Aucune garde de code | **Non implémenté** |
 | Commande 1 clic | Premium | ❌ Aucune garde de code | **Non implémenté** |
-| Membres du foyer (jusqu'à 6 profils) | Famille | `estAuMoins('famille')` — `app/membres-foyer.tsx`, `app/(tabs)/profil.tsx`, `app/(tabs)/planifier.tsx` ; limite `LIMITE_MEMBRES_FAMILLE = 6` (`hooks/useMembresFoyer.ts`) | Implémenté |
+| Membres du foyer (jusqu'à 6 profils) | Famille | `estAuMoins('famille')` (client) **+ trigger serveur** `trg_verifier_ajout_membre_foyer` (COUR-35, `20260727010000_membres_foyer_garde_palier.sql`) : rejette l'INSERT si le palier du responsable n'est pas Famille, et la limite de 6 est désormais réellement appliquée en base (pas seulement côté app) | Implémenté (client + serveur) |
 | Listes de courses partagées | Famille | ❌ Aucune garde de code | **Non implémenté** |
 | Vote sur les menus | Famille | ❌ Aucune garde de code | **Non implémenté** |
+
+**COUR-35 — audit client vs serveur** : avant ce ticket, la seule fonctionnalité payante protégée aussi côté serveur était l'Assistant IA (`ai-assistant` vérifie `profil.abonnement` avant de répondre). Toutes les autres gardes n'existaient que côté client (`estAuMoins`), y compris **Membres du foyer** — un utilisateur authentifié pouvait appeler directement l'API REST Supabase (`POST /rest/v1/membres_foyer`) en contournant entièrement le paywall et la limite de 6, sans qu'aucun état local ne s'y oppose. Corrigé par un trigger `BEFORE INSERT` (voir tableau ci-dessus).
+
+**Comparateur de prix — lecture des données de prix reste publique, en connaissance de cause** : `offres_magasin`/`prix_historique`/`produits_canoniques`/`enseignes` ont une RLS `for select using (true)` (COUR-16, choix explicite pour permettre la comparaison sans authentification). Un utilisateur non-Standard peut donc lire ces données via un appel REST direct, même si l'écran du comparateur le bloque. Contrairement à Membres du foyer, ceci n'a pas été durci dans ce ticket : la donnée (prix publics en grande surface) n'est pas confidentielle et l'exposer ne cause pas de préjudice direct — le palier Standard vend surtout l'agrégation/UX de comparaison, pas un secret. À confirmer par les fondateurs si un blocage serveur strict est malgré tout souhaité.
 
 **Note nommage** : le mode d'optimisation panier littéral `'premium'` (`ModeOptimisation`, `types/index.ts`) est un nom de mode de tri du panier, **sans rapport** avec le palier d'abonnement `'premium'` (`NiveauAbonnement`) — il est débloqué dès le palier **Standard**. Coïncidence de nom à garder en tête pour éviter toute confusion en revue de code ou en support client.
 
