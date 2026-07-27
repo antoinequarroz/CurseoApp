@@ -97,6 +97,7 @@ Signature visuelle : chaque card recette/produit a le coin supérieur gauche dé
 ## Documentation complémentaire
 
 - `docs/ARCHITECTURE.md` — vue d'ensemble
+- `docs/DEFINITION_OF_DONE.md` — règle commune avant de considérer un ticket terminé (qualité, migrations/RLS, déploiement, preuves)
 - `docs/adr/` — décisions d'architecture (Expo, Supabase, Zustand+React Query, RevenueCat, proxy OpenAI, offline-first)
 - `PRIVACY.md`, `TERMS.md`, `docs/cgvu.md` — conformité nLPD et App Store
 - `CHANGELOG.md` — historique des versions (format Keep a Changelog)
