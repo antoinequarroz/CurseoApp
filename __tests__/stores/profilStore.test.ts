@@ -31,4 +31,28 @@ describe('profilStore', () => {
     expect(useProfilStore.getState().profil?.budget_hebdo).toBe(200);
     expect(useProfilStore.getState().profil?.prenom).toBe('Alex');
   });
+
+  it('reflete localement un nouveau palier RevenueCat sans toucher le reste du profil', () => {
+    useProfilStore.getState().setProfil(profilTest);
+    useProfilStore.getState().refleterAbonnementLocal('premium');
+    expect(useProfilStore.getState().profil?.abonnement).toBe('premium');
+    expect(useProfilStore.getState().profil?.prenom).toBe('Alex');
+  });
+
+  it('ignore refleterAbonnementLocal si aucun profil n\'est charge (COUR-33 : hors-ligne au demarrage)', () => {
+    useProfilStore.getState().refleterAbonnementLocal('famille');
+    expect(useProfilStore.getState().profil).toBeNull();
+  });
+
+  it('memorise le palier hors-ligne separement du profil', () => {
+    useProfilStore.getState().setAbonnementHorsLigne('standard');
+    expect(useProfilStore.getState().abonnementHorsLigne).toBe('standard');
+    expect(useProfilStore.getState().profil).toBeNull();
+  });
+
+  it('reset efface aussi le palier hors-ligne', () => {
+    useProfilStore.getState().setAbonnementHorsLigne('famille');
+    useProfilStore.getState().reset();
+    expect(useProfilStore.getState().abonnementHorsLigne).toBeNull();
+  });
 });

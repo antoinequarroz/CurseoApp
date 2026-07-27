@@ -7,7 +7,7 @@ import { useTheme, type ApparencePreference } from '@/lib/theme-context';
 import { useProfilStore } from '@/stores/profilStore';
 import { supabase } from '@/lib/supabase';
 import { resetUserStores } from '@/lib/resetSession';
-import { PALIERS_ABONNEMENT } from '@/lib/revenuecat';
+import { PALIERS_ABONNEMENT, restaurerAchats } from '@/lib/revenuecat';
 import { useAbonnement } from '@/hooks/useAbonnement';
 import { PaywallModal } from '@/components/ui/PaywallModal';
 import { Card } from '@/components/ui/Card';
@@ -76,7 +76,27 @@ export default function Profil() {
   const [abonnementOuvert, setAbonnementOuvert] = useState(false);
   const [apparenceOuvert, setApparenceOuvert] = useState(false);
   const [paywallFamilleVisible, setPaywallFamilleVisible] = useState(false);
+  const [restaurationEnCours, setRestaurationEnCours] = useState(false);
   const { estAuMoins } = useAbonnement();
+
+  // COUR-33 : "Restaurer les achats fonctionne apres reinstallation" —
+  // restaurerAchats() (lib/revenuecat.ts) existait depuis COUR-32 mais
+  // n'etait branchee a aucune UI (code mort, comme initRevenueCat l'etait
+  // avant COUR-32). Reflete immediatement le palier retrouve, sans attendre
+  // le webhook (meme logique que l'achat, PaywallModal).
+  const restaurerLesAchats = async () => {
+    setRestaurationEnCours(true);
+    try {
+      const niveau = await restaurerAchats();
+      useProfilStore.getState().refleterAbonnementLocal(niveau);
+      toast.succes(t('profil.restauration_reussie'));
+    } catch (error) {
+      console.warn('[profil] Echec restauration achats', error);
+      toast.erreur(t('profil.restauration_echec'));
+    } finally {
+      setRestaurationEnCours(false);
+    }
+  };
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? null));
@@ -183,6 +203,12 @@ export default function Profil() {
             <Caption>{p.prix}</Caption>
           </View>
         ))}
+        <Button
+          label={t('profil.restaurer_achats')}
+          variant="secondary"
+          loading={restaurationEnCours}
+          onPress={() => void restaurerLesAchats()}
+        />
       </RowRepliable>
 
       <RowRepliable

@@ -19,3 +19,5 @@ RevenueCat (sandbox pour le MVP) plutôt qu'une implémentation StoreKit/Billing
 Matrice complète des droits par palier (fonctionnalités, limites, product ids, comportement en cas de droit inconnu/expiré) : [`docs/entitlements/matrice-droits.md`](../entitlements/matrice-droits.md) (COUR-31).
 
 Protocole de test d'achat sandbox App Store de bout en bout (nécessite Mac/Xcode/iPhone/TestFlight — hors de portée d'un agent sans accès à ce matériel) : [`docs/entitlements/test-sandbox-app-store.md`](../entitlements/test-sandbox-app-store.md) (COUR-32).
+
+Scénarios sandbox restauration/renouvellement/expiration + règle de grâce hors-ligne : [`docs/entitlements/scenarios-cycle-de-vie-abonnement.md`](../entitlements/scenarios-cycle-de-vie-abonnement.md) (COUR-33).

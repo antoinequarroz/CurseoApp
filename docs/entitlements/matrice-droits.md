@@ -59,9 +59,21 @@ Aucune autre limite mensuelle/annuelle n'est aujourd'hui codée en dur ailleurs 
 | Abonnement expiré (`EXPIRATION`) | Downgrade immédiat vers `'gratuit'` |
 | Annulation (`CANCELLATION`) | Accès conservé jusqu'à la fin de la période déjà payée — pas de downgrade immédiat (comportement standard App Store/Play Store) |
 | Incident de paiement (`BILLING_ISSUE`) | Pas de downgrade immédiat (grace period Apple de 16 jours) ; notification insérée dans `notifications` pour informer l'utilisateur — envoi d'email non implémenté (`TODO` explicite dans le webhook) |
+| App démarrée hors-ligne, fetch `profils` impossible (COUR-33) | Voir §4bis « Règle de grâce hors-ligne » ci-dessous |
+
+## 4bis. Règle de grâce hors-ligne (COUR-33)
+
+Le profil (donc `abonnement`) n'est **jamais persisté localement** : `stores/profilStore.ts` vit entièrement en mémoire et est re-fetch depuis Supabase à chaque démarrage (`app/_layout.tsx`). Sans règle explicite, un abonné payant qui ouvre l'app sans réseau (avion, cave, coupure) perdrait silencieusement son accès premium le temps que la connexion revienne, puisque `useAbonnement` retombe sur `'gratuit'` quand `profil` est `null`.
+
+**Règle retenue** (`lib/abonnementHorsLigne.ts`) : le dernier palier confirmé avec succès (fetch Supabase réussi, achat ou restauration RevenueCat) est mémorisé localement (`AsyncStorage`, horodaté) et reste valable **72 heures** hors-ligne. Passé ce délai, repli explicite sur `'gratuit'` — même philosophie deny-by-default que pour une valeur d'abonnement inconnue (§4).
+
+- **Pourquoi 72h** : assez long pour couvrir une coupure réseau ponctuelle (trajet, zone blanche, avion) sans frustrer un abonné légitime ; assez court pour ne jamais masquer durablement une expiration ou annulation réelle qui n'aurait pas pu être synchronisée faute de réseau.
+- **Portée** : ce cache ne contient que le palier (`NiveauAbonnement`) et son horodatage de vérification — jamais le reste du profil (préférences, foyer, etc.), qui continue de nécessiter un vrai fetch Supabase.
+- **Priorité** : `profil.abonnement` (Supabase, chargé avec succès) prime toujours sur le palier de grâce — celui-ci n'intervient que quand `profil` est `null` (`hooks/useAbonnement.ts`, champ `abonnementHorsLigne` de `profilStore`).
+- **Écriture du cache** : à chaque `setProfil()` réussi, et à chaque `refleterAbonnementLocal()` (achat/restauration RevenueCat confirmés côté client, avant même le passage du webhook).
 
 ## 5. Dette identifiée (hors périmètre de correction immédiate)
 
-- `niveauDepuisCustomerInfo()` (`lib/revenuecat.ts`) — dérivation du palier depuis le SDK RevenueCat côté client — n'est **appelée nulle part** dans le repo aujourd'hui : le webhook reste la seule source de vérité effective. À utiliser si un besoin d'affichage optimiste (avant confirmation webhook) apparaît, sinon à retirer pour éviter le code mort.
+- ~~`niveauDepuisCustomerInfo()` jamais appelée~~ — **résolu par COUR-32** : utilisée par `acheterPackage()`, `restaurerAchats()` et `ecouterMisesAJourAbonnement()` pour refléter le palier côté client immédiatement après achat/restauration, avant confirmation du webhook (qui reste la source de vérité persistée, ADR-004).
 - Triple source de vérité à synchroniser manuellement pour la liste des 4 paliers : `lib/revenuecat.ts` (`ENTITLEMENT_IDS`), `supabase/functions/revenuecat-webhook/index.ts` (`PALIERS_VALIDES`), `supabase/schema.sql` (contrainte `CHECK`) — trois runtimes différents (React Native, Deno, SQL) empêchent un partage direct de constante ; chaque fichier référence désormais explicitement les deux autres en commentaire.
 - Quota "25 recettes/mois" et fonctionnalités Premium/Famille listées "Non implémenté" au §2 : à trancher (implémenter ou retirer du paywall) dans un ticket dédié, hors périmètre de COUR-31 qui formalise la matrice sans construire de nouvelles fonctionnalités.

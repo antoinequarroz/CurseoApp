@@ -17,6 +17,7 @@ import { ThemeProvider } from '@/lib/theme-context';
 import { queryClient } from '@/lib/queryClient';
 import { supabase } from '@/lib/supabase';
 import { initRevenueCat, ecouterMisesAJourAbonnement } from '@/lib/revenuecat';
+import { lireAbonnementAvecGrace } from '@/lib/abonnementHorsLigne';
 import { useProfilStore } from '@/stores/profilStore';
 import { useWhatsNew } from '@/lib/whatsNew';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -49,6 +50,13 @@ export default function RootLayout() {
         }
       } catch (error) {
         console.warn('[startup] Initialisation session/profil ignoree.', error);
+        // COUR-33 : le fetch du profil a echoue (le plus souvent hors-ligne)
+        // — repli sur le dernier palier confirme avec succes s'il est encore
+        // dans la fenetre de grace de 72h, plutot que de laisser
+        // useAbonnement retomber silencieusement sur 'gratuit' pour un
+        // abonne payant reel. Voir lib/abonnementHorsLigne.ts.
+        const niveauGrace = await lireAbonnementAvecGrace();
+        if (niveauGrace) useProfilStore.getState().setAbonnementHorsLigne(niveauGrace);
       }
       setAppReady(true);
     }

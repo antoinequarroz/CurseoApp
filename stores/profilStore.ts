@@ -2,11 +2,18 @@
 import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/lib/toast';
+import { memoriserAbonnementVerifie } from '@/lib/abonnementHorsLigne';
 import type { NiveauAbonnement, Profil } from '@/types';
 
 interface ProfilState {
   profil: Profil | null;
+  // COUR-33 : palier issu de la fenetre de grace hors-ligne (voir
+  // lib/abonnementHorsLigne.ts), utilise par useAbonnement UNIQUEMENT quand
+  // `profil` est null (demarrage hors-ligne, fetch Supabase impossible) —
+  // jamais prioritaire sur un `profil` reellement charge.
+  abonnementHorsLigne: NiveauAbonnement | null;
   setProfil: (profil: Profil) => void;
+  setAbonnementHorsLigne: (niveau: NiveauAbonnement) => void;
   mettreAJourPreferences: (partiel: Partial<Profil>) => void;
   refleterAbonnementLocal: (niveau: NiveauAbonnement) => void;
   reset: () => void;
@@ -20,7 +27,14 @@ let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 export const useProfilStore = create<ProfilState>((set, get) => ({
   profil: null,
-  setProfil: (profil) => set({ profil }),
+  abonnementHorsLigne: null,
+  setProfil: (profil) => {
+    set({ profil });
+    // Profil confirme par Supabase = palier verifie avec succes — rafraichit
+    // la fenetre de grace pour le prochain demarrage hors-ligne.
+    void memoriserAbonnementVerifie(profil.abonnement);
+  },
+  setAbonnementHorsLigne: (niveau) => set({ abonnementHorsLigne: niveau }),
   mettreAJourPreferences: (partiel) => {
     const profilActuel = get().profil;
     if (!profilActuel) return;
@@ -46,9 +60,12 @@ export const useProfilStore = create<ProfilState>((set, get) => ({
   // l'unique source de verite persistee, voir ADR-004), sinon un client
   // pourrait ecraser ou devancer incorrectement l'etat serveur.
   refleterAbonnementLocal: (niveau) => {
+    // Achat/restauration confirme par RevenueCat = palier verifie avec
+    // succes, meme avant que le webhook n'ait mis a jour Supabase.
+    void memoriserAbonnementVerifie(niveau);
     const profilActuel = get().profil;
     if (!profilActuel || profilActuel.abonnement === niveau) return;
     set({ profil: { ...profilActuel, abonnement: niveau } });
   },
-  reset: () => set({ profil: null }),
+  reset: () => set({ profil: null, abonnementHorsLigne: null }),
 }));
