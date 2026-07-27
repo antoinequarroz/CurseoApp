@@ -1,3 +1,15 @@
+# COUR-37 : les commandes ci-dessous sont EXACTEMENT celles documentees
+# comme la Definition of Done (docs/DEFINITION_OF_DONE.md §1) et comme les
+# scripts npm locaux (package.json) — jamais une variante CI-only, pour
+# qu'un echec ici soit toujours reproductible tel quel en local.
+#
+# "Un echec bloque la fusion" (critere du ticket) est impose par une regle
+# de protection de branche GitHub (Settings > Branches > main > Require
+# status checks to pass before merging, cocher `quality` et
+# `supabase-migrations`) — ce fichier declare seulement les checks, il ne
+# peut pas rendre leur succes obligatoire lui-meme (reglage du depot, pas du
+# workflow ; necessite un acces admin non disponible depuis cet
+# environnement, voir le rapport de ticket).
 name: CI Courseo
 on: [push, pull_request]
 jobs:
@@ -7,10 +19,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: '22' }
-      - run: npm ci --legacy-peer-deps
-      - run: npm run lint
-      - run: npm run type-check
-      - run: npm test -- --coverage
+      - name: Installer les dependances depuis le lockfile (npm ci)
+        run: npm ci --legacy-peer-deps
+      - name: Lint (npm run lint)
+        run: npm run lint
+      - name: Verification des types (npm run type-check)
+        run: npm run type-check
+      - name: Tests + couverture (npm test -- --coverage)
+        run: npm test -- --coverage
 
   # COUR-12 : empeche qu'une migration cassee soit fusionnee. Initialise une
   # base Postgres vierge (via le CLI Supabase, Docker deja disponible sur les
