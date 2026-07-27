@@ -28,6 +28,14 @@ declare
   abonnement_responsable text;
   nb_membres_existants integer;
 begin
+  -- service_role (seed, scripts de verification, futur outillage support)
+  -- contourne cette garde comme il contourne deja la RLS — la garde vise
+  -- les ecritures d'un UTILISATEUR final (anon/authenticated), pas les
+  -- operations de confiance cote serveur.
+  if auth.role() = 'service_role' then
+    return new;
+  end if;
+
   select p.abonnement into abonnement_responsable
   from foyers f
   join profils p on p.id = f.responsable_id
