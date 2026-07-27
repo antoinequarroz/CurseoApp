@@ -246,7 +246,9 @@
   "paywall": {
     "titre": "Débloquer Coursia",
     "choisir_palier_label": "Choisir le palier {{nom}} à {{prix}}",
-    "continuer": "Continuer"
+    "continuer": "Continuer",
+    "achat_reussi": "Abonnement activé, merci !",
+    "achat_echec": "L'achat n'a pas abouti. Réessaie ou vérifie ta connexion."
   },
   "whatsnew": {
     "titre": "Quoi de neuf ?",

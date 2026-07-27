@@ -16,6 +16,7 @@ import { useFonts as useDMMonoFonts, DMMono_400Regular, DMMono_500Medium } from 
 import { ThemeProvider } from '@/lib/theme-context';
 import { queryClient } from '@/lib/queryClient';
 import { supabase } from '@/lib/supabase';
+import { initRevenueCat, ecouterMisesAJourAbonnement } from '@/lib/revenuecat';
 import { useProfilStore } from '@/stores/profilStore';
 import { useWhatsNew } from '@/lib/whatsNew';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -42,6 +43,9 @@ export default function RootLayout() {
             .eq('id', data.session.user.id)
             .single();
           if (profil) useProfilStore.getState().setProfil(profil);
+          // COUR-32 : identifie l'utilisateur aupres du SDK RevenueCat des que
+          // connu, avant tout achat possible (paywall accessible des les tabs).
+          initRevenueCat(data.session.user.id);
         }
       } catch (error) {
         console.warn('[startup] Initialisation session/profil ignoree.', error);
@@ -50,6 +54,17 @@ export default function RootLayout() {
     }
     void prepare();
   }, [fontsLoaded]);
+
+  // COUR-32 critere 3/4 : tout changement d'entitlements RevenueCat (achat,
+  // restauration, renouvellement/expiration synchronises par le SDK en tache
+  // de fond) met a jour l'abonnement affiche immediatement, sans redemarrage
+  // — purement local, le webhook reste la source de verite persistee.
+  useEffect(() => {
+    const arreter = ecouterMisesAJourAbonnement((niveau) => {
+      useProfilStore.getState().refleterAbonnementLocal(niveau);
+    });
+    return arreter;
+  }, []);
 
   const onLayoutRootView = useCallback(async () => {
     if (appReady) await SplashScreen.hideAsync();

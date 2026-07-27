@@ -2,12 +2,13 @@
 import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/lib/toast';
-import type { Profil } from '@/types';
+import type { NiveauAbonnement, Profil } from '@/types';
 
 interface ProfilState {
   profil: Profil | null;
   setProfil: (profil: Profil) => void;
   mettreAJourPreferences: (partiel: Partial<Profil>) => void;
+  refleterAbonnementLocal: (niveau: NiveauAbonnement) => void;
   reset: () => void;
 }
 
@@ -38,6 +39,16 @@ export const useProfilStore = create<ProfilState>((set, get) => ({
           if (error) toast.erreur('Impossible d\'enregistrer tes préférences');
         });
     }, 600);
+  },
+  // COUR-32 : reflete localement le palier renvoye par RevenueCat (achat,
+  // restauration, ecouteur CustomerInfo) pour une UI a jour sans
+  // redemarrage — n'ecrit JAMAIS vers Supabase (le webhook RevenueCat reste
+  // l'unique source de verite persistee, voir ADR-004), sinon un client
+  // pourrait ecraser ou devancer incorrectement l'etat serveur.
+  refleterAbonnementLocal: (niveau) => {
+    const profilActuel = get().profil;
+    if (!profilActuel || profilActuel.abonnement === niveau) return;
+    set({ profil: { ...profilActuel, abonnement: niveau } });
   },
   reset: () => set({ profil: null }),
 }));

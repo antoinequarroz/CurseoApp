@@ -31,6 +31,7 @@ import { useHaptics } from '@/hooks/useHaptics';
 import { useOnboardingStore } from '@/stores/onboardingStore';
 import { useProfilStore } from '@/stores/profilStore';
 import { supabase } from '@/lib/supabase';
+import { initRevenueCat } from '@/lib/revenuecat';
 import { analytics } from '@/lib/analytics';
 import { KeyboardView } from '@/components/ui/KeyboardView';
 import { RegimeParPersonneTeaser } from '@/components/ui/RegimeParPersonneTeaser';
@@ -229,6 +230,10 @@ export default function Onboarding() {
     useProfilStore.getState().setProfil(profilComplet);
     if (session.session?.user) {
       await supabase.from('profils').upsert(profilComplet);
+      // COUR-32 : identifie l'utilisateur aupres de RevenueCat des la fin de
+      // l'onboarding — sans redemarrage de l'app, un achat pourrait sinon
+      // etre tente avant que le SDK ne connaisse l'utilisateur.
+      initRevenueCat(session.session.user.id);
     }
     terminer();
     analytics.onboardingCompleted();
