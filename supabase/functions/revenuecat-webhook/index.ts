@@ -38,7 +38,19 @@ serve(async (req) => {
 
   // Doit rester synchronise avec les 4 paliers de lib/revenuecat.ts (PALIERS_ABONNEMENT)
   // et la contrainte `check (abonnement in (...))` de supabase/schema.sql.
-  const PALIERS_VALIDES = new Set(['gratuit', 'standard', 'premium', 'famille']);
+  // Ordre = priorite du plus haut palier au plus bas (voir COUR-31,
+  // docs/entitlements/matrice-droits.md) — meme ordre que
+  // niveauDepuisCustomerInfo() dans lib/revenuecat.ts (derivation cote
+  // client), pour ne jamais diverger si RevenueCat renvoie plusieurs
+  // entitlements actifs simultanement (ex. changement de palier en cours).
+  const PALIERS_PAR_PRIORITE = ['famille', 'premium', 'standard'];
+  const PALIERS_VALIDES = new Set(['gratuit', ...PALIERS_PAR_PRIORITE]);
+
+  /** Le plus haut palier parmi les entitlements actifs, ou 'gratuit' si aucun. */
+  function palierPrioritaire(entitlementIds: string[] | undefined): string {
+    const actifs = new Set(entitlementIds ?? []);
+    return PALIERS_PAR_PRIORITE.find((p) => actifs.has(p)) ?? 'gratuit';
+  }
 
   // Renvoie une erreur explicite (au lieu d'avaler l'erreur et repondre 200) :
   // RevenueCat reessaie automatiquement les webhooks en echec (non-2xx), donc un
@@ -60,7 +72,16 @@ serve(async (req) => {
     case 'INITIAL_PURCHASE':
     case 'RENEWAL':
     case 'PRODUCT_CHANGE': {
-      const erreur = await majAbonnement(event.entitlement_ids?.[0] ?? 'standard');
+      // Pas d'entitlement actif sur un evenement d'achat/renouvellement : ne
+      // jamais deviner (l'ancien fallback 'standard' pouvait sur-attribuer
+      // un palier, et retomber sur 'gratuit' downgraderait a tort un achat
+      // reel) — rejet explicite pour forcer un retry RevenueCat plutot
+      // qu'un etat fige incorrect.
+      if (!event.entitlement_ids?.length) {
+        console.error(`[revenuecat-webhook] Aucun entitlement actif sur ${event.type} pour ${userId}`);
+        return new Response('Aucun entitlement actif', { status: 422, headers: SECURITY_HEADERS });
+      }
+      const erreur = await majAbonnement(palierPrioritaire(event.entitlement_ids));
       if (erreur) return erreur;
       break;
     }

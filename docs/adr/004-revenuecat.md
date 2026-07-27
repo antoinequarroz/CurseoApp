@@ -15,3 +15,5 @@ RevenueCat (sandbox pour le MVP) plutôt qu'une implémentation StoreKit/Billing
 - RevenueCat unifie iOS/Android derrière une seule API d'entitlements (`lib/revenuecat.ts`)
 - Le webhook RevenueCat (`supabase/functions/revenuecat-webhook`) est la source de vérité pour `profils.abonnement`, pas l'app cliente — évite les incohérences en cas d'app tuée pendant l'achat
 - Contrepartie : dépendance à un service tiers payant au-delà d'un certain volume (acceptable pour le MVP)
+
+Matrice complète des droits par palier (fonctionnalités, limites, product ids, comportement en cas de droit inconnu/expiré) : [`docs/entitlements/matrice-droits.md`](../entitlements/matrice-droits.md) (COUR-31).

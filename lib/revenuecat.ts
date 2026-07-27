@@ -62,6 +62,8 @@ export const PALIERS_ABONNEMENT = [
     id: 'famille' as const,
     nom: 'Famille',
     prix: 'CHF 16.90/mois',
-    fonctionnalites: ['5 profils', 'Listes partagees', 'Vote sur les menus'],
+    // COUR-31 : doit rester synchronise avec LIMITE_MEMBRES_FAMILLE
+    // (hooks/useMembresFoyer.ts), seule limite reellement appliquee cote code.
+    fonctionnalites: ['6 profils', 'Listes partagees', 'Vote sur les menus'],
   },
 ];
