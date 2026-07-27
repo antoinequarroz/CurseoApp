@@ -371,6 +371,18 @@ authorization_url_path = "/oauth/consent"
 # Allow dynamic client registration
 allow_dynamic_registration = false
 
+# COUR-34 : verify_jwt=true (comportement par defaut) rejette la requete au
+# niveau de la gateway AVANT meme d'atteindre le code de la fonction — or
+# revenuecat-webhook authentifie ses appelants avec son propre secret
+# (Authorization: Bearer <REVENUECAT_WEBHOOK_SECRET>, verifie en temps
+# constant dans index.ts), pas avec un JWT Supabase : RevenueCat n'en
+# fournit jamais un. Sans cette section, l'appel echoue "Invalid Token or
+# Protected Header formatting" avant meme d'atteindre notre propre
+# verification d'authenticite — trouve en testant reellement en local
+# (aucun verify script n'existait avant COUR-34 pour cette fonction).
+[functions.revenuecat-webhook]
+verify_jwt = false
+
 [edge_runtime]
 enabled = true
 # Supported request policies: `oneshot`, `per_worker`.

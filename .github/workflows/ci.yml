@@ -33,6 +33,11 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: latest
+      - name: Secret de test pour les Edge Functions locales (COUR-34)
+        # supabase/functions/.env est gitignore (comme tout .env*) — jamais
+        # de vrai secret ici, uniquement une valeur fixe pour l'auth du
+        # webhook RevenueCat en local/CI (verifiee dans verify-revenuecat-webhook.sh).
+        run: echo "REVENUECAT_WEBHOOK_SECRET=secret-test-local-ci" > supabase/functions/.env
       - name: Demarrer Supabase (applique migrations + seed automatiquement)
         run: supabase start
       - name: Verifier le schema et le seed obtenus
@@ -57,6 +62,8 @@ jobs:
         run: bash scripts/verify-adresses-livraison.sh
       - name: Verifier le backend recettes communautaires et la moderation (COUR-29)
         run: bash scripts/verify-recettes-communautaires.sh
+      - name: Verifier l'authenticite et l'idempotence du webhook RevenueCat (COUR-34)
+        run: bash scripts/verify-revenuecat-webhook.sh
       - name: Arreter Supabase
         if: always()
         run: supabase stop --no-backup
