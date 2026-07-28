@@ -82,6 +82,12 @@ jobs:
         run: bash scripts/verify-recettes-communautaires.sh
       - name: Verifier l'authenticite et l'idempotence du webhook RevenueCat (COUR-34)
         run: bash scripts/verify-revenuecat-webhook.sh
+      # COUR-39 : test d'integration transverse (recettes, planning, foyer,
+      # communaute, abonnements) avec deux utilisateurs authentifies distincts.
+      # Place en dernier : c'est le seul script qui nettoie integralement ses
+      # donnees, il tolere donc les residus laisses par les precedents.
+      - name: Verifier les parcours critiques bout-en-bout a deux utilisateurs (COUR-39)
+        run: bash scripts/verify-parcours-critiques.sh
       - name: Arreter Supabase
         if: always()
         run: supabase stop --no-backup
