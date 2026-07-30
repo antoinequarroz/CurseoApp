@@ -8,9 +8,11 @@ import { useProfilStore } from '@/stores/profilStore';
 import Onboarding from '@/app/(auth)/onboarding';
 import { supabase } from '@/lib/supabase';
 import { initRevenueCat } from '@/lib/revenuecat';
+import { toast } from '@/lib/toast';
 
 jest.mock('expo-router', () => ({ router: { replace: jest.fn(), push: jest.fn() } }));
 jest.mock('@/lib/revenuecat', () => ({ initRevenueCat: jest.fn() }));
+jest.mock('@/lib/toast', () => ({ toast: { succes: jest.fn(), erreur: jest.fn() } }));
 jest.mock('@/lib/supabase', () => ({
   supabase: {
     auth: { getSession: jest.fn() },
@@ -78,15 +80,38 @@ describe('Onboarding', () => {
     expect(router.replace).toHaveBeenCalledWith('/(tabs)');
   });
 
-  it('finalisation : sans session, cree un profil local sans appeler Supabase ni RevenueCat', async () => {
+  // COUR-40 : avant ce correctif, finaliser sans session creait un profil
+  // local avec l'id litteral 'demo-user' et n'ecrivait rien en base. L'app
+  // semblait fonctionner, mais toutes les ecritures serveur suivantes
+  // partaient avec un profil_id inexistant (violations de cle etrangere
+  // observees en production pendant la recette TestFlight du 29.07).
+  it('finalisation : sans session, refuse de finaliser et renvoie vers la connexion', async () => {
     (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: null } });
     useOnboardingStore.getState().setEtape(5);
 
     const { getByText } = await renderAvecProviders();
     fireEvent.press(getByText('Terminer'));
 
-    await waitFor(() => expect(router.replace).toHaveBeenCalledWith('/(tabs)'));
+    await waitFor(() => expect(router.replace).toHaveBeenCalledWith('/(auth)/connexion'));
+    expect(router.replace).not.toHaveBeenCalledWith('/(tabs)');
     expect(initRevenueCat).not.toHaveBeenCalled();
-    expect(useProfilStore.getState().profil?.id).toBe('demo-user');
+    expect(supabase.from).not.toHaveBeenCalled();
+    // Aucun profil fantome ne doit subsister dans le store.
+    expect(useProfilStore.getState().profil).toBeNull();
+  });
+
+  it('finalisation : un echec d enregistrement bloque l entree dans l app', async () => {
+    (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: { user: { id: 'u-1' } } } });
+    (supabase.from as jest.Mock).mockReturnValue({
+      upsert: jest.fn().mockResolvedValue({ error: new Error('reseau') }),
+    });
+    useOnboardingStore.getState().setEtape(5);
+
+    const { getByText } = await renderAvecProviders();
+    fireEvent.press(getByText('Terminer'));
+
+    await waitFor(() => expect(toast.erreur).toHaveBeenCalled());
+    expect(router.replace).not.toHaveBeenCalledWith('/(tabs)');
+    expect(useProfilStore.getState().profil).toBeNull();
   });
 });

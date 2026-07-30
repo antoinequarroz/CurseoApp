@@ -40,6 +40,7 @@ import { Screen } from '@/components/ui/Screen';
 import { DisplayXL, Body, BodySm, Caption, PriceXL } from '@/components/ui/Typography';
 import { formatPrix } from '@/lib/format';
 import { t } from '@/lib/i18n';
+import { toast } from '@/lib/toast';
 import type { Enseigne, Objectif, Regime } from '@/types';
 
 const TOTAL_ETAPES = 5;
@@ -207,8 +208,28 @@ export default function Onboarding() {
 
   const finaliser = async () => {
     const { data: session } = await supabase.auth.getSession();
+
+    // COUR-40 : sans session, l'ancien code retombait sur l'id litteral
+    // 'demo-user' et n'ecrivait RIEN dans Supabase (l'upsert etait deja
+    // conditionne a la session). L'app paraissait fonctionner — le profil
+    // vivait dans le store zustand — mais chaque ecriture serveur ultérieure
+    // partait avec un profil_id inexistant : la recette TestFlight du 29.07 a
+    // produit en production des rafales de
+    //   invalid input syntax for type uuid: "demo-user"
+    //   insert or update on "swipes"/"repas_planifies" violates foreign key
+    // et ~20 des 24 anomalies remontees (planning, courses, gouts, economies,
+    // profil) n'etaient que ce seul defaut vu depuis 20 ecrans.
+    //
+    // On refuse donc de finaliser sans session, plutot que de fabriquer un
+    // etat local qui ment sur ce qui est reellement enregistre.
+    if (!session.session?.user) {
+      toast.erreur(t('onboarding.erreur_session_requise'));
+      router.replace('/(auth)/connexion');
+      return;
+    }
+
     const profilComplet = {
-      id: session.session?.user.id ?? 'demo-user',
+      id: session.session.user.id,
       prenom: donneesPartielles.prenom ?? 'Toi',
       nb_personnes: donneesPartielles.nb_personnes ?? 1,
       nb_enfants: donneesPartielles.nb_enfants ?? 0,
@@ -227,14 +248,22 @@ export default function Onboarding() {
       apparence: 'auto' as const,
       cgvu_version_acceptee: cgvuAcceptees ? '1.0' : null,
     };
-    useProfilStore.getState().setProfil(profilComplet);
-    if (session.session?.user) {
-      await supabase.from('profils').upsert(profilComplet);
-      // COUR-32 : identifie l'utilisateur aupres de RevenueCat des la fin de
-      // l'onboarding — sans redemarrage de l'app, un achat pourrait sinon
-      // etre tente avant que le SDK ne connaisse l'utilisateur.
-      initRevenueCat(session.session.user.id);
+    // COUR-40 : l'ecriture serveur precede la mise a jour du store. L'ancien
+    // ordre (store d'abord, upsert ensuite sans verifier l'erreur) laissait
+    // l'app afficher un profil qui n'existait pas en base — c'est ce qui
+    // rendait la panne invisible pendant toute la recette.
+    const { error } = await supabase.from('profils').upsert(profilComplet);
+    if (error) {
+      console.warn('[onboarding] Echec de l enregistrement du profil', error);
+      toast.erreur(t('onboarding.erreur_enregistrement'));
+      return;
     }
+
+    useProfilStore.getState().setProfil(profilComplet);
+    // COUR-32 : identifie l'utilisateur aupres de RevenueCat des la fin de
+    // l'onboarding — sans redemarrage de l'app, un achat pourrait sinon
+    // etre tente avant que le SDK ne connaisse l'utilisateur.
+    initRevenueCat(session.session.user.id);
     terminer();
     analytics.onboardingCompleted();
     void haptics.success();

@@ -62,7 +62,9 @@
     "regime_par_personne_titre": "Personnaliser par personne",
     "regime_par_personne_description": "Bientôt disponible : indique un régime ou des allergies différents pour chaque membre du foyer.",
     "regime_par_personne_a11y": "Personnaliser les régimes par personne, fonctionnalité du palier Famille, bientôt disponible",
-    "palier_famille": "Palier Famille"
+    "palier_famille": "Palier Famille",
+    "erreur_session_requise": "Connecte-toi pour enregistrer ton profil, sinon rien ne sera sauvegardé.",
+    "erreur_enregistrement": "Impossible d'enregistrer ton profil, réessaie dans un instant."
   },
   "accueil": {
     "salutation": "Bonjour {{prenom}}, voici ta semaine",
