@@ -27,6 +27,12 @@ jobs:
         run: npm run type-check
       - name: Tests + couverture (npm test -- --coverage)
         run: npm test -- --coverage
+      - name: Installer le gateway depuis son lockfile
+        run: npm ci --prefix services/swissgroceries-gateway --ignore-scripts
+      - name: Tester le gateway et son coupe-circuit
+        run: npm run test:gateway
+      - name: Construire l'image gateway sans la publier
+        run: docker build --tag coursia-swissgroceries-gateway:ci services/swissgroceries-gateway
 
   # COUR-12 : empeche qu'une migration cassee soit fusionnee. Initialise une
   # base Postgres vierge (via le CLI Supabase, Docker deja disponible sur les
@@ -53,7 +59,11 @@ jobs:
         # supabase/functions/.env est gitignore (comme tout .env*) — jamais
         # de vrai secret ici, uniquement une valeur fixe pour l'auth du
         # webhook RevenueCat en local/CI (verifiee dans verify-revenuecat-webhook.sh).
-        run: echo "REVENUECAT_WEBHOOK_SECRET=secret-test-local-ci" > supabase/functions/.env
+        run: |
+          echo "REVENUECAT_WEBHOOK_SECRET=secret-test-local-ci" > supabase/functions/.env
+          echo "SWISS_GROCERIES_SERVER_ENABLED=false" >> supabase/functions/.env
+          echo "SWISS_GROCERIES_SERVER_MODE=canary" >> supabase/functions/.env
+          echo "SWISS_GROCERIES_CANARY_USER_IDS=11111111-1111-1111-1111-111111111111" >> supabase/functions/.env
       - name: Demarrer Supabase (applique migrations + seed automatiquement)
         run: supabase start
       - name: Verifier le schema et le seed obtenus
@@ -82,6 +92,8 @@ jobs:
         run: bash scripts/verify-recettes-communautaires.sh
       - name: Verifier l'authenticite et l'idempotence du webhook RevenueCat (COUR-34)
         run: bash scripts/verify-revenuecat-webhook.sh
+      - name: Verifier la cohorte canary SwissGroceries avec de vrais comptes Auth (COUR-61)
+        run: bash scripts/verify-swissgroceries-canary.sh
       # COUR-39 : test d'integration transverse (recettes, planning, foyer,
       # communaute, abonnements) avec deux utilisateurs authentifies distincts.
       # Place en dernier : c'est le seul script qui nettoie integralement ses

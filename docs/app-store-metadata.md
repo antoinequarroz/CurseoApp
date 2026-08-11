@@ -1,34 +1,34 @@
-# App Store Connect — Coursia
+# App Store Connect — CoursIA
 
 ## Informations générales
 
-- Nom de l'app : Coursia
+- Nom de l'app : CoursIA
 - Sous-titre : Repas et courses intelligents
 - Bundle ID : ch.courseo.app
 - Catégorie : Nourriture et boissons / Épicerie
 
 ## Description courte (170 caractères max)
 
-Planifie tes repas, génère ta liste de courses et compare les prix chez Coop, Migros, Lidl et Aldi. Tout automatisé, en quelques secondes.
+Planifie tes repas, génère ta liste de courses et consulte les prix disponibles pour les produits suivis. Pensé pour les foyers suisses.
 
 ## Description longue
 
-Coursia est le copilote alimentaire des foyers suisses.
+CoursIA est le copilote alimentaire des foyers suisses.
 
 **PLANIFIE TES REPAS EN UN SWIPE**
-Découvre des recettes personnalisées selon tes goûts, ton budget et tes restrictions alimentaires. Swipe pour aimer ou passer — Coursia apprend tes préférences.
+Découvre des recettes adaptées à ton foyer, ton budget et tes restrictions alimentaires. Aime ou passe, puis organise ta semaine.
 
 **GÉNÈRE TA LISTE DE COURSES AUTOMATIQUEMENT**
-Plus besoin de noter chaque ingrédient à la main. Coursia calcule exactement ce dont tu as besoin pour la semaine, ajuste les quantités selon le nombre de personnes et organise ta liste par rayon.
+Plus besoin de noter chaque ingrédient à la main. CoursIA calcule exactement ce dont tu as besoin pour la semaine, ajuste les quantités selon le nombre de personnes et organise ta liste par rayon.
 
-**COMPARE LES PRIX ENTRE COOP, MIGROS, LIDL ET ALDI**
-Coursia compare les prix et optimise ton panier pour que tu dépenses le moins possible — sans sacrifier la qualité.
+**CONSULTE LES PRIX DISPONIBLES**
+Pour les produits suivis, compare les offres disponibles, leur format, leur prix unitaire, leur source et leur date de mise à jour. La couverture est volontairement limitée pendant le prototype.
 
-**ÉCONOMISE CHAQUE SEMAINE**
-Vois exactement combien tu économises grâce à Coursia. Chaque commande affiche les économies réalisées par rapport à l'enseigne la plus chère.
+**SIMULE TON PANIER**
+Teste plusieurs modes d'organisation du panier. Les montants du prototype sont clairement indiqués comme simulations et aucune commande n'est envoyée à une enseigne.
 
-**POUR TOUTE LA FAMILLE**
-Planifie pour plusieurs personnes, gère les allergies et régimes de chaque membre, et partagez vos listes de courses en temps réel.
+**PENSÉ POUR LE FOYER**
+Planifie pour plusieurs personnes et, avec le palier Famille, gère les régimes et allergies de chaque membre.
 
 ## Mots-clés
 
@@ -36,16 +36,17 @@ courses,repas,recettes,Migros,Coop,Lidl,budget,planning,liste,prix,Suisse,famill
 
 ## URLs
 
-- Confidentialité : https://courseo.ch/privacy
-- Support : https://courseo.ch/support
+- Confidentialité : https://coursia.app/privacy (à publier et vérifier avant soumission)
+- Support : https://coursia.app/support (à publier et vérifier avant soumission)
 
 ## Notes de revue Apple (non publiées)
 
-Application de planification de repas et de courses pour le marché suisse. Le comparateur de prix utilise des données mockées dans cette version MVP. Les achats in-app sont en mode sandbox.
+Application de planification de repas et de courses pour le marché suisse. Le catalogue et certains prix proviennent de Supabase. Le récapitulatif global du panier reste une simulation explicitement signalée. Les achats in-app doivent être testés en sandbox avant revue.
 
 Compte de test :
-- Email : review@courseo.ch
-- Mot de passe : CourseOReview2025!
+
+- Email : à créer dans Supabase staging
+- Mot de passe : à fournir dans App Store Connect, jamais dans ce dépôt
 
 ## Captures d'écran (ordre recommandé)
 

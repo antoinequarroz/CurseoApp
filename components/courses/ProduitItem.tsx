@@ -8,9 +8,20 @@ import { useHaptics } from '@/hooks/useHaptics';
 import { NomProduitCourse, Caption } from '@/components/ui/Typography';
 import { formatQuantite } from '@/lib/format';
 import { t } from '@/lib/i18n';
-import type { ItemCourse } from '@/types';
+import { ComparateurPrix } from './ComparateurPrix';
+import type { ItemCourse, NiveauAbonnement } from '@/types';
 
-export function ProduitItem({ item, onToggle, onSupprimer }: { item: ItemCourse; onToggle: () => void; onSupprimer?: () => void }) {
+export function ProduitItem({
+  item,
+  onToggle,
+  onSupprimer,
+  onChoisirPalier,
+}: {
+  item: ItemCourse;
+  onToggle: () => void;
+  onSupprimer?: () => void;
+  onChoisirPalier: (palier: NiveauAbonnement) => void;
+}) {
   const { colors } = useTheme();
   const haptics = useHaptics();
   const opaciteTexte = useSharedValue(item.coche ? 0.48 : 1);
@@ -22,18 +33,8 @@ export function ProduitItem({ item, onToggle, onSupprimer }: { item: ItemCourse;
   const texteStyle = useAnimatedStyle(() => ({ opacity: opaciteTexte.value }));
 
   return (
-    <Pressable
-      onPress={() => {
-        void haptics.selection();
-        onToggle();
-      }}
-      accessibilityRole="checkbox"
-      accessibilityState={{ checked: item.coche }}
-      accessibilityLabel={`${item.produit}, ${formatQuantite(item.quantite, item.unite)}`}
+    <View
       style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
         paddingVertical: 12,
         paddingHorizontal: 12,
         borderRadius: 16,
@@ -42,37 +43,52 @@ export function ProduitItem({ item, onToggle, onSupprimer }: { item: ItemCourse;
         borderColor: item.coche ? colors.bgSecondary : colors.border,
       }}
     >
-      <View
-        style={{
-          width: 30,
-          height: 30,
-          borderRadius: 15,
-          borderWidth: 2,
-          borderColor: item.coche ? colors.primary : colors.border,
-          backgroundColor: item.coche ? colors.primary : colors.bgSecondary,
-          alignItems: 'center',
-          justifyContent: 'center',
+      <Pressable
+        onPress={() => {
+          void haptics.selection();
+          onToggle();
         }}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: item.coche }}
+        accessibilityLabel={`${item.produit}, ${formatQuantite(item.quantite, item.unite)}`}
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}
       >
-        {item.coche && <Check size={17} color="#FFFFFF" strokeWidth={3} />}
-      </View>
-
-      <Animated.View style={[{ flex: 1 }, texteStyle]}>
-        <NomProduitCourse>{item.produit}</NomProduitCourse>
-        <Caption>{formatQuantite(item.quantite, item.unite)}</Caption>
-      </Animated.View>
-
-      {onSupprimer && (
-        <Pressable
-          onPress={onSupprimer}
-          accessibilityRole="button"
-          accessibilityLabel={t('courses.supprimer_article', { produit: item.produit })}
-          hitSlop={8}
-          style={{ padding: 4 }}
+        <View
+          style={{
+            width: 30,
+            height: 30,
+            borderRadius: 15,
+            borderWidth: 2,
+            borderColor: item.coche ? colors.primary : colors.border,
+            backgroundColor: item.coche ? colors.primary : colors.bgSecondary,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
         >
-          <X size={16} color={colors.textMuted} />
-        </Pressable>
-      )}
-    </Pressable>
+          {item.coche && <Check size={17} color="#FFFFFF" strokeWidth={3} />}
+        </View>
+
+        <Animated.View style={[{ flex: 1 }, texteStyle]}>
+          <NomProduitCourse>{item.produit}</NomProduitCourse>
+          <Caption>{formatQuantite(item.quantite, item.unite)}</Caption>
+        </Animated.View>
+
+        {onSupprimer && (
+          <Pressable
+            onPress={(event) => {
+              event.stopPropagation();
+              onSupprimer();
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={t('courses.supprimer_article', { produit: item.produit })}
+            hitSlop={8}
+            style={{ padding: 4 }}
+          >
+            <X size={16} color={colors.textMuted} />
+          </Pressable>
+        )}
+      </Pressable>
+      {!item.coche && <ComparateurPrix produit={item.produit} onChoisirPalier={onChoisirPalier} />}
+    </View>
   );
 }

@@ -9,7 +9,10 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { ItemCourse, PlanningHebdomadaire, Profil, Rayon } from '@/types';
 import { genererListeCourses } from '@/lib/generateurCourses';
-import { supabase } from '@/lib/supabase';
+import {
+  chargerDerniereListeCourses,
+  enregistrerListeCourses,
+} from '@/lib/coursesRepository';
 
 interface CoursesState {
   items: ItemCourse[];
@@ -17,13 +20,17 @@ interface CoursesState {
   planningId: string | null;
   syncEnAttente: boolean;
   syncing: boolean;
+  erreurSynchronisation: boolean;
+  revision: number;
+  cycleSession: number;
   genererDepuisPlanning: (planning: PlanningHebdomadaire, profil: Pick<Profil, 'nb_personnes'>, planningId?: string) => void;
   toggleCoche: (id: string) => void;
   /** Ajoute un article libre (pas issu d'une recette) : fruits du dejeuner, papier toilette, etc. */
   ajouterItemLibre: (produit: string, rayon: Rayon, quantite?: number, unite?: string) => void;
   retirerItem: (id: string) => void;
   reset: () => void;
-  syncerAvecSupabase: (profilId: string) => Promise<void>;
+  chargerDepuisSupabase: (profilId: string) => Promise<boolean>;
+  syncerAvecSupabase: (profilId: string) => Promise<boolean>;
 }
 
 export const useCoursesStore = create<CoursesState>()(
@@ -34,6 +41,9 @@ export const useCoursesStore = create<CoursesState>()(
       planningId: null,
       syncEnAttente: false,
       syncing: false,
+      erreurSynchronisation: false,
+      revision: 0,
+      cycleSession: 0,
       genererDepuisPlanning: (planning, profil, planningId) =>
         set((state) => ({
           // Les articles libres (sans recette_origine) sont preserves lors d'une
@@ -42,11 +52,15 @@ export const useCoursesStore = create<CoursesState>()(
           items: [...genererListeCourses(planning, profil), ...state.items.filter((i) => !i.recette_origine)],
           planningId: planningId ?? get().planningId,
           syncEnAttente: true,
+          erreurSynchronisation: false,
+          revision: state.revision + 1,
         })),
       toggleCoche: (id) =>
         set((state) => ({
           items: state.items.map((item) => (item.id === id ? { ...item, coche: !item.coche } : item)),
           syncEnAttente: true,
+          erreurSynchronisation: false,
+          revision: state.revision + 1,
         })),
       ajouterItemLibre: (produit, rayon, quantite = 1, unite = 'unite') =>
         set((state) => ({
@@ -62,32 +76,92 @@ export const useCoursesStore = create<CoursesState>()(
             },
           ],
           syncEnAttente: true,
+          erreurSynchronisation: false,
+          revision: state.revision + 1,
         })),
       retirerItem: (id) =>
-        set((state) => ({ items: state.items.filter((i) => i.id !== id), syncEnAttente: true })),
-      reset: () => set({ items: [], listeId: null, planningId: null, syncEnAttente: false }),
-      syncerAvecSupabase: async (profilId) => {
-        const { items, listeId, planningId, syncing } = get();
-        if (syncing || items.length === 0) return;
-        set({ syncing: true });
+        set((state) => ({
+          items: state.items.filter((i) => i.id !== id),
+          syncEnAttente: true,
+          erreurSynchronisation: false,
+          revision: state.revision + 1,
+        })),
+      reset: () => set((state) => ({
+        items: [],
+        listeId: null,
+        planningId: null,
+        syncEnAttente: false,
+        syncing: false,
+        erreurSynchronisation: false,
+        revision: 0,
+        // Invalide les réponses réseau encore en vol au moment d'une
+        // déconnexion afin qu'elles ne contaminent pas le compte suivant.
+        cycleSession: state.cycleSession + 1,
+      })),
+      chargerDepuisSupabase: async (profilId) => {
+        const depart = get();
+        if (depart.syncing || depart.syncEnAttente || depart.listeId || depart.items.length > 0) {
+          return true;
+        }
+
+        const revisionAuDepart = depart.revision;
+        const cycleAuDepart = depart.cycleSession;
+        set({ syncing: true, erreurSynchronisation: false });
         try {
-          if (listeId) {
-            const { error } = await supabase.from('listes_courses').update({ items }).eq('id', listeId);
-            if (error) throw error;
-          } else {
-            const { data, error } = await supabase
-              .from('listes_courses')
-              .insert({ profil_id: profilId, planning_id: planningId, items })
-              .select('id')
-              .single();
-            if (error) throw error;
-            set({ listeId: (data as { id: string }).id });
+          const distante = await chargerDerniereListeCourses(profilId);
+          const courant = get();
+          if (courant.cycleSession !== cycleAuDepart) return false;
+          // Une action locale effectuée pendant le chargement reste prioritaire.
+          if (courant.revision === revisionAuDepart && !courant.syncEnAttente && distante) {
+            set({
+              items: distante.items,
+              listeId: distante.id,
+              planningId: distante.planningId,
+            });
           }
-          set({ syncEnAttente: false });
+          return true;
         } catch {
-          // Reste en attente : reessaie au prochain retour reseau/mutation.
+          if (get().cycleSession === cycleAuDepart) set({ erreurSynchronisation: true });
+          return false;
         } finally {
-          set({ syncing: false });
+          if (get().cycleSession === cycleAuDepart) set({ syncing: false });
+        }
+      },
+      syncerAvecSupabase: async (profilId) => {
+        const depart = get();
+        if (depart.syncing || !depart.syncEnAttente) return true;
+
+        // Une liste créée puis entièrement supprimée avant son premier envoi
+        // n'a rien à créer sur le serveur.
+        if (!depart.listeId && depart.items.length === 0) {
+          set({ syncEnAttente: false, erreurSynchronisation: false });
+          return true;
+        }
+
+        const revisionEnvoyee = depart.revision;
+        const cycleAuDepart = depart.cycleSession;
+        set({ syncing: true, erreurSynchronisation: false });
+        try {
+          const listeId = await enregistrerListeCourses({
+            profilId,
+            listeId: depart.listeId,
+            planningId: depart.planningId,
+            items: depart.items,
+          });
+          if (get().cycleSession !== cycleAuDepart) return false;
+          set((courant) => ({
+            listeId,
+            // Une modification arrivée pendant la requête déclenche un second
+            // envoi au lieu d'être marquée à tort comme synchronisée.
+            syncEnAttente: courant.revision !== revisionEnvoyee,
+            erreurSynchronisation: false,
+          }));
+          return true;
+        } catch {
+          if (get().cycleSession === cycleAuDepart) set({ erreurSynchronisation: true });
+          return false;
+        } finally {
+          if (get().cycleSession === cycleAuDepart) set({ syncing: false });
         }
       },
     }),
@@ -99,6 +173,7 @@ export const useCoursesStore = create<CoursesState>()(
         listeId: state.listeId,
         planningId: state.planningId,
         syncEnAttente: state.syncEnAttente,
+        revision: state.revision,
       }),
     },
   ),

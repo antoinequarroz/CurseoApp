@@ -9,7 +9,10 @@ export const queryClient = new QueryClient({
       retry: 2,
       retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
       staleTime: 5 * 60 * 1000,
-      gcTime: 24 * 60 * 60 * 1000,
+      // Aligné sur la durée du cache persistant : une recette consultée il y
+      // a plusieurs jours doit encore être disponible pendant un séjour hors
+      // ligne, sans être collectée après seulement 24 h.
+      gcTime: 7 * 24 * 60 * 60 * 1000,
       networkMode: 'offlineFirst',
     },
     mutations: {

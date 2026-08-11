@@ -27,6 +27,8 @@ interface LigneRecetteBrute {
   calories: number | null;
   portions: number;
   est_communautaire: boolean;
+  source: string | null;
+  droits_image: string | null;
   recette_ingredients: {
     quantite: number;
     unite: string;
@@ -63,10 +65,12 @@ function versRecette(ligne: LigneRecetteBrute, allergenesEffectifs: AllergeneEff
       })),
     etapes: [...ligne.recette_etapes].sort((a, b) => a.numero - b.numero).map((e) => e.instruction),
     est_communautaire: ligne.est_communautaire,
+    source: ligne.source ?? undefined,
+    droits_image: ligne.droits_image ?? undefined,
   };
 }
 
-const SELECT_RECETTE_COMPLETE = `id, titre, description, image_url, blurhash, temps_preparation, difficulte, cout_estime, calories, portions, est_communautaire,
+const SELECT_RECETTE_COMPLETE = `id, titre, description, image_url, blurhash, temps_preparation, difficulte, cout_estime, calories, portions, est_communautaire, source, droits_image,
    recette_ingredients ( quantite, unite, ordre, ingredients ( nom, rayon ) ),
    recette_etapes ( numero, instruction ),
    recette_regimes ( regimes ( code ) ),

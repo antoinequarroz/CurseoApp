@@ -1,0 +1,102 @@
+name: Activate SwissGroceries canary
+
+on:
+  workflow_dispatch:
+    inputs:
+      license_approved:
+        description: "La licence autorise explicitement ce canary distant"
+        required: true
+        default: false
+        type: boolean
+      technical_canary_passed:
+        description: "Le canary technique COUR-60 est vert"
+        required: true
+        default: false
+        type: boolean
+      field_benchmark_passed:
+        description: "Le benchmark terrain COUR-60 est vert"
+        required: true
+        default: false
+        type: boolean
+      confirmation:
+        description: "Saisir ACTIVER CANARY"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: swissgroceries-staging
+  cancel-in-progress: false
+
+jobs:
+  guards:
+    name: Valider les gardes metier
+    runs-on: ubuntu-latest
+    steps:
+      - name: Exiger toutes les validations
+        shell: bash
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          test "${{ inputs.license_approved }}" = "true"
+          test "${{ inputs.technical_canary_passed }}" = "true"
+          test "${{ inputs.field_benchmark_passed }}" = "true"
+          test "$CONFIRMATION" = "ACTIVER CANARY"
+
+  activate:
+    name: Ouvrir uniquement la cohorte autorisee
+    needs: guards
+    runs-on: ubuntu-latest
+    environment: swissgroceries-staging
+    env:
+      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      CANARY_USER_IDS: ${{ secrets.SWISS_GROCERIES_CANARY_USER_IDS }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@3c2f5e2ae34c34e428e8e206e2c4d21fa2d20fbf # v2.1.1
+        with:
+          version: latest
+
+      - name: Valider la cohorte sans afficher ses identifiants
+        shell: bash
+        run: |
+          test -n "$SUPABASE_PROJECT_REF"
+          test -n "$CANARY_USER_IDS"
+          node --input-type=module <<'NODE'
+          import { parseCanaryUserIds } from './supabase/functions/swissgroceries/access.mjs';
+          const raw = process.env.CANARY_USER_IDS;
+          const count = raw.split(',').map((id) => id.trim()).filter(Boolean).length;
+          const parsed = parseCanaryUserIds(raw);
+          if (count < 1 || count > 10 || parsed.size !== count) process.exit(1);
+          NODE
+
+      - name: Deployer le code en position fermee
+        shell: bash
+        run: |
+          trap 'rm -f "$RUNNER_TEMP/swissgroceries-canary.env"' EXIT
+          printf '%s\n' \
+            'SWISS_GROCERIES_SERVER_ENABLED=false' \
+            'SWISS_GROCERIES_SERVER_MODE=off' \
+            "SWISS_GROCERIES_CANARY_USER_IDS=${CANARY_USER_IDS}" \
+            > "$RUNNER_TEMP/swissgroceries-canary.env"
+          chmod 600 "$RUNNER_TEMP/swissgroceries-canary.env"
+          supabase secrets set --project-ref "$SUPABASE_PROJECT_REF" \
+            --env-file "$RUNNER_TEMP/swissgroceries-canary.env"
+          supabase functions deploy swissgroceries \
+            --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Activer le mode canary sans ouvrir le flag historique
+        shell: bash
+        run: |
+          supabase secrets set --project-ref "$SUPABASE_PROJECT_REF" \
+            "SWISS_GROCERIES_SERVER_ENABLED=false" \
+            "SWISS_GROCERIES_SERVER_MODE=canary"
+          SECRETS="$(supabase secrets list --project-ref "$SUPABASE_PROJECT_REF")"
+          grep -q 'SWISS_GROCERIES_SERVER_ENABLED' <<< "$SECRETS"
+          grep -q 'SWISS_GROCERIES_SERVER_MODE' <<< "$SECRETS"
+          grep -q 'SWISS_GROCERIES_CANARY_USER_IDS' <<< "$SECRETS"
+          echo "Canary actif pour une cohorte serveur limitee ; flag mobile inchange."

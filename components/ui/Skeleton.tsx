@@ -19,9 +19,15 @@ function SkeletonBlock({ width, height, radius = 8 }: { width: DimensionValue; h
   return <Animated.View style={[{ width, height, borderRadius: radius }, style]} />;
 }
 
-export function SkeletonRecetteCard() {
+export function SkeletonRecetteCard({ accessibilityLabel }: { accessibilityLabel?: string } = {}) {
   return (
-    <View style={{ gap: 12 }}>
+    <View
+      style={{ gap: 12 }}
+      accessible={Boolean(accessibilityLabel)}
+      accessibilityRole={accessibilityLabel ? 'progressbar' : undefined}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityLiveRegion={accessibilityLabel ? 'polite' : undefined}
+    >
       <SkeletonBlock width="100%" height={200} radius={16} />
       <SkeletonBlock width="70%" height={20} />
       <SkeletonBlock width="40%" height={16} />

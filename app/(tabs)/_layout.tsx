@@ -1,88 +1,56 @@
 /**
- * Navigation par onglets — barre standard iOS (pleine largeur, ancree au bord,
- * labels toujours visibles, icone+texte teintes en corail quand actif). Suite
- * a la recommandation HIG/iOS 26 : eviter une tab bar flottante personnalisee
- * avec effets de verre empiles, preferer la composition systeme simple.
+ * Navigation principale CoursIA.
+ *
+ * Quatre destinations stables restent dans la barre native. Les vues de
+ * synthese, comme Economies, sont accessibles depuis leur contexte plutot que
+ * de diluer la boucle Accueil -> Planifier -> Courses.
  */
 import React from 'react';
-import { Pressable, type PressableProps } from 'react-native';
-import { Tabs } from 'expo-router';
-import { BlurView } from 'expo-blur';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Home, Calendar, ShoppingCart, TrendingDown, User } from 'lucide-react-native';
+import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { useTheme } from '@/lib/theme-context';
-import { useHaptics } from '@/hooks/useHaptics';
 import { useCoursesStore } from '@/stores/coursesStore';
-import { ICON_SIZE } from '@/lib/icons';
 
 export default function TabsLayout() {
-  const { colors, isDark } = useTheme();
-  const haptics = useHaptics();
-  const insets = useSafeAreaInsets();
-  const nbItemsCourses = useCoursesStore((s) => s.items.filter((i) => !i.coche).length);
+  const { colors } = useTheme();
+  const nbItemsCourses = useCoursesStore((s) => s.items.filter((item) => !item.coche).length);
+  const badgeCourses = nbItemsCourses > 99 ? '99+' : String(nbItemsCourses);
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.accentDark,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600', marginTop: 2 },
-        tabBarStyle: {
-          height: 56 + insets.bottom,
-          paddingBottom: insets.bottom,
-          borderTopWidth: 1,
-          borderTopColor: colors.border,
-          backgroundColor: 'transparent',
-        },
-        tabBarBackground: () => (
-          <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={{ flex: 1 }} />
-        ),
-        tabBarButton: (props) => (
-          <TabButton {...props} onPressCustom={() => void haptics.selection()} />
-        ),
+    <NativeTabs
+      tintColor={colors.primary}
+      iconColor={{ default: colors.textMuted, selected: colors.primary }}
+      labelStyle={{
+        default: { color: colors.textMuted },
+        selected: { color: colors.primary, fontWeight: '600' },
       }}
+      badgeBackgroundColor={colors.accentDark}
+      labelVisibilityMode="labeled"
+      minimizeBehavior="never"
+      backBehavior="history"
     >
-      <Tabs.Screen
-        name="index"
-        options={{ title: 'Accueil', tabBarIcon: ({ color }) => <Home size={ICON_SIZE.lg} color={color} /> }}
-      />
-      <Tabs.Screen
-        name="planifier"
-        options={{ title: 'Planifier', tabBarIcon: ({ color }) => <Calendar size={ICON_SIZE.lg} color={color} /> }}
-      />
-      <Tabs.Screen
-        name="courses"
-        options={{
-          title: 'Courses',
-          tabBarIcon: ({ color }) => <ShoppingCart size={ICON_SIZE.lg} color={color} />,
-          tabBarBadge: nbItemsCourses > 0 ? nbItemsCourses : undefined,
-        }}
-      />
-      <Tabs.Screen
-        name="economies"
-        options={{ title: 'Économies', tabBarIcon: ({ color }) => <TrendingDown size={ICON_SIZE.lg} color={color} /> }}
-      />
-      <Tabs.Screen
-        name="profil"
-        options={{ title: 'Profil', tabBarIcon: ({ color }) => <User size={ICON_SIZE.lg} color={color} /> }}
-      />
-    </Tabs>
-  );
-}
+      <NativeTabs.Trigger name="index" accessibilityLabel="Accueil" testID="tab-accueil">
+        <NativeTabs.Trigger.Icon sf={{ default: 'house', selected: 'house.fill' }} md="home" />
+        <NativeTabs.Trigger.Label>Accueil</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
 
-interface TabButtonProps extends PressableProps {
-  onPressCustom: () => void;
-}
+      <NativeTabs.Trigger name="planifier" accessibilityLabel="Planifier" testID="tab-planifier">
+        <NativeTabs.Trigger.Icon sf="calendar" md="calendar_month" />
+        <NativeTabs.Trigger.Label>Planifier</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
 
-function TabButton({ onPressCustom, onPress, ...props }: TabButtonProps) {
-  return (
-    <Pressable
-      {...props}
-      onPress={(e) => {
-        onPressCustom();
-        onPress?.(e);
-      }}
-    />
+      <NativeTabs.Trigger name="courses" accessibilityLabel="Courses" testID="tab-courses">
+        <NativeTabs.Trigger.Icon sf={{ default: 'cart', selected: 'cart.fill' }} md="shopping_cart" />
+        <NativeTabs.Trigger.Label>Courses</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Badge hidden={nbItemsCourses === 0}>{badgeCourses}</NativeTabs.Trigger.Badge>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="profil" accessibilityLabel="Profil" testID="tab-profil">
+        <NativeTabs.Trigger.Icon
+          sf={{ default: 'person.crop.circle', selected: 'person.crop.circle.fill' }}
+          md="account_circle"
+        />
+        <NativeTabs.Trigger.Label>Profil</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+    </NativeTabs>
   );
 }

@@ -13,6 +13,8 @@ import { useProfilStore } from '@/stores/profilStore';
 import { supabase } from '@/lib/supabase';
 import { ListeCourses } from '@/components/courses/ListeCourses';
 import { AjouterArticle } from '@/components/courses/AjouterArticle';
+import { StatutSynchronisation } from '@/components/courses/StatutSynchronisation';
+import { OptimisationCourses } from '@/components/courses/OptimisationCourses';
 import { RecapCommande } from '@/components/panier/RecapCommande';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -23,6 +25,7 @@ import { DisplayLG, Heading, BodySm, Subheading } from '@/components/ui/Typograp
 import { toast } from '@/lib/toast';
 import { analytics } from '@/lib/analytics';
 import { t } from '@/lib/i18n';
+import { useSwissGroceriesEligibility } from '@/hooks/useSwissGroceriesEligibility';
 import type { ModeOptimisation, NiveauAbonnement } from '@/types';
 
 const MODES: { id: ModeOptimisation; label: string }[] = [
@@ -42,7 +45,8 @@ export default function Courses() {
   const { estAuMoins } = useAbonnement();
   const [paywallVisible, setPaywallVisible] = useState(false);
   const [hydrated, setHydrated] = useState(useCoursesStore.persist.hasHydrated());
-  useCoursesSync();
+  const synchronisation = useCoursesSync();
+  const { eligible: swissGroceriesEligible } = useSwissGroceriesEligibility();
 
   useEffect(() => {
     if (hydrated) return;
@@ -50,8 +54,14 @@ export default function Courses() {
   }, [hydrated]);
 
   useEffect(() => {
-    if (items.length > 0) calculer(items);
-  }, [items, calculer]);
+    if (items.length > 0 && !swissGroceriesEligible) calculer(items);
+  }, [items, calculer, swissGroceriesEligible]);
+
+  useEffect(() => {
+    // Le MCP ne propose pas encore de score nutritionnel fiable. Un ancien
+    // mode "sante" persiste repasse donc sur l'equilibre, sans fausse promesse.
+    if (swissGroceriesEligible && mode === 'sante') setMode('equilibre');
+  }, [mode, setMode, swissGroceriesEligible]);
 
   const validerCommande = async () => {
     if (!recap || !profil) return;
@@ -88,14 +98,24 @@ export default function Courses() {
 
   if (items.length === 0) {
     return (
-      <ScreenScroll contentContainerStyle={{ gap: 22, justifyContent: 'center', flexGrow: 1 }}>
-        <EmptyState
-          illustration="courses"
-          titre={t('courses.empty_titre')}
-          sousTitre={t('courses.empty_soustitre')}
-        />
-        <AjouterArticle onAjouter={ajouterItemLibre} />
-      </ScreenScroll>
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        <OfflineBanner />
+        <ScreenScroll contentContainerStyle={{ gap: 22, justifyContent: 'center', flexGrow: 1 }}>
+          <StatutSynchronisation
+            estConnecte={synchronisation.estConnecte}
+            syncing={synchronisation.syncing}
+            syncEnAttente={synchronisation.syncEnAttente}
+            erreur={synchronisation.erreurSynchronisation}
+            onReessayer={synchronisation.reessayer}
+          />
+          <EmptyState
+            illustration="courses"
+            titre={t('courses.empty_titre')}
+            sousTitre={t('courses.empty_soustitre')}
+          />
+          <AjouterArticle onAjouter={ajouterItemLibre} />
+        </ScreenScroll>
+      </View>
     );
   }
 
@@ -108,20 +128,37 @@ export default function Courses() {
           <BodySm>{t('courses.sous_titre')}</BodySm>
         </View>
 
+        <StatutSynchronisation
+          estConnecte={synchronisation.estConnecte}
+          syncing={synchronisation.syncing}
+          syncEnAttente={synchronisation.syncEnAttente}
+          erreur={synchronisation.erreurSynchronisation}
+          onReessayer={synchronisation.reessayer}
+        />
+
         <LinearGradient
           colors={[colors.primaryDark, colors.primary]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={{ borderRadius: 28, padding: 20, gap: 14 }}
         >
-          <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: 'rgba(255,255,255,0.16)', alignItems: 'center', justifyContent: 'center' }}>
+          <View
+            style={{
+              width: 46,
+              height: 46,
+              borderRadius: 23,
+              backgroundColor: 'rgba(255,255,255,0.16)',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
             <ShoppingBasket size={24} color="#FFFFFF" />
           </View>
           <View>
-            <Heading style={{ color: '#FFFFFF' }}>{t('courses.articles_a_verifier', { count: items.length })}</Heading>
-            <BodySm style={{ color: 'rgba(255,255,255,0.78)' }}>
-              {t('courses.hero_message')}
-            </BodySm>
+            <Heading style={{ color: '#FFFFFF' }}>
+              {t('courses.articles_a_verifier', { count: items.length })}
+            </Heading>
+            <BodySm style={{ color: 'rgba(255,255,255,0.78)' }}>{t('courses.hero_message')}</BodySm>
           </View>
         </LinearGradient>
 
@@ -131,13 +168,14 @@ export default function Courses() {
             <Subheading>{t('courses.mode_optimisation')}</Subheading>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
-            {MODES.map((m) => (
+            {MODES.filter((m) => !swissGroceriesEligible || m.id !== 'sante').map((m) => (
               <Pressable
                 key={m.id}
                 onPress={() => choisirMode(m.id)}
                 accessibilityRole="button"
                 accessibilityState={{ selected: mode === m.id }}
                 style={{
+                  minHeight: 44,
                   paddingVertical: 10,
                   paddingHorizontal: 16,
                   borderRadius: 9999,
@@ -145,7 +183,9 @@ export default function Courses() {
                   marginRight: 8,
                 }}
               >
-                <Subheading style={{ color: mode === m.id ? '#FFFFFF' : colors.textPrimary }}>{m.label}</Subheading>
+                <Subheading style={{ color: mode === m.id ? '#FFFFFF' : colors.textPrimary }}>
+                  {m.label}
+                </Subheading>
               </Pressable>
             ))}
           </ScrollView>
@@ -153,9 +193,26 @@ export default function Courses() {
 
         <AjouterArticle onAjouter={ajouterItemLibre} />
 
-        <ListeCourses items={items} onToggle={toggleCoche} onSupprimer={retirerItem} />
+        <ListeCourses
+          items={items}
+          onToggle={toggleCoche}
+          onSupprimer={retirerItem}
+          onChoisirPalier={(palier) => analytics.subscriptionStarted(palier)}
+        />
 
-        {recap && <RecapCommande recap={recap} onValider={() => void validerCommande()} />}
+        {swissGroceriesEligible ? (
+          <OptimisationCourses
+            items={items}
+            mode={mode}
+            enseignesFavorites={profil?.enseignes_favorites ?? []}
+            estStandard={estAuMoins('standard')}
+            onDebloquer={() => setPaywallVisible(true)}
+          />
+        ) : null}
+
+        {!swissGroceriesEligible && recap && (
+          <RecapCommande recap={recap} onValider={() => void validerCommande()} />
+        )}
       </ScreenScroll>
 
       <PaywallModal

@@ -3,9 +3,16 @@ import { renderHook, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { usePrix } from '@/hooks/usePrix';
 import * as prixRepository from '@/lib/prixRepository';
+import * as swissGroceriesRepository from '@/lib/swissGroceriesRepository';
 import type { ComparatifPrixReel, OffrePrix } from '@/lib/prixRepository';
 
 jest.mock('@/lib/prixRepository');
+jest.mock('@/lib/swissGroceriesRepository', () => ({
+  fetchComparatifPrixLive: jest.fn(),
+}));
+jest.mock('@/hooks/useSwissGroceriesEligibility', () => ({
+  useSwissGroceriesEligibility: jest.fn(() => ({ eligible: true, isLoading: false })),
+}));
 // Force isSupabaseConfigured=true pour ce fichier, meme raison qu'en COUR-19
 // (useRecettes.test.tsx) : le cas "non configure" est teste a part dans
 // usePrix.sansSupabase.test.tsx, sans mock du module (booleen expose comme
@@ -17,6 +24,7 @@ jest.mock('@/lib/supabase', () => ({
 }));
 
 const fetchComparatifPrixMock = prixRepository.fetchComparatifPrix as jest.Mock;
+const fetchComparatifPrixLiveMock = swissGroceriesRepository.fetchComparatifPrixLive as jest.Mock;
 
 function offre(overrides: Partial<OffrePrix>): OffrePrix {
   return {
@@ -40,7 +48,10 @@ function wrapper({ children }: { children: React.ReactNode }) {
 }
 
 describe('usePrix', () => {
-  beforeEach(() => fetchComparatifPrixMock.mockReset());
+  beforeEach(() => {
+    fetchComparatifPrixMock.mockReset();
+    fetchComparatifPrixLiveMock.mockReset().mockResolvedValue(null);
+  });
 
   it('succes : expose les offres triees avec formats differents', async () => {
     const comparatif: ComparatifPrixReel = {
@@ -110,5 +121,33 @@ describe('usePrix', () => {
     const { result: resultVide } = await renderHook(() => usePrix('Produit sans prix'), { wrapper });
     await waitFor(() => expect(resultVide.current.isLoading).toBe(false));
     expect(resultVide.current.data?.offres).toHaveLength(0);
+  });
+
+  it('revient au catalogue connu si la source live est indisponible', async () => {
+    const catalogueVide: ComparatifPrixReel = {
+      produitCanoniqueId: 'p-2',
+      nom: 'Produit suivi',
+      offres: [],
+      meilleurPrixUnitaire: null,
+    };
+    fetchComparatifPrixMock.mockResolvedValue(catalogueVide);
+    fetchComparatifPrixLiveMock.mockRejectedValue(new Error('gateway indisponible'));
+
+    const { result } = await renderHook(() => usePrix('Produit suivi'), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.isError).toBe(false);
+    expect(result.current.data).toEqual(catalogueVide);
+  });
+
+  it('signale la panne live pour un produit inconnu du catalogue', async () => {
+    fetchComparatifPrixMock.mockResolvedValue(null);
+    fetchComparatifPrixLiveMock.mockRejectedValue(new Error('gateway indisponible'));
+
+    const { result } = await renderHook(() => usePrix('Produit inconnu live'), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.isError).toBe(true);
+    expect(result.current.data).toBeUndefined();
   });
 });

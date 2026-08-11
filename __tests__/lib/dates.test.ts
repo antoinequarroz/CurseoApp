@@ -40,4 +40,8 @@ describe('dates (COUR-27)', () => {
     expect(dates.jourSemaineDepuisISO('2026-07-22')).toBe('mercredi');
     expect(dates.jourSemaineDepuisISO('2026-07-26')).toBe('dimanche');
   });
+
+  it('formatDateHeureCourte : affiche une collecte en heure suisse', () => {
+    expect(dates.formatDateHeureCourte(new Date('2026-08-10T12:34:00.000Z'))).toBe('10 août à 14:34');
+  });
 });

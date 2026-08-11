@@ -4,14 +4,14 @@ import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { Flag } from 'lucide-react-native';
+import { AlertTriangle, Clock3, Flag, Flame, ShieldCheck, WalletCards } from 'lucide-react-native';
 import { useTheme } from '@/lib/theme-context';
 import { RECETTES_MOCK } from '@/lib/mocks/recettes.mock';
 import { fetchRecetteParId } from '@/lib/recettesRepository';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { DisplayLG, Heading, Body, BodySm, Price, Data } from '@/components/ui/Typography';
+import { DisplayLG, Heading, Body, BodySm, Price, Data, Caption, Subheading } from '@/components/ui/Typography';
 import { formatCalories, formatPrix, formatQuantite, formatTemps } from '@/lib/format';
 import { SignalerRecetteModal } from '@/components/recettes/SignalerRecetteModal';
 import { t } from '@/lib/i18n';
@@ -34,6 +34,8 @@ export default function DetailRecette() {
   });
 
   const recette = recetteMock ?? requeteSupabase.data;
+  const allergenesConfirmes = recette?.allergenesEffectifs?.filter((allergene) => allergene.certitude === 'confirme') ?? [];
+  const allergenesPossibles = recette?.allergenesEffectifs?.filter((allergene) => allergene.certitude === 'possible') ?? [];
 
   if (!recetteMock && requeteSupabase.isLoading) {
     return (
@@ -68,10 +70,43 @@ export default function DetailRecette() {
           <Body style={{ color: colors.textSecondary, marginTop: 4 }}>{recette.description}</Body>
         </View>
 
-        <Card style={{ flexDirection: 'row', padding: 16, justifyContent: 'space-between' }}>
-          <Data>{formatTemps(recette.temps_preparation)}</Data>
-          <Data>{formatCalories(recette.calories)}</Data>
-          <Price>{formatPrix(recette.cout_estime)}</Price>
+        <Card style={{ flexDirection: 'row', padding: 16, gap: 12, justifyContent: 'space-between' }}>
+          <View style={{ flex: 1, gap: 5 }}>
+            <Clock3 size={18} color={colors.primary} accessible={false} />
+            <Caption>{t('recettes.temps_indicatif')}</Caption>
+            <Data>{formatTemps(recette.temps_preparation)}</Data>
+          </View>
+          <View style={{ flex: 1, gap: 5 }}>
+            <Flame size={18} color={colors.primary} accessible={false} />
+            <Caption>{t('recettes.calories_estimees')}</Caption>
+            <Data>≈ {formatCalories(recette.calories)}</Data>
+          </View>
+          <View style={{ flex: 1, gap: 5 }}>
+            <WalletCards size={18} color={colors.primary} accessible={false} />
+            <Caption>{t('recettes.budget_estime')}</Caption>
+            <Price>≈ {formatPrix(recette.cout_estime)}</Price>
+          </View>
+        </Card>
+
+        <Card style={{ padding: 18, gap: 10, backgroundColor: colors.bgWarm }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {allergenesConfirmes.length > 0 || allergenesPossibles.length > 0 ? (
+              <AlertTriangle size={20} color={colors.warning} accessible={false} />
+            ) : (
+              <ShieldCheck size={20} color={colors.primary} accessible={false} />
+            )}
+            <Heading>{t('recettes.allergenes_titre')}</Heading>
+          </View>
+          {allergenesConfirmes.length > 0 ? (
+            <BodySm>{t('recettes.allergenes_confirmes', { allergenes: allergenesConfirmes.map((a) => a.libelle).join(', ') })}</BodySm>
+          ) : null}
+          {allergenesPossibles.length > 0 ? (
+            <BodySm>{t('recettes.allergenes_possibles', { allergenes: allergenesPossibles.map((a) => a.libelle).join(', ') })}</BodySm>
+          ) : null}
+          {allergenesConfirmes.length === 0 && allergenesPossibles.length === 0 ? (
+            <BodySm>{t('recettes.allergenes_non_garanti')}</BodySm>
+          ) : null}
+          <Caption>{t('recettes.disclaimer_allergenes')}</Caption>
         </Card>
 
         <Card style={{ padding: 18, gap: 8 }}>
@@ -84,8 +119,19 @@ export default function DetailRecette() {
         <Card style={{ padding: 18, gap: 8 }}>
           <Heading>Étapes</Heading>
           {recette.etapes.map((etape, i) => (
-            <BodySm key={i}>{i + 1}. {etape}</BodySm>
+            <View key={`${i}-${etape}`} style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start', paddingVertical: 5 }}>
+              <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}>
+                <Subheading>{i + 1}</Subheading>
+              </View>
+              <BodySm style={{ flex: 1, paddingTop: 4 }}>{etape}</BodySm>
+            </View>
           ))}
+        </Card>
+
+        <Card style={{ padding: 18, gap: 6 }}>
+          <Heading>{t('recettes.transparence_titre')}</Heading>
+          <BodySm>{t('recettes.estimations_explication')}</BodySm>
+          <Caption selectable>{recette.source ?? t('recettes.source_coursia')}</Caption>
         </Card>
 
         <Pressable

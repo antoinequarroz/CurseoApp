@@ -1,4 +1,4 @@
-/** Templates et triggers des notifications push Coursia. */
+/** Templates et triggers des notifications push CoursIA. */
 import * as Notifications from 'expo-notifications';
 
 export const NotificationTemplates = {
@@ -24,7 +24,7 @@ export const NotificationTemplates = {
   }),
   bilanHebdo: (economies: number) => ({
     title: 'Bilan de ta semaine',
-    body: `Tu as économisé CHF ${economies.toFixed(2)} grâce à Coursia !`,
+    body: `Tu as économisé CHF ${economies.toFixed(2)} grâce à CoursIA !`,
     trigger: { weekday: 6, hour: 18, minute: 0, repeats: true } as const,
   }),
 };

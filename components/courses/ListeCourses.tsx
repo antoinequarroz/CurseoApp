@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { ChevronDown } from 'lucide-react-native';
 import { useTheme } from '@/lib/theme-context';
-import { ORDRE_RAYONS, type ItemCourse, type Rayon } from '@/types';
+import { ORDRE_RAYONS, type ItemCourse, type NiveauAbonnement, type Rayon } from '@/types';
 import { Card } from '@/components/ui/Card';
 import { Heading, Caption } from '@/components/ui/Typography';
 import { ProduitItem } from './ProduitItem';
@@ -12,9 +12,10 @@ interface ListeCoursesProps {
   items: ItemCourse[];
   onToggle: (id: string) => void;
   onSupprimer?: (id: string) => void;
+  onChoisirPalier: (palier: NiveauAbonnement) => void;
 }
 
-export function ListeCourses({ items, onToggle, onSupprimer }: ListeCoursesProps) {
+export function ListeCourses({ items, onToggle, onSupprimer, onChoisirPalier }: ListeCoursesProps) {
   const { colors } = useTheme();
   const [rayonsReplies, setRayonsReplies] = useState<Set<Rayon>>(new Set());
 
@@ -37,7 +38,10 @@ export function ListeCourses({ items, onToggle, onSupprimer }: ListeCoursesProps
       {groupes.map((groupe) => {
         const replie = rayonsReplies.has(groupe.rayon);
         return (
-          <Card key={groupe.rayon} style={{ padding: 14, gap: replie ? 0 : 10, borderRadius: 22, borderTopLeftRadius: 22 }}>
+          <Card
+            key={groupe.rayon}
+            style={{ padding: 14, gap: replie ? 0 : 10, borderRadius: 22, borderTopLeftRadius: 22 }}
+          >
             <Pressable
               onPress={() => basculerRayon(groupe.rayon)}
               accessibilityRole="button"
@@ -48,7 +52,11 @@ export function ListeCourses({ items, onToggle, onSupprimer }: ListeCoursesProps
               <Heading>{groupe.rayon}</Heading>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Caption>{groupe.items.length} article(s)</Caption>
-                <ChevronDown size={16} color={colors.textMuted} style={{ transform: [{ rotate: replie ? '-90deg' : '0deg' }] }} />
+                <ChevronDown
+                  size={16}
+                  color={colors.textMuted}
+                  style={{ transform: [{ rotate: replie ? '-90deg' : '0deg' }] }}
+                />
               </View>
             </Pressable>
             {!replie &&
@@ -58,6 +66,7 @@ export function ListeCourses({ items, onToggle, onSupprimer }: ListeCoursesProps
                   item={item}
                   onToggle={() => onToggle(item.id)}
                   onSupprimer={!item.recette_origine && onSupprimer ? () => onSupprimer(item.id) : undefined}
+                  onChoisirPalier={onChoisirPalier}
                 />
               ))}
           </Card>

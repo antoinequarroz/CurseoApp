@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { Image } from 'expo-image';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react-native';
 import { useTheme } from '@/lib/theme-context';
 import { useHaptics } from '@/hooks/useHaptics';
 import { Heading, Subheading, BodySm, Caption, TitreRecettePlanning } from '@/components/ui/Typography';
@@ -30,12 +30,14 @@ function TuileRepas({
   ignore,
   onPress,
   onIgnorer,
+  onRetirer,
 }: {
   label: string;
   repasPlanifie?: RepasPlanifie;
   ignore?: boolean;
   onPress: () => void;
   onIgnorer: () => void;
+  onRetirer: () => void;
 }) {
   const { colors } = useTheme();
 
@@ -43,12 +45,14 @@ function TuileRepas({
     <View style={{ gap: 8 }}>
       <Heading>{label}</Heading>
       {repasPlanifie ? (
-        <Pressable
-          onPress={onPress}
-          accessibilityRole="button"
-          accessibilityLabel={t('planning.slot_label', { label, titre: repasPlanifie.recette.titre })}
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}
-        >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Pressable
+            onPress={onPress}
+            accessibilityRole="button"
+            accessibilityLabel={t('planning.slot_label', { label, titre: repasPlanifie.recette.titre })}
+            accessibilityHint={t('planning.remplacer_repas_hint')}
+            style={{ flex: 1, minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 12 }}
+          >
           <Image
             source={{ uri: `${repasPlanifie.recette.image_url}?auto=format&fit=crop&w=200&q=70` }}
             placeholder={repasPlanifie.recette.blurhash}
@@ -59,7 +63,17 @@ function TuileRepas({
           <TitreRecettePlanning style={{ flex: 1, color: colors.textPrimary }}>
             {repasPlanifie.recette.titre}
           </TitreRecettePlanning>
-        </Pressable>
+          </Pressable>
+          <Pressable
+            onPress={onRetirer}
+            accessibilityRole="button"
+            accessibilityLabel={t('planning.retirer_repas', { titre: repasPlanifie.recette.titre })}
+            hitSlop={4}
+            style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' }}
+          >
+            <Trash2 size={18} color={colors.textMuted} accessible={false} />
+          </Pressable>
+        </View>
       ) : (
         <View style={{ gap: 6 }}>
           <Pressable
@@ -110,6 +124,7 @@ export function PlanningSemaine({
   jourInitial,
   onPressSlot,
   onIgnorer,
+  onRetirer,
   onChangerSemaine,
   onRetourAujourdhui,
 }: {
@@ -119,6 +134,7 @@ export function PlanningSemaine({
   jourInitial: JourSemaine;
   onPressSlot: (jour: JourSemaine, moment: 'midi' | 'soir') => void;
   onIgnorer: (jour: JourSemaine, moment: 'midi' | 'soir') => void;
+  onRetirer: (jour: JourSemaine, moment: 'midi' | 'soir') => void;
   /** delta en semaines (-1 = precedente, +1 = suivante). */
   onChangerSemaine: (delta: number) => void;
   onRetourAujourdhui: () => void;
@@ -229,6 +245,7 @@ export function PlanningSemaine({
         ignore={repas.midiIgnore}
         onPress={() => onPressSlot(jourSelectionne, 'midi')}
         onIgnorer={() => onIgnorer(jourSelectionne, 'midi')}
+        onRetirer={() => onRetirer(jourSelectionne, 'midi')}
       />
       <TuileRepas
         label={t('planning.slot_soir')}
@@ -236,6 +253,7 @@ export function PlanningSemaine({
         ignore={repas.soirIgnore}
         onPress={() => onPressSlot(jourSelectionne, 'soir')}
         onIgnorer={() => onIgnorer(jourSelectionne, 'soir')}
+        onRetirer={() => onRetirer(jourSelectionne, 'soir')}
       />
     </View>
   );

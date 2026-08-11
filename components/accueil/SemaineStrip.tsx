@@ -1,5 +1,5 @@
 /**
- * Bandeau "Ma semaine" de l'accueil (refonte Coursia) — une pastille par jour
+ * Bandeau "Ma semaine" de l'accueil (refonte CoursIA) — une pastille par jour
  * (L M M J V S D), pleine si un repas est planifie ce jour-la, avec un lien
  * vers le planning complet. Inspire du moodboard fourni par le produit.
  */
@@ -40,7 +40,7 @@ export function SemaineStrip({ planning }: { planning: PlanningHebdomadaire }) {
   };
 
   return (
-    <Card style={{ padding: 18, gap: 14, borderRadius: 26, borderTopLeftRadius: 26 }}>
+    <Card style={{ padding: 18, gap: 16, borderRadius: 26 }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <View>
           <Caption>{t('accueil.ma_semaine')}</Caption>
@@ -50,7 +50,7 @@ export function SemaineStrip({ planning }: { planning: PlanningHebdomadaire }) {
           onPress={ouvrirPlanning}
           accessibilityRole="button"
           accessibilityLabel={t('accueil.modifier')}
-          hitSlop={8}
+          style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 4 }}
         >
           <BodySm style={{ color: colors.primary }}>{t('accueil.modifier')}</BodySm>
         </Pressable>
@@ -66,14 +66,18 @@ export function SemaineStrip({ planning }: { planning: PlanningHebdomadaire }) {
               key={jour}
               onPress={ouvrirPlanning}
               accessibilityRole="button"
-              accessibilityLabel={t('accueil.jour_planifie', { jour: t(`planning.jour_${jour}`), statut: aUnRepas ? t('accueil.planifie') : t('accueil.non_planifie') })}
-              style={{ alignItems: 'center', gap: 6 }}
+              accessibilityLabel={t('accueil.jour_planifie', {
+                jour: t(`planning.jour_${jour}`),
+                statut: aUnRepas ? t('accueil.planifie') : t('accueil.non_planifie'),
+              })}
+              accessibilityState={{ selected: estAujourdhui }}
+              style={{ minWidth: 40, minHeight: 48, alignItems: 'center', justifyContent: 'center', gap: 6 }}
             >
               <View
                 style={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: 17,
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
                   alignItems: 'center',
                   justifyContent: 'center',
                   backgroundColor: aUnRepas ? colors.primary : colors.bgSecondary,
@@ -93,7 +97,18 @@ export function SemaineStrip({ planning }: { planning: PlanningHebdomadaire }) {
       <Pressable
         onPress={ouvrirPlanning}
         accessibilityRole="button"
-        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingTop: 4 }}
+        accessibilityLabel={t('accueil.voir_plan_semaine')}
+        style={{
+          minHeight: 44,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 4,
+          borderRadius: 14,
+          borderCurve: 'continuous',
+          backgroundColor: colors.bgSecondary,
+          paddingHorizontal: 12,
+        }}
       >
         <BodySm style={{ color: colors.primary }}>{t('accueil.voir_plan_semaine')}</BodySm>
         <ChevronRight size={16} color={colors.primary} />

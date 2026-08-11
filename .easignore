@@ -1,0 +1,44 @@
+# Dependencies and generated outputs
+node_modules/
+.expo/
+dist/
+web-build/
+coverage/
+output/
+expo-env.d.ts
+*.tsbuildinfo
+
+# Local native/build state
+ios/
+android/
+.kotlin/
+supabase/.temp/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.pem
+
+# Local environment and logs
+.env
+.env.*
+!.env.example
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+expo-start*.log
+eas-build-*.log
+.metro-health-check*
+
+# Agent tooling is useful in the repository but never in the app archive
+.agents/
+.claude/
+.github/agents/
+.github/hooks/
+.github/skills/
+skills-lock.json
+
+# OS metadata
+.DS_Store

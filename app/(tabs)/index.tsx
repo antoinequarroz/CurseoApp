@@ -1,8 +1,8 @@
-/** Accueil — refonte Coursia inspiree du moodboard : salutation, semaine, inspirations. */
+/** Accueil — refonte CoursIA inspiree du moodboard : salutation, semaine, inspirations. */
 import React from 'react';
 import { Pressable, View } from 'react-native';
 import { router } from 'expo-router';
-import { Bell, ChefHat } from 'lucide-react-native';
+import { Bell, ChefHat, TrendingDown, WalletCards } from 'lucide-react-native';
 import { useTheme } from '@/lib/theme-context';
 import { useProfilStore } from '@/stores/profilStore';
 import { useCoursesStore } from '@/stores/coursesStore';
@@ -32,42 +32,60 @@ export default function Accueil() {
   const budgetRestant = Math.max(0, budgetHebdo - budgetConsomme);
 
   return (
-    <ScreenScroll contentContainerStyle={{ gap: 22 }}>
+    <ScreenScroll contentContainerStyle={{ width: '100%', maxWidth: 560, alignSelf: 'center', gap: 24 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <ChefHat size={22} color={colors.primaryDark} />
-          <Heading style={{ letterSpacing: 0.5 }}>COURSIA</Heading>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View
+            style={{
+              width: 38,
+              height: 38,
+              borderRadius: 12,
+              borderCurve: 'continuous',
+              backgroundColor: colors.primary,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <ChefHat size={20} color={colors.bg} strokeWidth={2} />
+          </View>
+          <Heading>CoursIA</Heading>
         </View>
         <Pressable
           onPress={() => router.push('/(tabs)/profil')}
           accessibilityRole="button"
           accessibilityLabel={t('profil.notifications')}
-          hitSlop={8}
-          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 16,
+            borderCurve: 'continuous',
+            backgroundColor: colors.bgSecondary,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
         >
           <Bell size={18} color={colors.textPrimary} />
         </Pressable>
       </View>
 
-      <View style={{ gap: 4 }}>
-        <DisplayLG>{t('accueil.bonjour_emoji', { prenom: profil?.prenom || t('accueil.toi_par_defaut') })}</DisplayLG>
-        <BodySm>{t('accueil.question_semaine')}</BodySm>
+      <View
+        style={{
+          gap: 8,
+          padding: 20,
+          borderRadius: 28,
+          borderCurve: 'continuous',
+          backgroundColor: colors.bgWarm,
+          borderWidth: 1,
+          borderColor: colors.border,
+        }}
+      >
+        <DisplayLG>
+          {t('accueil.bonjour_emoji', { prenom: profil?.prenom || t('accueil.toi_par_defaut') })}
+        </DisplayLG>
+        <BodySm style={{ maxWidth: 310 }}>{t('accueil.question_semaine')}</BodySm>
       </View>
 
       <SemaineStrip planning={planning} />
-
-      <InspirationsCarousel profilId={profil?.id ?? 'demo-user'} />
-
-      <View style={{ flexDirection: 'row', gap: 12 }}>
-        <Card style={{ flex: 1, padding: 16, gap: 6, borderRadius: 20, borderTopLeftRadius: 20 }}>
-          <Caption>{t('accueil.budget_restant')}</Caption>
-          <Price>{formatPrix(budgetRestant)}</Price>
-        </Card>
-        <Card style={{ flex: 1, padding: 16, gap: 6, borderRadius: 20, borderTopLeftRadius: 20 }}>
-          <Caption>{t('accueil.economies_titre')}</Caption>
-          <Savings>{formatPrix(economiesCumulees)}</Savings>
-        </Card>
-      </View>
 
       <Button
         label={t('accueil.generer_courses')}
@@ -77,6 +95,51 @@ export default function Accueil() {
           router.push('/(tabs)/courses');
         }}
       />
+
+      <InspirationsCarousel profilId={profil?.id ?? 'demo-user'} />
+
+      <View style={{ flexDirection: 'row', gap: 12 }}>
+        <Card style={{ flex: 1, minHeight: 126, padding: 16, gap: 10 }}>
+          <View
+            style={{
+              width: 34,
+              height: 34,
+              borderRadius: 12,
+              backgroundColor: colors.bgSecondary,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <WalletCards size={17} color={colors.primary} />
+          </View>
+          <Caption>{t('accueil.budget_restant')}</Caption>
+          <Price>{formatPrix(budgetRestant)}</Price>
+        </Card>
+        <Pressable
+          onPress={() => router.push('/economies')}
+          accessibilityRole="button"
+          accessibilityLabel={t('accueil.economies_titre')}
+          accessibilityHint={t('accueil.economies_hint')}
+          style={({ pressed }) => ({ flex: 1, opacity: pressed ? 0.72 : 1 })}
+        >
+          <Card style={{ flex: 1, minHeight: 126, padding: 16, gap: 10 }}>
+            <View
+              style={{
+                width: 34,
+                height: 34,
+                borderRadius: 12,
+                backgroundColor: colors.swipePass,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <TrendingDown size={17} color={colors.savingsColor} />
+            </View>
+            <Caption>{t('accueil.economies_titre')}</Caption>
+            <Savings>{formatPrix(economiesCumulees)}</Savings>
+          </Card>
+        </Pressable>
+      </View>
     </ScreenScroll>
   );
 }

@@ -14,6 +14,7 @@ interface EmptyStateProps {
   sousTitre?: string;
   ctaLabel?: string;
   onCta?: () => void;
+  ctaLoading?: boolean;
 }
 
 function Illustration({ type, color }: { type: TypeIllustration; color: string }) {
@@ -91,7 +92,7 @@ function Illustration({ type, color }: { type: TypeIllustration; color: string }
   }
 }
 
-export function EmptyState({ illustration, titre, sousTitre, ctaLabel, onCta }: EmptyStateProps) {
+export function EmptyState({ illustration, titre, sousTitre, ctaLabel, onCta, ctaLoading }: EmptyStateProps) {
   const { colors } = useTheme();
 
   return (
@@ -103,7 +104,7 @@ export function EmptyState({ illustration, titre, sousTitre, ctaLabel, onCta }: 
           {sousTitre}
         </BodySm>
       ) : null}
-      {ctaLabel && onCta ? <Button label={ctaLabel} onPress={onCta} /> : null}
+      {ctaLabel && onCta ? <Button label={ctaLabel} onPress={onCta} loading={ctaLoading} /> : null}
     </View>
   );
 }

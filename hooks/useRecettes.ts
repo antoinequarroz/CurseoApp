@@ -36,6 +36,7 @@ import type { Recette, Regime } from '@/types';
 export type { AlerteAllergene };
 
 const PAGE_SIZE = 10;
+const AUCUNE_RECETTE: Recette[] = [];
 
 interface FiltresRecettes {
   regime?: Regime[];
@@ -50,10 +51,11 @@ export function useRecettes(filtres: FiltresRecettes = {}) {
   });
 
   const synonymes = useSynonymesAllergenes();
+  const catalogue = source.data ?? AUCUNE_RECETTE;
 
   const { recettes: recettesFiltrees, alertesParRecette, allergiesNonReconnues } = useMemo(
-    () => filtrerParContraintes(source.data ?? [], filtres.regime ?? [], filtres.allergies ?? [], synonymes),
-    [source.data, filtres.regime, filtres.allergies, synonymes],
+    () => filtrerParContraintes(catalogue, filtres.regime ?? [], filtres.allergies ?? [], synonymes),
+    [catalogue, filtres.regime, filtres.allergies, synonymes],
   );
 
   // Nombre de pages chargees par combinaison de filtres (pas un simple
@@ -78,12 +80,23 @@ export function useRecettes(filtres: FiltresRecettes = {}) {
     isLoading: source.isLoading,
     isError: source.isError,
     error: source.error,
+    // Ne pas confondre une table réellement vide avec un catalogue qui ne
+    // contient aucune recette compatible avec les contraintes du foyer.
+    isCatalogueEmpty: source.isSuccess && catalogue.length === 0,
+    isFilteredEmpty: source.isSuccess && catalogue.length > 0 && recettesFiltrees.length === 0,
     isEmpty: source.isSuccess && recettesFiltrees.length === 0,
     isRefetching: source.isRefetching,
+    isPaused: source.fetchStatus === 'paused',
+    // `data !== undefined` distingue un résultat déjà chargé (même vide)
+    // d'un premier lancement hors ligne sans aucune donnée disponible.
+    hasCachedData: source.data !== undefined,
     refetch: source.refetch,
     fetchNextPage: () =>
       setPagesParFiltre((prev) => ({ ...prev, [filtresKey]: (prev[filtresKey] ?? 1) + 1 })),
     hasNextPage,
+    // Le planning doit pouvoir reconstruire les favoris persistants meme si
+    // leur carte n'appartient pas encore a une page visible du carrousel.
+    toutesRecettes: recettesFiltrees,
     // COUR-22 : par recette.id, allergenes de l'utilisateur matches en
     // 'possible' seulement — jamais utilise pour exclure, seulement pour
     // afficher un avertissement explicite (ne jamais presenter comme sur).

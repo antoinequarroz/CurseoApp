@@ -72,7 +72,8 @@ function recette(overrides: Partial<Recette> = {}): Recette {
 function etatRecettesParDefaut(overrides: Partial<ReturnType<typeof useRecettes>> = {}) {
   return {
     data: { pages: [] }, isLoading: false, isError: false, error: null, isEmpty: true,
-    isRefetching: false, refetch: jest.fn(), fetchNextPage: jest.fn(), hasNextPage: false,
+    isCatalogueEmpty: true, isFilteredEmpty: false, isRefetching: false, isPaused: false,
+    hasCachedData: true, refetch: jest.fn(), fetchNextPage: jest.fn(), hasNextPage: false,
     alertesParRecette: {}, allergiesNonReconnues: [], ...overrides,
   };
 }
@@ -85,7 +86,7 @@ describe('Planifier (onglet Recettes, par defaut au montage)', () => {
     useAbonnementMock.mockReturnValue({ niveau: 'gratuit', estAuMoins: jest.fn(() => false) });
     useMembresFoyerMock.mockReturnValue({ membres: [], isLoading: false, isError: false, isEmpty: true, refetch: jest.fn(), limite: 6, limiteAtteinte: false, mutationEnCours: false, ajouter: jest.fn(), modifier: jest.fn(), retirer: jest.fn() });
     useCompatibiliteMembresMock.mockReturnValue({ recettes: [], alertesParRecette: {}, allergiesNonReconnues: [] });
-    useRepasSemaineMock.mockReturnValue({ planning: planningVide, isLoading: false, isError: false, isEmpty: true, refetch: jest.fn(), mutationEnCours: false, assigner: jest.fn(), ignorer: jest.fn(), retirer: jest.fn() });
+    useRepasSemaineMock.mockReturnValue({ planning: planningVide, isLoading: false, isError: false, isEmpty: true, isRefetching: false, isPaused: false, hasCachedData: true, refetch: jest.fn(), mutationEnCours: false, assigner: jest.fn(), ignorer: jest.fn(), retirer: jest.fn() });
     useNetworkStatusMock.mockReturnValue({ estConnecte: true, estHorsLigne: false });
   });
 
@@ -94,14 +95,15 @@ describe('Planifier (onglet Recettes, par defaut au montage)', () => {
   });
 
   it('chargement : affiche le skeleton, pas le vide ni la carte', async () => {
-    useRecettesMock.mockReturnValue(etatRecettesParDefaut({ isLoading: true, isEmpty: false }));
-    const { queryByText } = await renderAvecProviders();
+    useRecettesMock.mockReturnValue(etatRecettesParDefaut({ isLoading: true, isEmpty: false, isCatalogueEmpty: false, hasCachedData: false }));
+    const { getByLabelText, queryByText } = await renderAvecProviders();
+    expect(getByLabelText('Chargement des recettes')).toBeTruthy();
     expect(queryByText('Aucune recette disponible')).toBeNull();
   });
 
   it('erreur : affiche un message avec bouton reessayer qui appelle refetch', async () => {
     const refetch = jest.fn();
-    useRecettesMock.mockReturnValue(etatRecettesParDefaut({ isError: true, isEmpty: false, refetch }));
+    useRecettesMock.mockReturnValue(etatRecettesParDefaut({ isError: true, isEmpty: false, isCatalogueEmpty: false, hasCachedData: false, refetch }));
     const { getByText } = await renderAvecProviders();
     expect(getByText('Impossible de charger les recettes')).toBeTruthy();
     fireEvent.press(getByText('Réessayer'));
@@ -109,13 +111,65 @@ describe('Planifier (onglet Recettes, par defaut au montage)', () => {
   });
 
   it('vide : affiche le message de catalogue vide', async () => {
+    const refetch = jest.fn();
+    useRecettesMock.mockReturnValue(etatRecettesParDefaut({ refetch }));
     const { getByText } = await renderAvecProviders();
     expect(getByText('Aucune recette disponible')).toBeTruthy();
+    fireEvent.press(getByText('Actualiser le catalogue'));
+    expect(refetch).toHaveBeenCalled();
+  });
+
+  it('filtres : distingue une absence de recette compatible d’un catalogue vide', async () => {
+    useRecettesMock.mockReturnValue(etatRecettesParDefaut({ isCatalogueEmpty: false, isFilteredEmpty: true }));
+    const { getByText, queryByText } = await renderAvecProviders();
+    expect(getByText('Aucune recette compatible')).toBeTruthy();
+    expect(getByText('Modifier mon profil')).toBeTruthy();
+    expect(queryByText('Aucune recette disponible')).toBeNull();
+  });
+
+  it('hors ligne sans cache : explique comment recuperer le catalogue sans afficher un chargement infini', async () => {
+    useNetworkStatusMock.mockReturnValue({ estConnecte: false, estHorsLigne: true });
+    useRecettesMock.mockReturnValue(etatRecettesParDefaut({ isLoading: true, isEmpty: false, isCatalogueEmpty: false, hasCachedData: false }));
+    const { getByText, queryByLabelText } = await renderAvecProviders();
+    expect(getByText('Recettes indisponibles hors ligne')).toBeTruthy();
+    expect(queryByLabelText('Chargement des recettes')).toBeNull();
+  });
+
+  it('hors ligne avec cache : conserve les recettes deja chargees', async () => {
+    useNetworkStatusMock.mockReturnValue({ estConnecte: false, estHorsLigne: true });
+    useRecettesMock.mockReturnValue(
+      etatRecettesParDefaut({
+        data: { pages: [[recette({ titre: 'Salade en cache' })]] },
+        isEmpty: false,
+        isCatalogueEmpty: false,
+      }),
+    );
+    const { getByText } = await renderAvecProviders();
+    expect(getByText('Salade en cache')).toBeTruthy();
+    expect(getByText('Hors ligne — les recettes déjà chargées restent disponibles.')).toBeTruthy();
+  });
+
+  it('erreur de rafraichissement avec cache : conserve la recette et propose de reessayer', async () => {
+    const refetch = jest.fn();
+    useRecettesMock.mockReturnValue(
+      etatRecettesParDefaut({
+        data: { pages: [[recette({ titre: 'Salade disponible' })]] },
+        isEmpty: false,
+        isCatalogueEmpty: false,
+        isError: true,
+        refetch,
+      }),
+    );
+    const { getByLabelText, getByText } = await renderAvecProviders();
+    expect(getByText('Salade disponible')).toBeTruthy();
+    expect(getByText('Actualisation impossible — les dernières recettes chargées restent disponibles.')).toBeTruthy();
+    fireEvent.press(getByLabelText('Réessayer'));
+    expect(refetch).toHaveBeenCalled();
   });
 
   it('succes : affiche la premiere recette', async () => {
     useRecettesMock.mockReturnValue(
-      etatRecettesParDefaut({ data: { pages: [[recette({ titre: 'Salade César' })]] }, isEmpty: false }),
+      etatRecettesParDefaut({ data: { pages: [[recette({ titre: 'Salade César' })]] }, isEmpty: false, isCatalogueEmpty: false }),
     );
     const { getByText } = await renderAvecProviders();
     expect(getByText('Salade César')).toBeTruthy();

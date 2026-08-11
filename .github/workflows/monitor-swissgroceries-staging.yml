@@ -1,0 +1,75 @@
+name: Monitor SwissGroceries staging
+
+on:
+  schedule:
+    # Decale de deux minutes pour eviter la charge GitHub du debut d'heure.
+    - cron: '2-59/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: swissgroceries-staging
+  cancel-in-progress: false
+
+jobs:
+  readiness:
+    name: Readiness et coupe-circuit
+    if: ${{ vars.SWISS_GROCERIES_MONITORING_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    environment: swissgroceries-staging-ops
+    env:
+      SERVICE_URL: ${{ vars.SWISS_GROCERIES_GATEWAY_URL }}
+      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+    steps:
+      - name: Valider la cible configuree
+        shell: bash
+        run: |
+          test -n "$SERVICE_URL"
+          test -n "$SUPABASE_PROJECT_REF"
+          case "$SERVICE_URL" in
+            https://*.run.app) ;;
+            *) echo "URL Cloud Run staging invalide"; exit 1 ;;
+          esac
+
+      - name: Verifier la readiness avec une tolerance aux demarrages a froid
+        id: readiness-probe
+        continue-on-error: true
+        shell: bash
+        run: |
+          for attempt in 1 2 3 4; do
+            status="$(curl --silent --show-error --output /dev/null \
+              --write-out '%{http_code}' --max-time 20 \
+              "${SERVICE_URL}/readyz" || true)"
+            if [ "$status" = "200" ]; then
+              echo "Gateway disponible a la tentative ${attempt}."
+              exit 0
+            fi
+            echo "Readiness en echec (${status:-transport}), tentative ${attempt}/4."
+            sleep $((attempt * 5))
+          done
+          exit 1
+
+      - uses: supabase/setup-cli@3c2f5e2ae34c34e428e8e206e2c4d21fa2d20fbf # v2.1.1
+        if: ${{ steps.readiness-probe.outcome == 'failure' }}
+        with:
+          version: latest
+
+      - name: Fermer automatiquement le coupe-circuit Supabase
+        if: ${{ steps.readiness-probe.outcome == 'failure' }}
+        shell: bash
+        run: |
+          supabase secrets set --project-ref "$SUPABASE_PROJECT_REF" \
+            "SWISS_GROCERIES_SERVER_ENABLED=false" \
+            "SWISS_GROCERIES_SERVER_MODE=off"
+          supabase secrets list --project-ref "$SUPABASE_PROJECT_REF" \
+            | grep -q 'SWISS_GROCERIES_SERVER_ENABLED'
+          supabase secrets list --project-ref "$SUPABASE_PROJECT_REF" \
+            | grep -q 'SWISS_GROCERIES_SERVER_MODE'
+          echo "::error::Gateway indisponible apres quatre sondes ; appels live desactives."
+
+      - name: Faire echouer le monitoring apres le rollback
+        if: ${{ steps.readiness-probe.outcome == 'failure' }}
+        run: exit 1

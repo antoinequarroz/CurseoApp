@@ -1,10 +1,10 @@
-# Politique de confidentialité — Coursia
+# Politique de confidentialité — CoursIA
 
 Dernière mise à jour : à compléter à la date de lancement.
 
 ## Qui sommes-nous
 
-Courseo est exploité par [Nom / Raison sociale], Suisse. Contact vie privée : privacy@courseo.ch
+CoursIA est exploité par [Nom / Raison sociale], Suisse. Contact vie privée : privacy@coursia.app
 
 ## Données collectées
 
@@ -20,7 +20,7 @@ Courseo est exploité par [Nom / Raison sociale], Suisse. Contact vie privée : 
 | Données d'usage (PostHog) | Amélioration produit | Consentement (opt-out possible) |
 | Rapports de crash (Sentry) | Stabilité de l'application | Intérêt légitime |
 
-Coursia ne collecte **jamais** de coordonnées bancaires (paiements gérés par Apple/Google) ni de données de localisation précise.
+CoursIA ne collecte **jamais** de coordonnées bancaires (paiements gérés par Apple/Google) ni de données de localisation précise.
 
 ## Durée de rétention
 
@@ -32,7 +32,7 @@ Coursia ne collecte **jamais** de coordonnées bancaires (paiements gérés par 
 
 Conformément à la nouvelle Loi fédérale sur la protection des données (nLPD, Suisse) :
 
-- **Droit d'accès** : demander une copie de vos données via l'écran Profil ou privacy@courseo.ch
+- **Droit d'accès** : demander une copie de vos données via l'écran Profil ou privacy@coursia.app
 - **Droit de rectification** : modifiable directement dans l'écran Profil
 - **Droit à l'effacement** : bouton "Supprimer mon compte" dans le Profil (confirmation en 2 étapes) — voir `supabase/functions/delete-account`
 - **Droit à la portabilité** : export des données sur demande, format JSON
@@ -49,4 +49,4 @@ Aucune donnée personnelle n'est vendue. Sous-traitants utilisés :
 
 ## Contact
 
-Pour toute question relative à cette politique : privacy@courseo.ch
+Pour toute question relative à cette politique : privacy@coursia.app

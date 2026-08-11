@@ -43,6 +43,9 @@ eas-build-*.log
 # Coverage
 coverage/
 
+# Local verification and build artifacts
+output/
+
 # typescript
 *.tsbuildinfo
 

@@ -1,6 +1,9 @@
 // @testing-library/react-native v12+ ships ses propres matchers Jest, plus besoin de jest-native.
 import 'react-native-gesture-handler/jestSetup';
 
+// Expo Image 57 initialise optionnellement Expo Observe au chargement. Le mock
+// natif de Jest expose un module partiel ; pour les tests UI, une Image RN suffit.
+jest.mock('expo-image', () => ({ Image: require('react-native').Image }));
 jest.mock('react-native-worklets', () => require('react-native-worklets/lib/module/mock'));
 jest.mock('react-native-purchases', () => {
   const mockStatique = {

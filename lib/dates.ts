@@ -14,6 +14,8 @@ export const dates = {
   debutMois: (d: Date) => startOfMonth(toZonedTime(d, TZ)),
   formatJour: (d: Date) => format(toZonedTime(d, TZ), 'EEEE d MMMM', { locale: fr }),
   formatCourt: (d: Date) => format(toZonedTime(d, TZ), 'EEE d', { locale: fr }),
+  /** Horodatage court lisible pour une donnée volatile, toujours en heure suisse. */
+  formatDateHeureCourte: (d: Date) => format(toZonedTime(d, TZ), "d MMM 'à' HH:mm", { locale: fr }),
   versUTC: (d: Date) => fromZonedTime(d, TZ),
   /** Cle JourSemaine ('lundi'..'dimanche') du jour donne — getDay() renvoie 0=dimanche. */
   jourSemaine: (d: Date): JourSemaine => JOURS_SEMAINE[(getDay(toZonedTime(d, TZ)) + 6) % 7]!,

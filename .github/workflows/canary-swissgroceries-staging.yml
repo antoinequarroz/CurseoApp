@@ -1,0 +1,91 @@
+name: Canary SwissGroceries staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      license_approved:
+        description: "Je confirme que la licence autorise ce test distant"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: swissgroceries-staging
+  cancel-in-progress: false
+
+env:
+  REGION: europe-west6
+  SERVICE_NAME: coursia-swissgroceries-staging
+  GATEWAY_SECRET: coursia-swissgroceries-gateway-api-key
+
+jobs:
+  licence-gate:
+    name: Validation de la licence
+    runs-on: ubuntu-latest
+    steps:
+      - name: Bloquer le canary sans accord explicite
+        if: ${{ inputs.license_approved != true }}
+        run: |
+          echo "Canary refuse : la licence SwissGroceries doit etre approuvee explicitement."
+          exit 1
+      - name: Confirmer la garde
+        if: ${{ inputs.license_approved == true }}
+        run: echo "Accord de licence confirme pour ce canary manuel."
+
+  canary:
+    name: Qualite des donnees live
+    needs: licence-gate
+    runs-on: ubuntu-latest
+    environment: swissgroceries-staging
+    env:
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Authentification Google Cloud sans cle longue duree
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+
+      - name: Identifier le gateway staging
+        shell: bash
+        run: |
+          GATEWAY_URL="$(gcloud run services describe "$SERVICE_NAME" \
+            --project "$GCP_PROJECT_ID" \
+            --region "$REGION" \
+            --format='value(status.url)')"
+          test -n "$GATEWAY_URL"
+          echo "GATEWAY_URL=$GATEWAY_URL" >> "$GITHUB_ENV"
+
+      - name: Mesurer le canary sans conserver les reponses brutes
+        shell: bash
+        run: |
+          GATEWAY_API_KEY="$(gcloud secrets versions access latest \
+            --secret "$GATEWAY_SECRET" --project "$GCP_PROJECT_ID")"
+          test "${#GATEWAY_API_KEY}" -ge 24
+          echo "::add-mask::$GATEWAY_API_KEY"
+          CANARY_REPORT_PATH="$GITHUB_WORKSPACE/canary-summary.json" \
+            GATEWAY_URL="$GATEWAY_URL" \
+            GATEWAY_API_KEY="$GATEWAY_API_KEY" \
+            npm --prefix services/swissgroceries-gateway run canary
+
+      - name: Conserver uniquement le rapport agrege
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: swissgroceries-canary-${{ github.sha }}
+          path: canary-summary.json
+          if-no-files-found: error
+          retention-days: 30

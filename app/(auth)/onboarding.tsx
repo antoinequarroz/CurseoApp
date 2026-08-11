@@ -33,6 +33,7 @@ import { useProfilStore } from '@/stores/profilStore';
 import { supabase } from '@/lib/supabase';
 import { initRevenueCat } from '@/lib/revenuecat';
 import { analytics } from '@/lib/analytics';
+import { resetUserStores } from '@/lib/resetSession';
 import { KeyboardView } from '@/components/ui/KeyboardView';
 import { RegimeParPersonneTeaser } from '@/components/ui/RegimeParPersonneTeaser';
 import { Button } from '@/components/ui/Button';
@@ -74,10 +75,25 @@ const AGE_PAR_DEFAUT = 5;
 const AGE_MIN = 0;
 const AGE_MAX = 17;
 
-function StepperAge({ label, age, onChange }: { label: string; age: number; onChange: (age: number) => void }) {
+function StepperAge({
+  label,
+  age,
+  onChange,
+}: {
+  label: string;
+  age: number;
+  onChange: (age: number) => void;
+}) {
   const { colors } = useTheme();
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8 }}>
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: 8,
+      }}
+    >
       <Body>{label}</Body>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
         <Pressable
@@ -85,7 +101,14 @@ function StepperAge({ label, age, onChange }: { label: string; age: number; onCh
           accessibilityRole="button"
           accessibilityLabel={t('onboarding.age_diminuer', { label })}
           hitSlop={8}
-          style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 16,
+            backgroundColor: colors.bgSecondary,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
         >
           <Body>–</Body>
         </Pressable>
@@ -95,7 +118,14 @@ function StepperAge({ label, age, onChange }: { label: string; age: number; onCh
           accessibilityRole="button"
           accessibilityLabel={t('onboarding.age_augmenter', { label })}
           hitSlop={8}
-          style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 16,
+            backgroundColor: colors.bgSecondary,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
         >
           <Body>+</Body>
         </Pressable>
@@ -104,7 +134,17 @@ function StepperAge({ label, age, onChange }: { label: string; age: number; onCh
   );
 }
 
-function IconTile({ label, Icon, selected, onPress }: { label: string; Icon: LucideIcon; selected: boolean; onPress: () => void }) {
+function IconTile({
+  label,
+  Icon,
+  selected,
+  onPress,
+}: {
+  label: string;
+  Icon: LucideIcon;
+  selected: boolean;
+  onPress: () => void;
+}) {
   const { colors } = useTheme();
   return (
     <Pressable
@@ -122,7 +162,9 @@ function IconTile({ label, Icon, selected, onPress }: { label: string; Icon: Luc
       }}
     >
       <Icon size={22} color={selected ? '#FFFFFF' : colors.textPrimary} />
-      <BodySm style={{ color: selected ? '#FFFFFF' : colors.textPrimary, textAlign: 'center' }}>{label}</BodySm>
+      <BodySm style={{ color: selected ? '#FFFFFF' : colors.textPrimary, textAlign: 'center' }}>
+        {label}
+      </BodySm>
     </Pressable>
   );
 }
@@ -193,8 +235,10 @@ export default function Onboarding() {
   const [cgvuAcceptees, setCgvuAcceptees] = useState(false);
   const [autresOuvert, setAutresOuvert] = useState(false);
   const [allergieSaisie, setAllergieSaisie] = useState('');
+  const [enregistrementEnCours, setEnregistrementEnCours] = useState(false);
 
   const suivant = () => {
+    if (enregistrementEnCours) return;
     void haptics.selection();
     if (etapeActuelle < TOTAL_ETAPES) {
       setEtape(etapeActuelle + 1);
@@ -207,67 +251,82 @@ export default function Onboarding() {
   };
 
   const finaliser = async () => {
-    const { data: session } = await supabase.auth.getSession();
+    setEnregistrementEnCours(true);
+    try {
+      const { data: session, error: erreurSession } = await supabase.auth.getSession();
+      if (erreurSession) throw erreurSession;
 
-    // COUR-40 : sans session, l'ancien code retombait sur l'id litteral
-    // 'demo-user' et n'ecrivait RIEN dans Supabase (l'upsert etait deja
-    // conditionne a la session). L'app paraissait fonctionner — le profil
-    // vivait dans le store zustand — mais chaque ecriture serveur ultérieure
-    // partait avec un profil_id inexistant : la recette TestFlight du 29.07 a
-    // produit en production des rafales de
-    //   invalid input syntax for type uuid: "demo-user"
-    //   insert or update on "swipes"/"repas_planifies" violates foreign key
-    // et ~20 des 24 anomalies remontees (planning, courses, gouts, economies,
-    // profil) n'etaient que ce seul defaut vu depuis 20 ecrans.
-    //
-    // On refuse donc de finaliser sans session, plutot que de fabriquer un
-    // etat local qui ment sur ce qui est reellement enregistre.
-    if (!session.session?.user) {
-      toast.erreur(t('onboarding.erreur_session_requise'));
-      router.replace('/(auth)/connexion');
-      return;
-    }
+      // COUR-40 : sans session, l'ancien code retombait sur l'id litteral
+      // 'demo-user' et n'ecrivait RIEN dans Supabase (l'upsert etait deja
+      // conditionne a la session). L'app paraissait fonctionner — le profil
+      // vivait dans le store zustand — mais chaque ecriture serveur ultérieure
+      // partait avec un profil_id inexistant : la recette TestFlight du 29.07 a
+      // produit en production des rafales de
+      //   invalid input syntax for type uuid: "demo-user"
+      //   insert or update on "swipes"/"repas_planifies" violates foreign key
+      // et ~20 des 24 anomalies remontees (planning, courses, gouts, economies,
+      // profil) n'etaient que ce seul defaut vu depuis 20 ecrans.
+      //
+      // On refuse donc de finaliser sans session, plutot que de fabriquer un
+      // etat local qui ment sur ce qui est reellement enregistre.
+      if (!session.session?.user) {
+        toast.erreur(t('onboarding.erreur_session_requise'));
+        router.replace('/(auth)/connexion');
+        return;
+      }
 
-    const profilComplet = {
-      id: session.session.user.id,
-      prenom: donneesPartielles.prenom ?? 'Toi',
-      nb_personnes: donneesPartielles.nb_personnes ?? 1,
-      nb_enfants: donneesPartielles.nb_enfants ?? 0,
-      enfants_ages: donneesPartielles.enfants_ages ?? [],
-      budget_hebdo: donneesPartielles.budget_hebdo ?? 150,
-      regime: donneesPartielles.regime ?? [],
-      allergies: donneesPartielles.allergies ?? [],
-      objectifs: donneesPartielles.objectifs ?? [],
-      enseignes_favorites: donneesPartielles.enseignes_favorites ?? [],
-      abonnement: 'gratuit' as const,
-      notifications_activees: true,
-      notifications_planning: true,
-      notifications_budget: true,
-      notifications_promos: false,
-      notifications_bilan: true,
-      apparence: 'auto' as const,
-      cgvu_version_acceptee: cgvuAcceptees ? '1.0' : null,
-    };
-    // COUR-40 : l'ecriture serveur precede la mise a jour du store. L'ancien
-    // ordre (store d'abord, upsert ensuite sans verifier l'erreur) laissait
-    // l'app afficher un profil qui n'existait pas en base — c'est ce qui
-    // rendait la panne invisible pendant toute la recette.
-    const { error } = await supabase.from('profils').upsert(profilComplet);
-    if (error) {
+      const profilComplet = {
+        id: session.session.user.id,
+        prenom: donneesPartielles.prenom ?? 'Toi',
+        nb_personnes: donneesPartielles.nb_personnes ?? 1,
+        nb_enfants: donneesPartielles.nb_enfants ?? 0,
+        enfants_ages: donneesPartielles.enfants_ages ?? [],
+        budget_hebdo: donneesPartielles.budget_hebdo ?? 150,
+        regime: donneesPartielles.regime ?? [],
+        allergies: donneesPartielles.allergies ?? [],
+        objectifs: donneesPartielles.objectifs ?? [],
+        enseignes_favorites: donneesPartielles.enseignes_favorites ?? [],
+        abonnement: 'gratuit' as const,
+        notifications_activees: true,
+        notifications_planning: true,
+        notifications_budget: true,
+        notifications_promos: false,
+        notifications_bilan: true,
+        apparence: 'auto' as const,
+        cgvu_version_acceptee: cgvuAcceptees ? '1.0' : null,
+      };
+      // COUR-40 : l'ecriture serveur precede la mise a jour du store. L'ancien
+      // ordre (store d'abord, upsert ensuite sans verifier l'erreur) laissait
+      // l'app afficher un profil qui n'existait pas en base — c'est ce qui
+      // rendait la panne invisible pendant toute la recette.
+      const { error } = await supabase.from('profils').upsert(profilComplet);
+      if (error) throw error;
+
+      useProfilStore.getState().setProfil(profilComplet);
+      // COUR-32 : identifie l'utilisateur aupres de RevenueCat des la fin de
+      // l'onboarding — sans redemarrage de l'app, un achat pourrait sinon
+      // etre tente avant que le SDK ne connaisse l'utilisateur.
+      initRevenueCat(session.session.user.id);
+      terminer();
+      analytics.onboardingCompleted();
+      void haptics.success();
+      router.replace('/(tabs)');
+    } catch (error) {
       console.warn('[onboarding] Echec de l enregistrement du profil', error);
       toast.erreur(t('onboarding.erreur_enregistrement'));
+    } finally {
+      setEnregistrementEnCours(false);
+    }
+  };
+
+  const utiliserAutreCompte = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.erreur(t('connexion.erreur_deconnexion'));
       return;
     }
-
-    useProfilStore.getState().setProfil(profilComplet);
-    // COUR-32 : identifie l'utilisateur aupres de RevenueCat des la fin de
-    // l'onboarding — sans redemarrage de l'app, un achat pourrait sinon
-    // etre tente avant que le SDK ne connaisse l'utilisateur.
-    initRevenueCat(session.session.user.id);
-    terminer();
-    analytics.onboardingCompleted();
-    void haptics.success();
-    router.replace('/(tabs)');
+    resetUserStores();
+    router.replace('/(auth)/connexion');
   };
 
   const changerNbEnfants = (nb: number) => {
@@ -316,7 +375,7 @@ export default function Onboarding() {
   const etapeBienvenue = etapeActuelle === 1;
 
   return (
-    <KeyboardView>
+    <KeyboardView scrollable={false} backgroundColor={etapeBienvenue ? '#0F2D27' : colors.bg}>
       <Screen style={{ gap: 16, backgroundColor: etapeBienvenue ? '#0F2D27' : colors.bg }}>
         {/* Progress bar */}
         <View style={{ flexDirection: 'row', gap: 6, marginBottom: 12 }}>
@@ -365,7 +424,9 @@ export default function Onboarding() {
                 <Salad size={26} color="rgba(255,255,255,0.6)" />
               </View>
               <DisplayXL style={{ color: '#FFFFFF' }}>{t('onboarding.bienvenue_titre')}</DisplayXL>
-              <BodySm style={{ color: 'rgba(255,255,255,0.72)' }}>{t('onboarding.bienvenue_sous_titre')}</BodySm>
+              <BodySm style={{ color: 'rgba(255,255,255,0.72)' }}>
+                {t('onboarding.bienvenue_sous_titre')}
+              </BodySm>
               <Body style={{ color: '#FFFFFF', fontWeight: '600' }}>{t('onboarding.nom_foyer')}</Body>
               <TextInput
                 value={donneesPartielles.prenom ?? ''}
@@ -392,6 +453,16 @@ export default function Onboarding() {
                   }}
                 />
                 <Caption style={{ color: 'rgba(255,255,255,0.72)' }}>{t('onboarding.cgvu_accept')}</Caption>
+              </Pressable>
+              <Pressable
+                onPress={utiliserAutreCompte}
+                accessibilityRole="button"
+                accessibilityLabel={t('connexion.utiliser_autre_compte')}
+                style={{ alignSelf: 'center', paddingVertical: 8, paddingHorizontal: 12 }}
+              >
+                <BodySm style={{ color: '#FFFFFF', textDecorationLine: 'underline' }}>
+                  {t('connexion.utiliser_autre_compte')}
+                </BodySm>
               </Pressable>
             </View>
           )}
@@ -544,13 +615,23 @@ export default function Onboarding() {
               <DisplayXL>{t('onboarding.objectifs_titre_court')}</DisplayXL>
               <View style={{ gap: 8 }}>
                 {OBJECTIFS.map((o) => (
-                  <CheckRow key={o.id} label={o.label} selected={(donneesPartielles.objectifs ?? []).includes(o.id)} onPress={() => toggleObjectif(o.id)} />
+                  <CheckRow
+                    key={o.id}
+                    label={o.label}
+                    selected={(donneesPartielles.objectifs ?? []).includes(o.id)}
+                    onPress={() => toggleObjectif(o.id)}
+                  />
                 ))}
               </View>
               <Body>{t('onboarding.enseignes_preferees')}</Body>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
                 {ENSEIGNES.map((e) => (
-                  <Chip key={e.id} label={e.label} selected={(donneesPartielles.enseignes_favorites ?? []).includes(e.id)} onPress={() => toggleEnseigne(e.id)} />
+                  <Chip
+                    key={e.id}
+                    label={e.label}
+                    selected={(donneesPartielles.enseignes_favorites ?? []).includes(e.id)}
+                    onPress={() => toggleEnseigne(e.id)}
+                  />
                 ))}
               </View>
             </View>
@@ -558,12 +639,15 @@ export default function Onboarding() {
         </Animated.ScrollView>
 
         <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
-          {etapeActuelle > 1 && <Button label={t('commun.precedent')} variant="secondary" onPress={precedent} />}
+          {etapeActuelle > 1 && (
+            <Button label={t('commun.precedent')} variant="secondary" onPress={precedent} />
+          )}
           <View style={{ flex: 1 }}>
             <Button
               label={etapeActuelle === TOTAL_ETAPES ? t('commun.terminer') : t('commun.suivant')}
               onPress={suivant}
-              disabled={etapeActuelle === 1 && !cgvuAcceptees}
+              loading={etapeActuelle === TOTAL_ETAPES && enregistrementEnCours}
+              disabled={(etapeActuelle === 1 && !cgvuAcceptees) || enregistrementEnCours}
             />
           </View>
         </View>

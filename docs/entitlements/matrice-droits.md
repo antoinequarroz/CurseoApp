@@ -25,6 +25,7 @@ Les product ids et prix annuels sont une **proposition** : aucun produit annuel 
 | Quota de 25 recettes/mois (catalogue) | Gratuit (limite au-delà) | ⚠️ Aucun compteur — texte marketing uniquement (`PALIERS_ABONNEMENT`, `lib/revenuecat.ts`) | **Non implémenté** — à trancher : soit implémenter un quota mensuel réel, soit retirer/reformuler ce texte |
 | Assistant IA | Standard | `supabase/functions/ai-assistant` : `profil.abonnement !== 'gratuit'`, rate-limité 20 req/h/utilisateur | Implémenté |
 | Comparateur de prix multi-enseignes | Standard | `estAuMoins('standard')` — `components/courses/ComparateurPrix.tsx` — **client uniquement**, voir note ci-dessous | Implémenté |
+| Optimisation live d'une liste multi-enseignes | Standard | Éligibilité mobile accordée par `supabase/functions/swissgroceries` depuis le palier en base, le mode serveur et l'UUID Auth ; 12 optimisations/heure/utilisateur ; le flag Expo est une capacité, pas un droit | Implémenté, fermé par défaut ; canary limité à 10 comptes après validation de la licence et de la qualité |
 | Modes d'optimisation panier (équilibré, « premium », bio, santé) | Standard | `estAuMoins('standard')` — `app/(tabs)/courses.tsx` | Implémenté — ⚠️ voir note nommage ci-dessous |
 | Objectifs nutritionnels | Premium | ❌ Aucune garde de code | **Non implémenté** |
 | Historique | Premium | ❌ Aucune garde de code | **Non implémenté** |

@@ -10,9 +10,9 @@ Valeurs lues dans `app.config.ts` / `eas.json` au moment de la rédaction — **
 
 | Élément | Valeur attendue |
 | --- | --- |
-| Nom affiché | Coursia |
+| Nom affiché | CoursIA |
 | `version` | 1.0.0 |
-| `ios.buildNumber` | 10 |
+| `ios.buildNumber` | 15 |
 | `bundleIdentifier` | `ch.courseo.app` |
 | App Store Connect `ascAppId` | 6790903786 |
 | Profil de build | `production` (`APP_ENV=production`) |
@@ -55,7 +55,7 @@ Légende : ✅ conforme · ❌ anomalie (→ n° de ticket) · ⏭️ non testab
 
 | # | Cas | Attendu | Statut | Anomalie |
 | --- | --- | --- | --- | --- |
-| 1.1 | Installer depuis TestFlight | Installation sans erreur, icône Coursia correcte (pas d'icône générique) | | |
+| 1.1 | Installer depuis TestFlight | Installation sans erreur, icône CoursIA correcte (pas d'icône générique) | | |
 | 1.2 | Premier lancement | Splash screen vert forêt (`#0F2D27`), pas d'écran blanc prolongé | | |
 | 1.3 | Rotation de l'appareil | L'app reste en portrait | | |
 | 1.4 | Mode sombre (Réglages iOS → Apparence) | Thème sombre appliqué, texte lisible partout | | |
@@ -211,7 +211,7 @@ Critère « Les permissions, notifications et changements réseau sont testés �
 
 | # | Cas | Attendu | Statut | Anomalie |
 | --- | --- | --- | --- | --- |
-| 12.1 | Première demande de notifications | Message système reprenant `NSUserNotificationsUsageDescription` (« Coursia vous envoie des rappels de planification et des alertes de promotions. ») | | |
+| 12.1 | Première demande de notifications | Message système reprenant `NSUserNotificationsUsageDescription` (« CoursIA vous envoie des rappels de planification et des alertes de promotions. ») | | |
 | 12.2 | **Refuser** les notifications | L'app reste pleinement utilisable, aucun blocage ni boucle de demande | | |
 | 12.3 | Refuser puis réactiver dans Réglages iOS | L'app tient compte du nouvel état sans réinstallation | | |
 | 12.4 | Sign in with Apple | Aucune permission superflue demandée (pas de caméra, photos, localisation) | | |
@@ -222,7 +222,7 @@ Templates dans `lib/notifications.ts` (rappel planning et rappel courses, hebdom
 
 | # | Cas | Attendu | Statut | Anomalie |
 | --- | --- | --- | --- | --- |
-| 13.1 | Accepter les notifications | Rappels planifiés (vérifiable via Réglages → Notifications → Coursia) | | |
+| 13.1 | Accepter les notifications | Rappels planifiés (vérifiable via Réglages → Notifications → CoursIA) | | |
 | 13.2 | Réception d'un rappel planning | Titre « Ta semaine commence ! », texte en français correct | | |
 | 13.3 | Réception d'un rappel courses | Titre « Ta liste de courses t'attend » | | |
 | 13.4 | Tap sur une notification, app fermée | Ouvre l'app sur un écran pertinent, pas un écran blanc | | |

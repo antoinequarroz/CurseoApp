@@ -9,14 +9,14 @@ const config: ExpoConfig = {
   // Nom fixe (pas de suffixe Dev/Staging) : EAS Build derive le nom de la
   // cible Xcode generee par `expo prebuild` de ce champ. Le faire varier
   // avec APP_ENV a deja provoque des builds casses ("Could not find target
-  // 'CourseoStaging'/'Courseo' in project.pbxproj") quand la resolution de
+  // les anciens noms de cible dans project.pbxproj) quand la resolution de
   // APP_ENV divergeait entre l'etape de credentials et celle de prebuild sur
   // les serveurs EAS. bundleIdentifier reste dynamique, ce qui suffit a
   // distinguer les environnements sur l'appareil.
-  // Rebranding "Coursia" : le nom affiche change, mais slug/scheme/bundleId
+  // Rebranding "CoursIA" : le nom affiche change, mais slug/scheme/bundleId
   // restent sur "courseo" pour ne pas casser le projet EAS et les
   // credentials App Store Connect deja enregistres.
-  name: 'Coursia',
+  name: 'CoursIA',
   slug: 'courseo',
   version: '1.0.0',
   orientation: 'portrait', // Une app de courses ne beneficie pas du paysage
@@ -30,14 +30,16 @@ const config: ExpoConfig = {
     // prebuild (retombee sur le fallback 'development'), causant un mismatch
     // avec le profil de provisioning App Store lors de la signature.
     bundleIdentifier: 'ch.courseo.app',
-    buildNumber: '11',
+    buildNumber: '19',
     supportsTablet: false, // MVP telephone uniquement
     requireFullScreen: true,
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
       NSUserNotificationsUsageDescription:
-        'Coursia vous envoie des rappels de planification et des alertes de promotions.',
-      CFBundleLocalizations: ['fr', 'de', 'it'],
+        'CoursIA vous envoie des rappels de planification et des alertes de promotions.',
+      // La V1 Store est volontairement francophone. Les fichiers DE/IT sont
+      // des placeholders et ne doivent pas etre annonces comme localisations.
+      CFBundleLocalizations: ['fr'],
     },
   },
   android: {
@@ -68,10 +70,7 @@ const config: ExpoConfig = {
     'expo-secure-store',
     'expo-localization',
     'expo-apple-authentication',
-    [
-      'expo-image',
-      {},
-    ],
+    ['expo-image', {}],
     [
       'expo-notifications',
       {
@@ -79,7 +78,13 @@ const config: ExpoConfig = {
         color: '#0F2D27',
       },
     ],
-    '@sentry/react-native',
+    [
+      '@sentry/react-native',
+      {
+        organization: process.env.SENTRY_ORG,
+        project: process.env.SENTRY_PROJECT,
+      },
+    ],
   ],
   extra: {
     supabaseUrl: process.env.SUPABASE_URL,
@@ -88,6 +93,7 @@ const config: ExpoConfig = {
     revenuecatKeyAndroid: process.env.REVENUECAT_API_KEY_ANDROID,
     sentryDsn: process.env.SENTRY_DSN,
     posthogApiKey: process.env.POSTHOG_API_KEY,
+    swissGroceriesEnabled: process.env.SWISS_GROCERIES_ENABLED === 'true',
     appEnv: APP_ENV,
     router: {},
     eas: {

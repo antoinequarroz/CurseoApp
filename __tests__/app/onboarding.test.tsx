@@ -15,12 +15,15 @@ jest.mock('@/lib/revenuecat', () => ({ initRevenueCat: jest.fn() }));
 jest.mock('@/lib/toast', () => ({ toast: { succes: jest.fn(), erreur: jest.fn() } }));
 jest.mock('@/lib/supabase', () => ({
   supabase: {
-    auth: { getSession: jest.fn() },
+    auth: { getSession: jest.fn(), signOut: jest.fn().mockResolvedValue({ error: null }) },
     from: jest.fn(() => ({ upsert: jest.fn().mockResolvedValue({ error: null }) })),
   },
 }));
 
-const METRICS_TEST = { frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 47, left: 0, right: 0, bottom: 34 } };
+const METRICS_TEST = {
+  frame: { x: 0, y: 0, width: 390, height: 844 },
+  insets: { top: 47, left: 0, right: 0, bottom: 34 },
+};
 
 async function renderAvecProviders() {
   return render(
@@ -44,7 +47,7 @@ describe('Onboarding', () => {
 
   it('succes : etape 1 affiche le titre de bienvenue', async () => {
     const { getByText } = await renderAvecProviders();
-    expect(getByText('Bienvenue sur Coursia')).toBeTruthy();
+    expect(getByText('Bienvenue sur CoursIA')).toBeTruthy();
   });
 
   it('etape 1 : le bouton Suivant est desactive tant que les CGVU ne sont pas acceptees', async () => {
@@ -68,14 +71,17 @@ describe('Onboarding', () => {
   });
 
   it('finalisation : avec une session, upsert le profil et initialise RevenueCat', async () => {
+    const upsert = jest.fn().mockResolvedValue({ error: null });
+    (supabase.from as jest.Mock).mockReturnValue({ upsert });
     (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: { user: { id: 'u-1' } } } });
     useOnboardingStore.getState().setEtape(5);
-    useOnboardingStore.getState().mettreAJourDonnees({ prenom: 'Alex' });
+    useOnboardingStore.getState().mettreAJourDonnees({ prenom: 'Alex', enfants_ages: [4, 9] });
 
     const { getByText } = await renderAvecProviders();
     fireEvent.press(getByText('Terminer'));
 
     await waitFor(() => expect(initRevenueCat).toHaveBeenCalledWith('u-1'));
+    expect(upsert).toHaveBeenCalledWith(expect.objectContaining({ id: 'u-1', enfants_ages: [4, 9] }));
     expect(useProfilStore.getState().profil?.prenom).toBe('Alex');
     expect(router.replace).toHaveBeenCalledWith('/(tabs)');
   });

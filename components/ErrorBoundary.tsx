@@ -17,8 +17,13 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
     return { error };
   }
 
-  componentDidCatch(error: Error): void {
-    if (!__DEV__) Sentry.captureException(error);
+  componentDidCatch(error: Error, info: React.ErrorInfo): void {
+    if (!__DEV__) {
+      Sentry.withScope((scope) => {
+        scope.setContext('react', { componentStack: info.componentStack ?? 'indisponible' });
+        Sentry.captureException(error);
+      });
+    }
   }
 
   render() {
@@ -29,9 +34,7 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
           {__DEV__ ? (
             <BodySm style={{ textAlign: 'center' }}>{this.state.error.message}</BodySm>
           ) : (
-            <BodySm style={{ textAlign: 'center' }}>
-              {t('erreurs.boundary_message')}
-            </BodySm>
+            <BodySm style={{ textAlign: 'center' }}>{t('erreurs.boundary_message')}</BodySm>
           )}
           <Button label={t('commun.reessayer')} onPress={() => this.setState({ error: null })} />
         </View>

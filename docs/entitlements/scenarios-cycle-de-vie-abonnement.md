@@ -11,8 +11,8 @@ Rappel utile pour le testeur : Apple accélère le cycle de vie des abonnements 
 | # | Étape | Résultat attendu | Résultat obtenu |
 |---|---|---|---|
 | 1 | Acheter un palier payant (voir `test-sandbox-app-store.md`) sur l'appareil A | Palier actif, confirmé dans RevenueCat et `profils.abonnement` | |
-| 2 | Désinstaller complètement l'app, la réinstaller depuis TestFlight (ou se connecter avec le même compte sur un second appareil) | L'app démarre au palier `gratuit` par défaut (nouvel `appUserID` tant que l'utilisateur ne s'est pas reconnecté à son compte Coursia) | |
-| 3 | Se reconnecter avec le même compte Coursia (email/mot de passe) | `profils.abonnement` chargé depuis Supabase reflète déjà le bon palier (le webhook a persisté l'achat de l'étape 1 — la restauration RevenueCat n'est même pas strictement nécessaire ici, c'est Supabase qui fait foi) | |
+| 2 | Désinstaller complètement l'app, la réinstaller depuis TestFlight (ou se connecter avec le même compte sur un second appareil) | L'app démarre au palier `gratuit` par défaut (nouvel `appUserID` tant que l'utilisateur ne s'est pas reconnecté à son compte CoursIA) | |
+| 3 | Se reconnecter avec le même compte CoursIA (email/mot de passe) | `profils.abonnement` chargé depuis Supabase reflète déjà le bon palier (le webhook a persisté l'achat de l'étape 1 — la restauration RevenueCat n'est même pas strictement nécessaire ici, c'est Supabase qui fait foi) | |
 | 4 | Depuis Profil → Abonnement, appuyer sur « Restaurer mes achats » (`restaurerAchats()`, `lib/revenuecat.ts`, branché COUR-33) | RevenueCat retrouve l'entitlement lié à l'Apple ID sandbox, l'app reflète immédiatement le palier via `refleterAbonnementLocal` (toast « Achats restaurés. ») | |
 
 Code exercé à l'étape 4 : `app/(tabs)/profil.tsx` → `restaurerLesAchats()` → `restaurerAchats()` (`lib/revenuecat.ts`) → `Purchases.restorePurchases()` → `niveauDepuisCustomerInfo()`.

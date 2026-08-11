@@ -1,0 +1,176 @@
+name: Deploy SwissGroceries staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      license_approved:
+        description: "Je confirme que la licence autorise ce deploiement distant"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: swissgroceries-staging
+  cancel-in-progress: false
+
+env:
+  REGION: europe-west6
+  ARTIFACT_REPOSITORY: coursia-containers
+  IMAGE_NAME: swissgroceries-gateway
+  SERVICE_NAME: coursia-swissgroceries-staging
+  RUNTIME_SERVICE_ACCOUNT: coursia-swissgroceries-staging
+  GATEWAY_SECRET: coursia-swissgroceries-gateway-api-key
+
+jobs:
+  licence-gate:
+    name: Validation de la licence
+    runs-on: ubuntu-latest
+    steps:
+      - name: Bloquer toute publication sans accord explicite
+        if: ${{ inputs.license_approved != true }}
+        run: |
+          echo "Deploiement refuse : la licence SwissGroceries doit etre approuvee explicitement."
+          exit 1
+      - name: Confirmer la garde
+        if: ${{ inputs.license_approved == true }}
+        run: echo "Accord de licence confirme pour cette execution manuelle."
+
+  deploy:
+    name: Gateway et Edge Function staging
+    needs: licence-gate
+    runs-on: ubuntu-latest
+    environment: swissgroceries-staging
+    env:
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Valider la configuration non secrete
+        shell: bash
+        run: |
+          test -n "$GCP_PROJECT_ID"
+          test -n "$SUPABASE_PROJECT_REF"
+
+      - name: Authentification Google Cloud sans cle longue duree
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+
+      - name: Verifier les ressources precreees
+        shell: bash
+        run: |
+          gcloud artifacts repositories describe "$ARTIFACT_REPOSITORY" \
+            --location "$REGION" \
+            --project "$GCP_PROJECT_ID" >/dev/null
+          gcloud secrets describe "$GATEWAY_SECRET" \
+            --project "$GCP_PROJECT_ID" >/dev/null
+          gcloud iam service-accounts describe \
+            "${RUNTIME_SERVICE_ACCOUNT}@${GCP_PROJECT_ID}.iam.gserviceaccount.com" \
+            --project "$GCP_PROJECT_ID" >/dev/null
+
+      - name: Construire et publier une image immuable
+        shell: bash
+        run: |
+          IMAGE="${REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${ARTIFACT_REPOSITORY}/${IMAGE_NAME}:${GITHUB_SHA}"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+          gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+          docker build --pull --tag "$IMAGE" services/swissgroceries-gateway
+          docker push "$IMAGE"
+
+      - name: Deployer le gateway avec des limites de cout
+        shell: bash
+        run: |
+          gcloud run deploy "$SERVICE_NAME" \
+            --project "$GCP_PROJECT_ID" \
+            --region "$REGION" \
+            --platform managed \
+            --image "$IMAGE" \
+            --service-account "${RUNTIME_SERVICE_ACCOUNT}@${GCP_PROJECT_ID}.iam.gserviceaccount.com" \
+            --allow-unauthenticated \
+            --ingress all \
+            --port 8787 \
+            --cpu 1 \
+            --memory 1Gi \
+            --concurrency 4 \
+            --min 0 \
+            --max 2 \
+            --timeout 75s \
+            --set-env-vars MAX_IN_FLIGHT=4 \
+            --set-secrets "GATEWAY_API_KEY=${GATEWAY_SECRET}:latest" \
+            --quiet
+
+      - name: Verifier le service avant de relier Supabase
+        shell: bash
+        run: |
+          SERVICE_URL="$(gcloud run services describe "$SERVICE_NAME" \
+            --project "$GCP_PROJECT_ID" \
+            --region "$REGION" \
+            --format='value(status.url)')"
+          test -n "$SERVICE_URL"
+          echo "SERVICE_URL=$SERVICE_URL" >> "$GITHUB_ENV"
+          curl --fail --silent --show-error --retry 5 --retry-all-errors \
+            --retry-delay 5 "${SERVICE_URL}/livez" >/dev/null
+          curl --fail --silent --show-error --retry 5 --retry-all-errors \
+            --retry-delay 5 "${SERVICE_URL}/readyz" >/dev/null
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' \
+            "${SERVICE_URL}/health")" = "401"
+
+      - name: Tester une requete protegee sans journaliser son contenu
+        shell: bash
+        run: |
+          GATEWAY_API_KEY="$(gcloud secrets versions access latest \
+            --secret "$GATEWAY_SECRET" --project "$GCP_PROJECT_ID")"
+          test "${#GATEWAY_API_KEY}" -ge 24
+          echo "::add-mask::$GATEWAY_API_KEY"
+          curl --fail --silent --show-error \
+            --header "Authorization: Bearer ${GATEWAY_API_KEY}" \
+            "${SERVICE_URL}/health" >/dev/null
+
+      - uses: supabase/setup-cli@3c2f5e2ae34c34e428e8e206e2c4d21fa2d20fbf # v2.1.1
+        with:
+          version: latest
+
+      - name: Relier le staging en gardant le coupe-circuit ferme
+        shell: bash
+        run: |
+          GATEWAY_API_KEY="$(gcloud secrets versions access latest \
+            --secret "$GATEWAY_SECRET" --project "$GCP_PROJECT_ID")"
+          echo "::add-mask::$GATEWAY_API_KEY"
+          supabase secrets set --project-ref "$SUPABASE_PROJECT_REF" \
+            "SWISS_GROCERIES_GATEWAY_URL=${SERVICE_URL}" \
+            "SWISS_GROCERIES_GATEWAY_API_KEY=${GATEWAY_API_KEY}" \
+            "SWISS_GROCERIES_SERVER_ENABLED=false" \
+            "SWISS_GROCERIES_SERVER_MODE=off"
+          supabase functions deploy swissgroceries \
+            --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Verifier la revision et le coupe-circuit
+        shell: bash
+        run: |
+          gcloud run services describe "$SERVICE_NAME" \
+            --project "$GCP_PROJECT_ID" \
+            --region "$REGION" \
+            --format='yaml(status.url,status.latestReadyRevisionName,spec.template.spec.containerConcurrency)' \
+            | tee cloud-run-deployment.txt
+          supabase secrets list --project-ref "$SUPABASE_PROJECT_REF" \
+            | grep -q 'SWISS_GROCERIES_SERVER_ENABLED'
+          supabase secrets list --project-ref "$SUPABASE_PROJECT_REF" \
+            | grep -q 'SWISS_GROCERIES_SERVER_MODE'
+          echo "Staging deploye. Le coupe-circuit serveur reste desactive."
+
+      - name: Conserver la preuve de deploiement
+        uses: actions/upload-artifact@v4
+        with:
+          name: swissgroceries-staging-${{ github.sha }}
+          path: cloud-run-deployment.txt
+          retention-days: 30

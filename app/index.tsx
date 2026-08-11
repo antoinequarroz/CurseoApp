@@ -1,8 +1,27 @@
-/** Point d'entree — redirige vers l'onboarding s'il n'est pas termine, sinon vers les tabs. */
+/** Point d'entree — la session serveur prime sur l'etat local du device. */
+import { useEffect, useState } from 'react';
 import { Redirect } from 'expo-router';
-import { useOnboardingStore } from '@/stores/onboardingStore';
+import { supabase } from '@/lib/supabase';
+import { useProfilStore } from '@/stores/profilStore';
+
+type Destination = '/(auth)/connexion' | '/(auth)/onboarding' | '/(tabs)';
 
 export default function Index() {
-  const estComplete = useOnboardingStore((s) => s.estComplete);
-  return <Redirect href={estComplete ? '/(tabs)' : '/(auth)/onboarding'} />;
+  const profil = useProfilStore((s) => s.profil);
+  const [destination, setDestination] = useState<Destination | null>(null);
+
+  useEffect(() => {
+    let actif = true;
+    void supabase.auth.getSession().then(({ data }) => {
+      if (!actif) return;
+      if (!data.session?.user) setDestination('/(auth)/connexion');
+      else setDestination(profil ? '/(tabs)' : '/(auth)/onboarding');
+    });
+    return () => {
+      actif = false;
+    };
+  }, [profil]);
+
+  if (!destination) return null;
+  return <Redirect href={destination} />;
 }

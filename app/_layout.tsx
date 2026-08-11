@@ -4,17 +4,24 @@
  */
 import 'react-native-url-polyfill/auto';
 import '../global.css';
+import { Sentry } from '../lib/sentry';
 import React, { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import Toast from 'react-native-toast-message';
 import { useFonts as useDMMonoFonts, DMMono_400Regular, DMMono_500Medium } from '@expo-google-fonts/dm-mono';
 import { ThemeProvider } from '@/lib/theme-context';
 import { queryClient } from '@/lib/queryClient';
+import {
+  peutPersisterQuery,
+  PERSISTED_QUERY_MAX_AGE,
+  QUERY_CACHE_BUSTER,
+  queryPersister,
+} from '@/lib/queryPersistence';
 import { supabase } from '@/lib/supabase';
 import { initRevenueCat, ecouterMisesAJourAbonnement } from '@/lib/revenuecat';
 import { lireAbonnementAvecGrace } from '@/lib/abonnementHorsLigne';
@@ -26,7 +33,7 @@ import { WhatsNewModal } from '@/components/ui/WhatsNewModal';
 
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
+function RootLayout() {
   const [appReady, setAppReady] = useState(false);
   const profil = useProfilStore((state) => state.profil);
   const { shouldShow: shouldShowWhatsNew, currentRelease, markAsSeen } = useWhatsNew();
@@ -84,19 +91,52 @@ export default function RootLayout() {
     <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaProvider>
-          <QueryClientProvider client={queryClient}>
+          <PersistQueryClientProvider
+            client={queryClient}
+            persistOptions={{
+              persister: queryPersister,
+              maxAge: PERSISTED_QUERY_MAX_AGE,
+              buster: QUERY_CACHE_BUSTER,
+              dehydrateOptions: {
+                shouldDehydrateQuery: (query) =>
+                  query.state.status === 'success' && peutPersisterQuery(query.queryKey),
+              },
+            }}
+          >
             <ThemeProvider>
               <ErrorBoundary>
                 <SessionGuard>
                   <Stack screenOptions={{ headerShown: false }}>
                     <Stack.Screen name="(auth)" />
                     <Stack.Screen name="(tabs)" />
-                    <Stack.Screen name="recette/[id]" options={{ presentation: 'modal', headerShown: true, title: 'Recette' }} />
-                    <Stack.Screen name="gouts" options={{ presentation: 'modal', headerShown: true, title: 'Vos goûts' }} />
-                    <Stack.Screen name="membres-foyer" options={{ presentation: 'modal', headerShown: true, title: 'Membres du foyer' }} />
-                    <Stack.Screen name="mon-foyer" options={{ presentation: 'modal', headerShown: true, title: 'Mon foyer' }} />
-                    <Stack.Screen name="adresses" options={{ presentation: 'modal', headerShown: true, title: 'Adresses de livraison' }} />
-                    <Stack.Screen name="aide" options={{ presentation: 'modal', headerShown: true, title: 'Aide & support' }} />
+                    <Stack.Screen
+                      name="economies"
+                      options={{ headerShown: true, title: 'Économies' }}
+                    />
+                    <Stack.Screen
+                      name="recette/[id]"
+                      options={{ presentation: 'modal', headerShown: true, title: 'Recette' }}
+                    />
+                    <Stack.Screen
+                      name="gouts"
+                      options={{ presentation: 'modal', headerShown: true, title: 'Vos goûts' }}
+                    />
+                    <Stack.Screen
+                      name="membres-foyer"
+                      options={{ presentation: 'modal', headerShown: true, title: 'Membres du foyer' }}
+                    />
+                    <Stack.Screen
+                      name="mon-foyer"
+                      options={{ presentation: 'modal', headerShown: true, title: 'Mon foyer' }}
+                    />
+                    <Stack.Screen
+                      name="adresses"
+                      options={{ presentation: 'modal', headerShown: true, title: 'Adresses de livraison' }}
+                    />
+                    <Stack.Screen
+                      name="aide"
+                      options={{ presentation: 'modal', headerShown: true, title: 'Aide & support' }}
+                    />
                   </Stack>
                   <WhatsNewModal
                     visible={Boolean(profil) && shouldShowWhatsNew}
@@ -106,10 +146,12 @@ export default function RootLayout() {
                 </SessionGuard>
               </ErrorBoundary>
             </ThemeProvider>
-          </QueryClientProvider>
+          </PersistQueryClientProvider>
         </SafeAreaProvider>
       </GestureHandlerRootView>
       <Toast />
     </View>
   );
 }
+
+export default Sentry.wrap(RootLayout);

@@ -1,4 +1,4 @@
-/** Detecte la perte de connexion — pilote <OfflineBanner /> sur l'ecran Courses. */
+/** Détecte la perte de connexion réseau ou d'accès réel à Internet. */
 import { useEffect, useState } from 'react';
 import NetInfo from '@react-native-community/netinfo';
 
@@ -7,7 +7,10 @@ export function useNetworkStatus() {
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
-      setEstConnecte(Boolean(state.isConnected));
+      // Un appareil peut être relié au Wi-Fi sans accès Internet. NetInfo
+      // expose alors isConnected=true mais isInternetReachable=false : ce
+      // cas doit piloter les mêmes états hors ligne qu'une coupure réseau.
+      setEstConnecte(state.isConnected === true && state.isInternetReachable !== false);
     });
     return unsubscribe;
   }, []);

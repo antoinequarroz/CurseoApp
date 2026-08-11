@@ -70,7 +70,7 @@ describe('Accueil', () => {
 
   it('succes : sans profil, affiche une salutation par defaut et le budget hebdo par defaut', async () => {
     const { getByText } = await renderAvecProviders();
-    expect(getByText(/Bienvenue à toi/)).toBeTruthy();
+    expect(getByText('Bonjour toi')).toBeTruthy();
     expect(getByText('CHF 150.00')).toBeTruthy();
   });
 
@@ -97,5 +97,12 @@ describe('Accueil', () => {
     expect(genererDepuisPlanning).toHaveBeenCalledWith(planningVide, profilBase);
     expect(router.push).toHaveBeenCalledWith('/(tabs)/courses');
     genererDepuisPlanning.mockRestore();
+  });
+
+  it('economies : ouvre la synthese depuis la carte de l accueil', async () => {
+    const { getByLabelText } = await renderAvecProviders();
+    fireEvent.press(getByLabelText('Économies cumulées'));
+
+    expect(router.push).toHaveBeenCalledWith('/economies');
   });
 });

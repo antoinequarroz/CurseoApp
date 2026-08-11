@@ -1,4 +1,4 @@
-# Definition of Done — Coursia (COUR-36)
+# Definition of Done — CoursIA (COUR-36)
 
 Règle commune appliquée avant de considérer un ticket terminé, formalisée à partir de la pratique déjà en place sur les ~35 premiers tickets du projet (COUR-8 à COUR-35). Rien d'inventé : chaque point ci-dessous correspond à quelque chose de réellement exigé (ou découvert manquant puis corrigé) sur au moins un ticket antérieur.
 

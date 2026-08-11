@@ -5,8 +5,14 @@
 import React, { useEffect } from 'react';
 import { View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import { Button } from '@/components/ui/Button';
+import { Caption, Heading } from '@/components/ui/Typography';
 import { useHaptics } from '@/hooks/useHaptics';
 import { t } from '@/lib/i18n';
 import { formatPrix, formatEconomies } from '@/lib/format';
@@ -25,6 +31,10 @@ export function RecapCommande({ recap, onValider }: { recap: RecapCommandeType; 
 
   return (
     <View style={{ gap: 16 }}>
+      <View style={{ gap: 4 }} accessibilityRole="summary">
+        <Heading>{t('panier.simulation_titre')}</Heading>
+        <Caption>{t('panier.simulation_description')}</Caption>
+      </View>
       {/* Degrade fixe (independant du theme) — les deux teintes garantissent >=4.5:1 avec le texte blanc. */}
       <LinearGradient
         colors={['#081712', '#0F2D27']}
@@ -41,7 +51,7 @@ export function RecapCommande({ recap, onValider }: { recap: RecapCommandeType; 
           {formatEconomies(recap.economies)}
         </Animated.Text>
         <Animated.Text style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)' }}>
-          {t('panier.economie_message')}
+          {t('panier.economie_message_simulee')}
         </Animated.Text>
       </LinearGradient>
 

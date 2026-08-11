@@ -4,8 +4,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/lib/theme-context';
 import { useResponsive } from '@/hooks/useResponsive';
 
-const TAB_BAR_CLEARANCE = 118;
-
 export function Screen({
   children,
   style,
@@ -42,6 +40,7 @@ export function ScreenScroll({
   contentContainerStyle,
   padded = true,
   tabBar = true,
+  contentInsetAdjustmentBehavior = 'automatic',
   ...props
 }: ScrollViewProps & { children: React.ReactNode; padded?: boolean; tabBar?: boolean }) {
   const { colors } = useTheme();
@@ -53,12 +52,15 @@ export function ScreenScroll({
       style={[{ flex: 1, backgroundColor: colors.bg }, style]}
       contentContainerStyle={[
         {
-          paddingTop: Math.max(insets.top, 16) + 8,
+          paddingTop: 24,
           paddingHorizontal: padded ? paddingHorizontal : 0,
-          paddingBottom: tabBar ? TAB_BAR_CLEARANCE + insets.bottom : Math.max(insets.bottom, 20),
+          // Les onglets natifs ajustent eux-memes leur ScrollView. Les ecrans
+          // hors onglets gardent un repli explicite pour la zone d'accueil.
+          paddingBottom: tabBar ? 24 : Math.max(insets.bottom, 20),
         },
         contentContainerStyle,
       ]}
+      contentInsetAdjustmentBehavior={contentInsetAdjustmentBehavior}
       showsVerticalScrollIndicator={false}
       {...props}
     >

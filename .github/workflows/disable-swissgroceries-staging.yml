@@ -1,0 +1,53 @@
+name: Disable SwissGroceries staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Saisir DESACTIVER pour fermer immediatement les appels live"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: swissgroceries-staging
+  cancel-in-progress: false
+
+jobs:
+  confirmation:
+    name: Confirmation de l'arret
+    runs-on: ubuntu-latest
+    steps:
+      - name: Exiger une confirmation non ambigue
+        shell: bash
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: test "$CONFIRMATION" = "DESACTIVER"
+
+  disable:
+    name: Fermer le coupe-circuit
+    needs: confirmation
+    runs-on: ubuntu-latest
+    environment: swissgroceries-staging
+    env:
+      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+    steps:
+      - uses: supabase/setup-cli@3c2f5e2ae34c34e428e8e206e2c4d21fa2d20fbf # v2.1.1
+        with:
+          version: latest
+
+      - name: Desactiver sans attendre une nouvelle build
+        shell: bash
+        run: |
+          test -n "$SUPABASE_PROJECT_REF"
+          supabase secrets set --project-ref "$SUPABASE_PROJECT_REF" \
+            "SWISS_GROCERIES_SERVER_ENABLED=false" \
+            "SWISS_GROCERIES_SERVER_MODE=off"
+          supabase secrets list --project-ref "$SUPABASE_PROJECT_REF" \
+            | grep -q 'SWISS_GROCERIES_SERVER_ENABLED'
+          supabase secrets list --project-ref "$SUPABASE_PROJECT_REF" \
+            | grep -q 'SWISS_GROCERIES_SERVER_MODE'
+          echo "Appels SwissGroceries desactives pour le staging."

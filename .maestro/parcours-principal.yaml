@@ -1,0 +1,46 @@
+appId: ${APP_ID}
+name: "coursIA — parcours principal"
+tags:
+  - smoke
+  - parcours-principal
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    id: auth-email
+- inputText: ${E2E_EMAIL}
+- tapOn:
+    id: auth-password
+- inputText: ${E2E_PASSWORD}
+- hideKeyboard
+- tapOn:
+    id: auth-submit
+- extendedWaitUntil:
+    visible: "Accueil"
+    timeout: 20000
+
+# Le profil chargé prouve que la session et les données foyer sont prêtes.
+- tapOn:
+    id: tab-profil
+- assertVisible: "Mon foyer"
+
+# Favori → planning complet → génération de la liste de courses.
+- tapOn:
+    id: tab-planifier
+- assertVisible: "Recettes"
+- tapOn:
+    id: recipe-like
+- tapOn:
+    id: planning-segment-planning
+- assertVisible: ".*repas décidés sur 14"
+- tapOn:
+    id: planning-autofill
+- extendedWaitUntil:
+    visible: "14 repas décidés sur 14"
+    timeout: 20000
+- tapOn:
+    id: planning-create-shopping-list
+- extendedWaitUntil:
+    visible: "Courses"
+    timeout: 10000
+- assertVisible: ".*articles à vérifier"

@@ -3,7 +3,7 @@
  * ecrit deja dans la table `swipes`) et journalise en plus localement pour
  * savoir quelles categories sont "cernees".
  */
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { View } from 'react-native';
 import { router } from 'expo-router';
 import { useGoutsStore } from '@/stores/goutsStore';
@@ -18,8 +18,6 @@ import type { CategorieGout } from '@/types';
 export function SwipeCategorieGouts({ categorie, profilId }: { categorie: CategorieGout; profilId: string }) {
   const swipes = useGoutsStore((s) => s.swipes);
   const enregistrerSwipe = useGoutsStore((s) => s.enregistrerSwipe);
-  const [index, setIndex] = useState(0);
-
   const recettesCategorie = useMemo(
     () => RECETTES_MOCK.filter((r) => categoriserRecette(r) === categorie),
     [categorie],
@@ -28,7 +26,8 @@ export function SwipeCategorieGouts({ categorie, profilId }: { categorie: Catego
     () => recettesCategorie.filter((r) => swipes[r.id] === undefined),
     [recettesCategorie, swipes],
   );
-  const recetteActuelle = recettesRestantes[index % Math.max(recettesRestantes.length, 1)];
+  const recetteActuelle = recettesRestantes[0];
+  const recetteSuivante = recettesRestantes[1];
   const nbAimees = recettesCategorie.filter((r) => swipes[r.id] === true).length;
 
   if (recettesCategorie.length === 0 || !recetteActuelle) {
@@ -47,12 +46,13 @@ export function SwipeCategorieGouts({ categorie, profilId }: { categorie: Catego
     <View style={{ gap: 10 }}>
       <Caption>{t('gouts.categorie_progression', { restant: recettesRestantes.length, total: recettesCategorie.length })}</Caption>
       <SwipeRecette
+        key={recetteActuelle.id}
         recette={recetteActuelle}
+        recetteSuivante={recetteSuivante}
         profilId={profilId}
         onTapDetail={() => router.push(`/recette/${recetteActuelle.id}`)}
         onSwiped={(aime) => {
           enregistrerSwipe(recetteActuelle.id, aime);
-          setIndex((i) => i + 1);
         }}
       />
     </View>

@@ -8,19 +8,22 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "APP_ENV": "development"
+        "APP_ENV": "development",
+        "SWISS_GROCERIES_ENABLED": "false",
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     },
     "preview": {
       "distribution": "internal",
       "env": {
-        "APP_ENV": "staging"
+        "APP_ENV": "staging",
+        "SWISS_GROCERIES_ENABLED": "true"
       }
     },
     "production": {
       "env": {
         "APP_ENV": "production",
-        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
+        "SWISS_GROCERIES_ENABLED": "true"
       }
     }
   },

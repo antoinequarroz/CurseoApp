@@ -1,9 +1,11 @@
 /** Tableau des prix par enseigne pour un produit — reserve aux abonnes Standard+. */
 import React, { useState } from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { ChevronDown, RefreshCw } from 'lucide-react-native';
 import { useTheme } from '@/lib/theme-context';
 import { useAbonnement } from '@/hooks/useAbonnement';
 import { usePrix } from '@/hooks/usePrix';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { enseigneColors } from '@/lib/theme';
 import { Body, BodySm, Price, Caption } from '@/components/ui/Typography';
 import { Badge } from '@/components/ui/Badge';
@@ -44,7 +46,14 @@ function LigneOffre({ offre, estMeilleurPrix }: { offre: OffrePrix; estMeilleurP
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 }}>
-          <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: enseigneColors[offre.enseigne] }} />
+          <View
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: 5,
+              backgroundColor: enseigneColors[offre.enseigne],
+            }}
+          />
           <Body>{NOM_ENSEIGNE[offre.enseigne] ?? offre.enseigne}</Body>
           {offre.format ? <Caption>{offre.format}</Caption> : null}
           {offre.promotion ? <Badge label={offre.promotion} variant="warning" /> : null}
@@ -52,7 +61,9 @@ function LigneOffre({ offre, estMeilleurPrix }: { offre: OffrePrix; estMeilleurP
         </View>
         <View style={{ alignItems: 'flex-end' }}>
           <Price>{formatPrix(offre.prix)}</Price>
-          <Caption>{t('comparateur.prix_par_unite', { prix: formatPrix(offre.prixUnitaire), unite: offre.unite })}</Caption>
+          <Caption>
+            {t('comparateur.prix_par_unite', { prix: formatPrix(offre.prixUnitaire), unite: offre.unite })}
+          </Caption>
         </View>
       </View>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -67,18 +78,39 @@ function LigneOffre({ offre, estMeilleurPrix }: { offre: OffrePrix; estMeilleurP
   );
 }
 
-export function ComparateurPrix({ produit, onChoisirPalier }: { produit: string; onChoisirPalier: (p: NiveauAbonnement) => void }) {
+export function ComparateurPrix({
+  produit,
+  onChoisirPalier,
+}: {
+  produit: string;
+  onChoisirPalier: (p: NiveauAbonnement) => void;
+}) {
   const { colors } = useTheme();
   const { estAuMoins } = useAbonnement();
+  const { estHorsLigne } = useNetworkStatus();
   const [paywallVisible, setPaywallVisible] = useState(false);
-  const { data: comparatif, isLoading, isError } = usePrix(produit);
+  const [ouvert, setOuvert] = useState(false);
+  const estStandard = estAuMoins('standard');
+  const {
+    data: comparatif,
+    isLoading,
+    isError,
+    refetch,
+  } = usePrix(produit, {
+    enabled: estStandard && ouvert && !estHorsLigne,
+  });
 
-  if (!estAuMoins('standard')) {
+  if (!estStandard) {
     return (
       <>
-        <BodySm onPress={() => setPaywallVisible(true)} style={{ color: colors.primary }}>
-          {t('comparateur.debloquer')}
-        </BodySm>
+        <Pressable
+          onPress={() => setPaywallVisible(true)}
+          accessibilityRole="button"
+          accessibilityLabel={t('comparateur.debloquer')}
+          style={{ paddingVertical: 8 }}
+        >
+          <BodySm style={{ color: colors.primary }}>{t('comparateur.debloquer')}</BodySm>
+        </Pressable>
         <PaywallModal
           visible={paywallVisible}
           onClose={() => setPaywallVisible(false)}
@@ -89,20 +121,69 @@ export function ComparateurPrix({ produit, onChoisirPalier }: { produit: string;
     );
   }
 
-  if (isLoading) return <SkeletonComparateur />;
-  if (isError) return <Caption>{t('comparateur.indisponible')}</Caption>;
-  if (!comparatif) return <Caption>{t('comparateur.non_trouve')}</Caption>;
-  if (comparatif.offres.length === 0) return <Caption>{t('comparateur.aucun_prix')}</Caption>;
-
   return (
     <View style={{ gap: 8 }}>
-      {comparatif.offres.map((offre) => (
-        <LigneOffre
-          key={offre.offreId}
-          offre={offre}
-          estMeilleurPrix={offre.prixUnitaire === comparatif.meilleurPrixUnitaire}
+      <Pressable
+        onPress={() => setOuvert((valeur) => !valeur)}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: ouvert }}
+        accessibilityLabel={t(ouvert ? 'comparateur.masquer' : 'comparateur.afficher', { produit })}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingVertical: 8,
+        }}
+      >
+        <BodySm style={{ color: colors.primary }}>
+          {t(ouvert ? 'comparateur.masquer_court' : 'comparateur.afficher_court')}
+        </BodySm>
+        <ChevronDown
+          size={16}
+          color={colors.primary}
+          style={{ transform: [{ rotate: ouvert ? '180deg' : '0deg' }] }}
         />
-      ))}
+      </Pressable>
+
+      {ouvert && (
+        <View style={{ gap: 8 }}>
+          {estHorsLigne && !comparatif ? (
+            <Caption style={{ color: colors.warning }}>{t('comparateur.hors_ligne')}</Caption>
+          ) : isLoading ? (
+            <SkeletonComparateur />
+          ) : isError ? (
+            <View style={{ gap: 6, alignItems: 'flex-start' }}>
+              <Caption>{t('comparateur.indisponible')}</Caption>
+              <Pressable
+                onPress={() => void refetch()}
+                accessibilityRole="button"
+                accessibilityLabel={t('comparateur.reessayer')}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6 }}
+              >
+                <RefreshCw size={14} color={colors.primary} />
+                <BodySm style={{ color: colors.primary }}>{t('comparateur.reessayer')}</BodySm>
+              </Pressable>
+            </View>
+          ) : !comparatif ? (
+            <Caption>{t('comparateur.non_trouve')}</Caption>
+          ) : comparatif.offres.length === 0 ? (
+            <Caption>{t('comparateur.aucun_prix')}</Caption>
+          ) : (
+            <>
+              {estHorsLigne && (
+                <Caption style={{ color: colors.warning }}>{t('comparateur.cache_hors_ligne')}</Caption>
+              )}
+              {comparatif.offres.map((offre) => (
+                <LigneOffre
+                  key={offre.offreId}
+                  offre={offre}
+                  estMeilleurPrix={offre.prixUnitaire === comparatif.meilleurPrixUnitaire}
+                />
+              ))}
+            </>
+          )}
+        </View>
+      )}
     </View>
   );
 }

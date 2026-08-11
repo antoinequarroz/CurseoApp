@@ -76,16 +76,23 @@ describe('useRecettes', () => {
   });
 
   it('succes : expose les recettes publiees une fois chargees', async () => {
-    fetchRecettesPublieesMock.mockResolvedValue([recette({ id: 'r-1' }), recette({ id: 'r-2' })]);
+    let terminerChargement!: (recettes: Recette[]) => void;
+    fetchRecettesPublieesMock.mockReturnValue(new Promise((resolve) => {
+      terminerChargement = resolve;
+    }));
 
     const { result } = await renderHook(() => useRecettes(), { wrapper });
 
     expect(result.current.isLoading).toBe(true);
 
+    await act(async () => terminerChargement([recette({ id: 'r-1' }), recette({ id: 'r-2' })]));
+
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.isError).toBe(false);
     expect(result.current.isEmpty).toBe(false);
+    expect(result.current.isCatalogueEmpty).toBe(false);
+    expect(result.current.hasCachedData).toBe(true);
     expect(result.current.data.pages.flat()).toHaveLength(2);
   });
 
@@ -98,6 +105,9 @@ describe('useRecettes', () => {
 
     expect(result.current.isError).toBe(false);
     expect(result.current.isEmpty).toBe(true);
+    expect(result.current.isCatalogueEmpty).toBe(true);
+    expect(result.current.isFilteredEmpty).toBe(false);
+    expect(result.current.hasCachedData).toBe(true);
     expect(result.current.data.pages.flat()).toHaveLength(0);
   });
 
@@ -110,6 +120,7 @@ describe('useRecettes', () => {
 
     expect(result.current.isError).toBe(true);
     expect(result.current.error).toBeInstanceOf(Error);
+    expect(result.current.hasCachedData).toBe(false);
     expect(result.current.data.pages.flat()).toHaveLength(0);
   });
 
@@ -140,6 +151,7 @@ describe('useRecettes', () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.data.pages[0]).toHaveLength(10);
+    expect(result.current.toutesRecettes).toHaveLength(12);
     expect(result.current.hasNextPage).toBe(true);
 
     await act(async () => result.current.fetchNextPage());
@@ -158,6 +170,35 @@ describe('useRecettes', () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.data.pages.flat().map((r) => r.id)).toEqual(['vegetarien-et-sans-gluten']);
+  });
+
+  it('distingue un catalogue rempli sans resultat compatible d’un catalogue distant vide', async () => {
+    fetchRecettesPublieesMock.mockResolvedValue([
+      recette({ id: 'viande', regime: [] }),
+    ]);
+
+    const { result } = await renderHook(() => useRecettes({ regime: ['vegetarien'] }), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.isEmpty).toBe(true);
+    expect(result.current.isCatalogueEmpty).toBe(false);
+    expect(result.current.isFilteredEmpty).toBe(true);
+  });
+
+  it('conserve les donnees en cache quand un rafraichissement echoue', async () => {
+    fetchRecettesPublieesMock.mockResolvedValueOnce([recette({ id: 'r-cache' })]);
+
+    const { result } = await renderHook(() => useRecettes(), { wrapper });
+    await waitFor(() => expect(result.current.data.pages.flat()).toHaveLength(1));
+
+    fetchRecettesPublieesMock.mockRejectedValueOnce(new Error('reseau indisponible'));
+    await act(async () => {
+      await result.current.refetch();
+    });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.hasCachedData).toBe(true);
+    expect(result.current.data.pages.flat().map((r) => r.id)).toEqual(['r-cache']);
   });
 
   describe('COUR-22 : filtrage allergies robuste', () => {

@@ -13,11 +13,20 @@ interface ButtonProps {
   disabled?: boolean;
   loading?: boolean;
   accessibilityHint?: string;
+  testID?: string;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export function Button({ label, onPress, variant = 'primary', disabled, loading, accessibilityHint }: ButtonProps) {
+export function Button({
+  label,
+  onPress,
+  variant = 'primary',
+  disabled,
+  loading,
+  accessibilityHint,
+  testID,
+}: ButtonProps) {
   const { colors } = useTheme();
   const haptics = useHaptics();
   const scale = useSharedValue(1);
@@ -41,7 +50,7 @@ export function Button({ label, onPress, variant = 'primary', disabled, loading,
 
   return (
     <AnimatedPressable
-      onPressIn={() => (scale.value = withTiming(0.97, { duration: 100 }))}
+      onPressIn={() => (scale.value = withTiming(0.96, { duration: 100 }))}
       onPressOut={() => (scale.value = withTiming(1, { duration: 100 }))}
       onPress={() => {
         if (disabled || loading) return;
@@ -53,20 +62,25 @@ export function Button({ label, onPress, variant = 'primary', disabled, loading,
       accessibilityLabel={label}
       accessibilityHint={accessibilityHint}
       accessibilityState={{ disabled: disabled || loading }}
+      testID={testID}
       style={[
         animatedStyle,
         {
           backgroundColor: bg,
           borderRadius: 28,
+          borderCurve: 'continuous',
+          minHeight: 54,
           paddingVertical: 16,
           paddingHorizontal: 24,
           alignItems: 'center',
           justifyContent: 'center',
-          opacity: disabled ? 0.5 : 1,
-          shadowColor: variant === 'primary' ? colors.accentDark : variant === 'success' ? '#0F2D27' : 'transparent',
-          shadowOpacity: variant === 'primary' || variant === 'success' ? 0.25 : 0,
-          shadowRadius: 12,
-          shadowOffset: { width: 0, height: 4 },
+          opacity: disabled || loading ? 0.55 : 1,
+          boxShadow:
+            variant === 'primary'
+              ? `0 6px 18px ${colors.accentDark}38`
+              : variant === 'success'
+                ? '0 6px 18px rgba(15, 45, 39, 0.22)'
+                : undefined,
         },
       ]}
     >

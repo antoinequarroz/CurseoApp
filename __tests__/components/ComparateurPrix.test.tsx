@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ComparateurPrix } from '@/components/courses/ComparateurPrix';
 import { ThemeProvider } from '@/lib/theme-context';
@@ -9,6 +9,9 @@ import type { ComparatifPrixReel } from '@/lib/prixRepository';
 import type { Profil } from '@/types';
 
 jest.mock('@/lib/prixRepository');
+jest.mock('@react-native-community/netinfo', () =>
+  jest.requireActual('@react-native-community/netinfo/jest/netinfo-mock'),
+);
 jest.mock('@/lib/supabase', () => ({
   ...jest.requireActual('@/lib/supabase'),
   isSupabaseConfigured: true,
@@ -54,8 +57,11 @@ describe('ComparateurPrix', () => {
 
   it('affiche le paywall pour un utilisateur gratuit', async () => {
     useProfilStore.getState().setProfil(profilBase);
-    const { getByText } = await renderAvecProviders(<ComparateurPrix produit="Pâtes penne 500g" onChoisirPalier={jest.fn()} />);
+    const { getByText } = await renderAvecProviders(
+      <ComparateurPrix produit="Pâtes penne 500g" onChoisirPalier={jest.fn()} />,
+    );
     expect(getByText('Débloquer le comparateur de prix →')).toBeTruthy();
+    expect(fetchComparatifPrixMock).not.toHaveBeenCalled();
   });
 
   it('formats differents : affiche chaque offre avec son format et son prix unitaire propre', async () => {
@@ -65,18 +71,40 @@ describe('ComparateurPrix', () => {
       nom: 'Riz basmati',
       offres: [
         {
-          offreId: 'o-1kg', enseigne: 'migros', format: '1kg', quantite: 1, unite: 'kg',
-          prix: 4.2, prixUnitaire: 4.2, promotion: null, source: 'saisie_manuelle', collecteLe: new Date().toISOString(), expire: false,
+          offreId: 'o-1kg',
+          enseigne: 'migros',
+          format: '1kg',
+          quantite: 1,
+          unite: 'kg',
+          prix: 4.2,
+          prixUnitaire: 4.2,
+          promotion: null,
+          source: 'saisie_manuelle',
+          collecteLe: new Date().toISOString(),
+          expire: false,
         },
         {
-          offreId: 'o-500g', enseigne: 'migros', format: '500g', quantite: 0.5, unite: 'kg',
-          prix: 2.3, prixUnitaire: 4.6, promotion: null, source: 'saisie_manuelle', collecteLe: new Date().toISOString(), expire: false,
+          offreId: 'o-500g',
+          enseigne: 'migros',
+          format: '500g',
+          quantite: 0.5,
+          unite: 'kg',
+          prix: 2.3,
+          prixUnitaire: 4.6,
+          promotion: null,
+          source: 'saisie_manuelle',
+          collecteLe: new Date().toISOString(),
+          expire: false,
         },
       ],
       meilleurPrixUnitaire: 4.2,
     } satisfies ComparatifPrixReel);
 
-    const { getByText, findByText } = await renderAvecProviders(<ComparateurPrix produit="Riz basmati" onChoisirPalier={jest.fn()} />);
+    const { getByText, findByText } = await renderAvecProviders(
+      <ComparateurPrix produit="Riz basmati" onChoisirPalier={jest.fn()} />,
+    );
+    expect(fetchComparatifPrixMock).not.toHaveBeenCalled();
+    fireEvent.press(getByText('Comparer les prix'));
     await findByText('1kg');
     expect(getByText('500g')).toBeTruthy();
     expect(getByText('CHF 4.20')).toBeTruthy();
@@ -88,14 +116,28 @@ describe('ComparateurPrix', () => {
     fetchComparatifPrixMock.mockResolvedValue({
       produitCanoniqueId: 'p-1',
       nom: 'Riz basmati',
-      offres: [{
-        offreId: 'o-1', enseigne: 'migros', format: '1kg', quantite: 1, unite: 'kg',
-        prix: 4.2, prixUnitaire: 4.2, promotion: '-7%', source: 'saisie_manuelle', collecteLe: new Date().toISOString(), expire: false,
-      }],
+      offres: [
+        {
+          offreId: 'o-1',
+          enseigne: 'migros',
+          format: '1kg',
+          quantite: 1,
+          unite: 'kg',
+          prix: 4.2,
+          prixUnitaire: 4.2,
+          promotion: '-7%',
+          source: 'saisie_manuelle',
+          collecteLe: new Date().toISOString(),
+          expire: false,
+        },
+      ],
       meilleurPrixUnitaire: 4.2,
     } satisfies ComparatifPrixReel);
 
-    const { findByText } = await renderAvecProviders(<ComparateurPrix produit="Riz basmati" onChoisirPalier={jest.fn()} />);
+    const { getByText, findByText } = await renderAvecProviders(
+      <ComparateurPrix produit="Riz basmati" onChoisirPalier={jest.fn()} />,
+    );
+    fireEvent.press(getByText('Comparer les prix'));
     expect(await findByText('-7%')).toBeTruthy();
   });
 
@@ -104,15 +146,28 @@ describe('ComparateurPrix', () => {
     fetchComparatifPrixMock.mockResolvedValue({
       produitCanoniqueId: 'p-1',
       nom: 'Riz basmati',
-      offres: [{
-        offreId: 'o-1', enseigne: 'migros', format: '1kg', quantite: 1, unite: 'kg',
-        prix: 4.2, prixUnitaire: 4.2, promotion: null, source: 'scraping',
-        collecteLe: new Date('2026-01-01').toISOString(), expire: true,
-      }],
+      offres: [
+        {
+          offreId: 'o-1',
+          enseigne: 'migros',
+          format: '1kg',
+          quantite: 1,
+          unite: 'kg',
+          prix: 4.2,
+          prixUnitaire: 4.2,
+          promotion: null,
+          source: 'scraping',
+          collecteLe: new Date('2026-01-01').toISOString(),
+          expire: true,
+        },
+      ],
       meilleurPrixUnitaire: 4.2,
     } satisfies ComparatifPrixReel);
 
-    const { findByText } = await renderAvecProviders(<ComparateurPrix produit="Riz basmati" onChoisirPalier={jest.fn()} />);
+    const { getByText, findByText } = await renderAvecProviders(
+      <ComparateurPrix produit="Riz basmati" onChoisirPalier={jest.fn()} />,
+    );
+    fireEvent.press(getByText('Comparer les prix'));
     expect(await findByText(/peut-être dépassé/)).toBeTruthy();
   });
 
@@ -123,18 +178,39 @@ describe('ComparateurPrix', () => {
       nom: 'Riz basmati',
       offres: [
         {
-          offreId: 'o-a', enseigne: 'migros', format: '1kg', quantite: 1, unite: 'kg',
-          prix: 4.2, prixUnitaire: 4.2, promotion: null, source: 'saisie_manuelle', collecteLe: new Date().toISOString(), expire: false,
+          offreId: 'o-a',
+          enseigne: 'migros',
+          format: '1kg',
+          quantite: 1,
+          unite: 'kg',
+          prix: 4.2,
+          prixUnitaire: 4.2,
+          promotion: null,
+          source: 'saisie_manuelle',
+          collecteLe: new Date().toISOString(),
+          expire: false,
         },
         {
-          offreId: 'o-b', enseigne: 'coop', format: '1kg', quantite: 1, unite: 'kg',
-          prix: 4.2, prixUnitaire: 4.2, promotion: null, source: 'saisie_manuelle', collecteLe: new Date().toISOString(), expire: false,
+          offreId: 'o-b',
+          enseigne: 'coop',
+          format: '1kg',
+          quantite: 1,
+          unite: 'kg',
+          prix: 4.2,
+          prixUnitaire: 4.2,
+          promotion: null,
+          source: 'saisie_manuelle',
+          collecteLe: new Date().toISOString(),
+          expire: false,
         },
       ],
       meilleurPrixUnitaire: 4.2,
     } satisfies ComparatifPrixReel);
 
-    const { findAllByText } = await renderAvecProviders(<ComparateurPrix produit="Riz basmati" onChoisirPalier={jest.fn()} />);
+    const { getByText, findAllByText } = await renderAvecProviders(
+      <ComparateurPrix produit="Riz basmati" onChoisirPalier={jest.fn()} />,
+    );
+    fireEvent.press(getByText('Comparer les prix'));
     const badges = await findAllByText('Meilleur prix');
     expect(badges).toHaveLength(2);
   });
@@ -143,7 +219,10 @@ describe('ComparateurPrix', () => {
     useProfilStore.getState().setProfil({ ...profilBase, abonnement: 'standard' });
     fetchComparatifPrixMock.mockResolvedValue(null);
 
-    const { findByText } = await renderAvecProviders(<ComparateurPrix produit="Produit inconnu" onChoisirPalier={jest.fn()} />);
+    const { getByText, findByText } = await renderAvecProviders(
+      <ComparateurPrix produit="Produit inconnu" onChoisirPalier={jest.fn()} />,
+    );
+    fireEvent.press(getByText('Comparer les prix'));
     expect(await findByText("Ce produit n'est pas encore suivi par le comparateur.")).toBeTruthy();
   });
 
@@ -156,7 +235,10 @@ describe('ComparateurPrix', () => {
       meilleurPrixUnitaire: null,
     } satisfies ComparatifPrixReel);
 
-    const { findByText } = await renderAvecProviders(<ComparateurPrix produit="Riz basmati" onChoisirPalier={jest.fn()} />);
+    const { getByText, findByText } = await renderAvecProviders(
+      <ComparateurPrix produit="Riz basmati" onChoisirPalier={jest.fn()} />,
+    );
+    fireEvent.press(getByText('Comparer les prix'));
     await waitFor(() => findByText('Aucun prix collecté pour ce produit pour le moment.'));
   });
 });

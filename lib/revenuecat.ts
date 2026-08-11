@@ -1,6 +1,6 @@
 /**
  * Configuration RevenueCat (sandbox). Gere les 4 paliers d'abonnement
- * Coursia : gratuit, standard, premium, famille.
+ * CoursIA : gratuit, standard, premium, famille.
  *
  * COUR-32 : achat sandbox de bout en bout — Purchases.configure() seul ne
  * suffit pas a rendre un achat testable, il faut aussi recuperer les vraies

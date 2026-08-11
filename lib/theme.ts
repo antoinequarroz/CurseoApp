@@ -1,5 +1,5 @@
 /**
- * Tokens de theme Coursia — palette moodboard v2 "vert foret / sauge / corail /
+ * Tokens de theme CoursIA — palette moodboard v2 "vert foret / sauge / corail /
  * creme". Tous les composants doivent consommer ces valeurs via useTheme()
  * (lib/theme-context.tsx) plutot que hardcoder des couleurs — c'est le seul
  * moyen de garantir un dark mode coherent sur toute l'app.

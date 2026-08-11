@@ -1,5 +1,5 @@
 /**
- * Carrousel "Inspirations pour vous" de l'accueil (refonte Coursia) — quelques
+ * Carrousel "Inspirations pour vous" de l'accueil (refonte CoursIA) — quelques
  * recettes a decouvrir en un coup d'oeil, avec un coeur pour aimer directement
  * sans passer par le swipe. Reutilise le meme mock que Planifier/Communaute.
  */
@@ -12,7 +12,7 @@ import { useTheme } from '@/lib/theme-context';
 import { useHaptics } from '@/hooks/useHaptics';
 import { supabase } from '@/lib/supabase';
 import { RECETTES_MOCK } from '@/lib/mocks/recettes.mock';
-import { Subheading, BodySm, Caption } from '@/components/ui/Typography';
+import { Heading, Subheading, Caption } from '@/components/ui/Typography';
 import { formatTemps } from '@/lib/format';
 import { t } from '@/lib/i18n';
 import type { Recette } from '@/types';
@@ -30,54 +30,68 @@ function CarteInspiration({ recette, profilId }: { recette: Recette; profilId: s
     const prochainEtat = !aime;
     setAime(prochainEtat);
     try {
-      await supabase.from('swipes').upsert({ profil_id: profilId, recette_id: recette.id, aime: prochainEtat });
+      await supabase
+        .from('swipes')
+        .upsert({ profil_id: profilId, recette_id: recette.id, aime: prochainEtat });
     } catch {
       // Mode demo/offline sans Supabase configure : le coeur reste actif localement.
     }
   };
 
   return (
-    <Pressable
-      onPress={() => router.push(`/recette/${recette.id}`)}
-      accessibilityRole="button"
-      accessibilityLabel={t('recettes.voir_detail_de', { titre: recette.titre })}
-      style={{ width: CARD_WIDTH, gap: 8 }}
-    >
-      <View style={{ height: 110, borderRadius: 18, overflow: 'hidden', backgroundColor: colors.bgSecondary }}>
-        <Image
-          source={{ uri: `${recette.image_url}?auto=format&fit=crop&w=500&q=70` }}
-          placeholder={recette.blurhash}
-          contentFit="cover"
-          transition={120}
-          cachePolicy="memory-disk"
-          style={{ width: '100%', height: '100%' }}
-          accessibilityLabel={`Photo de ${recette.titre}`}
-        />
-        <Pressable
-          onPress={basculerJaime}
-          accessibilityRole="button"
-          accessibilityLabel={aime ? t('recettes.retirer_favoris') : t('recettes.jaime')}
-          hitSlop={8}
+    <View style={{ width: CARD_WIDTH, position: 'relative' }}>
+      <Pressable
+        onPress={() => router.push(`/recette/${recette.id}`)}
+        accessibilityRole="button"
+        accessibilityLabel={t('recettes.voir_detail_de', { titre: recette.titre })}
+        style={{ gap: 8 }}
+      >
+        <View
           style={{
-            position: 'absolute',
-            top: 8,
-            right: 8,
-            width: 28,
-            height: 28,
-            borderRadius: 14,
-            backgroundColor: 'rgba(0,0,0,0.35)',
-            alignItems: 'center',
-            justifyContent: 'center',
+            height: 110,
+            borderRadius: 18,
+            borderCurve: 'continuous',
+            overflow: 'hidden',
+            backgroundColor: colors.bgSecondary,
+            borderWidth: 1,
+            borderColor: colors.border,
           }}
         >
-          <Heart size={14} color="#FFFFFF" fill={aime ? '#FFFFFF' : 'transparent'} />
-        </Pressable>
-      </View>
-      <Subheading numberOfLines={1}>{recette.titre}</Subheading>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-        <Caption>{formatTemps(recette.temps_preparation)}</Caption>
-      </View>
-    </Pressable>
+          <Image
+            source={{ uri: `${recette.image_url}?auto=format&fit=crop&w=500&q=70` }}
+            placeholder={recette.blurhash}
+            contentFit="cover"
+            transition={120}
+            cachePolicy="memory-disk"
+            style={{ width: '100%', height: '100%' }}
+            accessibilityLabel={`Photo de ${recette.titre}`}
+          />
+        </View>
+        <Subheading numberOfLines={1}>{recette.titre}</Subheading>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <Caption>{formatTemps(recette.temps_preparation)}</Caption>
+        </View>
+      </Pressable>
+      <Pressable
+        onPress={basculerJaime}
+        accessibilityRole="button"
+        accessibilityLabel={aime ? t('recettes.retirer_favoris') : t('recettes.jaime')}
+        accessibilityState={{ selected: aime }}
+        style={{
+          position: 'absolute',
+          top: 7,
+          right: 7,
+          width: 36,
+          height: 36,
+          borderRadius: 18,
+          backgroundColor: 'rgba(15,45,39,0.72)',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Heart size={17} color="#FFFFFF" fill={aime ? '#FFFFFF' : 'transparent'} />
+      </Pressable>
+    </View>
   );
 }
 
@@ -86,7 +100,7 @@ export function InspirationsCarousel({ profilId }: { profilId: string }) {
 
   return (
     <View style={{ gap: 12 }}>
-      <BodySm style={{ fontWeight: '600' }}>{t('accueil.inspirations_titre')}</BodySm>
+      <Heading>{t('accueil.inspirations_titre')}</Heading>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 14 }}>
         {inspirations.map((recette) => (
           <CarteInspiration key={recette.id} recette={recette} profilId={profilId} />

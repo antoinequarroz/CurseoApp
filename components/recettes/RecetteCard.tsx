@@ -79,7 +79,10 @@ export function RecetteCard({
         )}
         <DescriptionRecetteCard>{recette.description}</DescriptionRecetteCard>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12 }}>
-          <Price>{formatPrix(recette.cout_estime)}</Price>
+          <View>
+            <Caption>{t('recettes.budget_estime')}</Caption>
+            <Price>≈ {formatPrix(recette.cout_estime)}</Price>
+          </View>
           <Caption>{recette.portions} portions</Caption>
         </View>
       </View>

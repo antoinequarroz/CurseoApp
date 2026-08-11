@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { SwipeRecette } from '@/components/recettes/SwipeRecette';
 import { ThemeProvider } from '@/lib/theme-context';
 import { RECETTES_MOCK } from '@/lib/mocks/recettes.mock';
@@ -30,6 +30,6 @@ describe('SwipeRecette', () => {
       </ThemeProvider>,
     );
     fireEvent.press(getByLabelText("J'aime cette recette"));
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await waitFor(() => expect(onSwiped).toHaveBeenCalledWith(true));
   });
 });

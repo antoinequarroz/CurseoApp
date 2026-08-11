@@ -3,7 +3,13 @@ const expoConfig = require('eslint-config-expo/flat');
 module.exports = [
   ...expoConfig,
   {
-    ignores: ['dist/*', 'supabase/functions/**'],
+    ignores: [
+      'dist/*',
+      'supabase/functions/**',
+      '.agents/**',
+      '.claude/skills/**',
+      '.github/skills/**',
+    ],
   },
   {
     files: ['jest.setup.js', 'jest.config.js', '__tests__/**/*'],

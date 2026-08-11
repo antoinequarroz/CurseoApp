@@ -58,7 +58,7 @@ export default function Economies() {
 
   if (isLoading) {
     return (
-      <ScreenScroll contentContainerStyle={{ gap: 20 }}>
+      <ScreenScroll contentContainerStyle={{ gap: 20 }} tabBar={false}>
         <DisplayLG>{t('tabs.economies')}</DisplayLG>
         <SkeletonComparateur />
       </ScreenScroll>
@@ -78,7 +78,7 @@ export default function Economies() {
   }
 
   return (
-    <ScreenScroll contentContainerStyle={{ gap: 20 }}>
+    <ScreenScroll contentContainerStyle={{ gap: 20 }} tabBar={false}>
       <DisplayLG>{t('tabs.economies')}</DisplayLG>
 
       <Card style={{ padding: 18, alignItems: 'center', gap: 12 }}>

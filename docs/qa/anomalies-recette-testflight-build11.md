@@ -29,7 +29,7 @@ Chaque ticket ci-dessous liste donc les cas de recette qu'il couvre : la traçab
 **Sévérité** : Bloquant · **Composant** : Onboarding / Auth
 
 ### Étapes de reproduction
-1. Installer la build 11 sur un appareil sans session Coursia active.
+1. Installer la build 11 sur un appareil sans session CoursIA active.
 2. À l'écran de connexion, tenter « Sign in with Apple » — la connexion échoue (voir COUR-40-B).
 3. Accéder à l'onboarding et le dérouler jusqu'au bout, appuyer sur « Terminer ».
 4. L'app redirige vers l'accueil et affiche le prénom saisi : tout semble normal.

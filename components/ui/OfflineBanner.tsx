@@ -1,20 +1,27 @@
-/** Banniere discrete affichee sur l'ecran Courses quand la connexion est perdue. */
+/** Banniere discrete affichee quand la connexion est perdue. */
 import React from 'react';
 import { View } from 'react-native';
 import { WifiOff } from 'lucide-react-native';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { useTheme } from '@/lib/theme-context';
+import { t } from '@/lib/i18n';
 import { Caption } from './Typography';
 
-export function OfflineBanner() {
-  const { estHorsLigne } = useNetworkStatus();
+interface OfflineBannerViewProps {
+  visible: boolean;
+  message?: string;
+}
+
+export function OfflineBannerView({ visible, message }: OfflineBannerViewProps) {
   const { colors } = useTheme();
 
-  if (!estHorsLigne) return null;
+  if (!visible) return null;
 
   return (
     <View
-      accessibilityRole="alert"
+      accessible
+      accessibilityLiveRegion="polite"
+      accessibilityLabel={message ?? t('commun.hors_ligne_message')}
       style={{
         flexDirection: 'row',
         alignItems: 'center',
@@ -24,10 +31,16 @@ export function OfflineBanner() {
         paddingHorizontal: 16,
       }}
     >
-      <WifiOff size={14} color="#1C1C1E" />
+      <WifiOff size={14} color="#1C1C1E" accessible={false} />
       <Caption style={{ color: '#1C1C1E' }}>
-        Mode hors-ligne — vos modifications seront synchronisées
+        {message ?? t('commun.hors_ligne_message')}
       </Caption>
     </View>
   );
+}
+
+/** Variante autonome pour les ecrans qui ne suivent pas deja la connexion. */
+export function OfflineBanner({ message }: { message?: string } = {}) {
+  const { estHorsLigne } = useNetworkStatus();
+  return <OfflineBannerView visible={estHorsLigne} message={message} />;
 }

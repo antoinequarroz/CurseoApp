@@ -121,6 +121,9 @@ export interface Recette {
   ingredients: Ingredient[];
   etapes: string[];
   est_communautaire: boolean;
+  /** Provenance éditoriale; les valeurs nutritionnelles/prix restent des estimations tant qu'aucune source certifiée n'est fournie. */
+  source?: string;
+  droits_image?: string;
 }
 
 /** Categorie utilisee pour le swipe "on cerne vos gouts" — derivee de la recette, pas stockee. */
