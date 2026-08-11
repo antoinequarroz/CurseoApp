@@ -14,8 +14,7 @@ Date : 11 aout 2026
   Windows `COURSIA_BACKUP_PASSPHRASE` ;
 - workflow distant `Daily Supabase Backup` 31486168798 : vert sur la revision
   `34ed0ae`, avec l'artefact chiffre
-  `coursia-supabase-backup-31486168798` (54 234 octets), expire le 10 septembre
-  2026.
+  `coursia-supabase-backup-31486168798` (54 234 octets), expire le 10 septembre 2026.
 
 ## Sentry build 19
 
