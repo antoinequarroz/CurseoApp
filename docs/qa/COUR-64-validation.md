@@ -12,8 +12,10 @@ Date : 11 aout 2026
   GitHub Actions sans afficher leurs valeurs ;
 - copie de recuperation de la phrase stockee dans la variable utilisateur
   Windows `COURSIA_BACKUP_PASSPHRASE` ;
-- verification distante du workflow : a renseigner apres le premier lancement
-  de la revision COUR-64.
+- workflow distant `Daily Supabase Backup` 31486168798 : vert sur la revision
+  `34ed0ae`, avec l'artefact chiffre
+  `coursia-supabase-backup-31486168798` (54 234 octets), expire le 10 septembre
+  2026.
 
 ## Sentry build 19
 
@@ -39,7 +41,10 @@ Date : 11 aout 2026
 - Jest : 44 suites, 265 tests verts ;
 - gateway : 26 tests verts ;
 - reset Supabase complet sur pile isolee : migrations et seed verts ;
-- verification distante GitHub Actions : a renseigner apres publication.
+- GitHub Actions `CI Courseo` 31486157731 : vert sur la revision `34ed0ae` ;
+- job `quality` : lint, types, couverture Jest, gateway et image Docker verts ;
+- job `supabase-migrations` : migrations, seed, RLS, cohorte canary et parcours
+  critiques a deux utilisateurs verts.
 
 ## Limites
 
