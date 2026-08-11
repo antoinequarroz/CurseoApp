@@ -27,9 +27,12 @@ Date : 11 aout 2026
   invariants apres reprise ;
 - le workflow `Supabase Backup Restore Drill` cible uniquement une sauvegarde
   verte de `main` ou un run choisi manuellement ;
-- verification distante de la nouvelle sauvegarde : a renseigner apres
-  publication ;
-- verification distante du restore drill : a renseigner apres publication.
+- sauvegarde distante 31488558903 : verte sur `6cdd5a0`, artefact chiffre
+  `coursia-supabase-backup-31488558903` de 54 161 octets ;
+- restore drill 31488714280 : vert, declenche automatiquement depuis cette
+  sauvegarde, avec destruction finale confirmee ;
+- CI Courseo 31488549905 : jobs `quality` et `supabase-migrations` verts sur
+  `6cdd5a0`.
 
 ## Limites
 
