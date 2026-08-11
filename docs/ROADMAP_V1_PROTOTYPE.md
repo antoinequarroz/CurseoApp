@@ -104,3 +104,5 @@ critiques executes sur appareil ou simulateur.
 - `COUR-54` à `COUR-61` - Intégration SwissGroceries isolée, résiliente,
   déployable et limitée à une cohorte canary réversible.
 - `COUR-62` - Activation mobile du canary pilotée exclusivement par le serveur.
+- `COUR-64` - Stabilisation des sauvegardes, de l'observabilite et de
+  l'exploitation pendant la recette TestFlight.

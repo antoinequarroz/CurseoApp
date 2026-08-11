@@ -38,7 +38,7 @@ function membre(overrides: Partial<MembreFoyer>): MembreFoyer {
 }
 
 function wrapper({ children }: { children: React.ReactNode }) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
 
@@ -54,6 +54,7 @@ describe('useCompatibiliteMembres', () => {
 
     expect(result.current.recettes).toHaveLength(2);
     expect(result.current.alertesParRecette).toEqual({});
+    expect(fetchSynonymesAllergenesMock).not.toHaveBeenCalled();
   });
 
   it("contraintes de plusieurs membres fusionnees : exclut une recette incompatible avec l'un d'eux", async () => {
@@ -65,6 +66,7 @@ describe('useCompatibiliteMembres', () => {
 
     const { result } = await renderHook(() => useCompatibiliteMembres(recettes, membres), { wrapper });
     await waitFor(() => expect(result.current.recettes.map((r) => r.id)).toEqual(['ok']));
+    expect(fetchSynonymesAllergenesMock).not.toHaveBeenCalled();
   });
 
   it('allergie confirmee chez un seul membre selectionne suffit a exclure la recette pour tous', async () => {

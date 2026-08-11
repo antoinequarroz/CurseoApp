@@ -66,7 +66,7 @@ describe('Adresses', () => {
     useAdressesMock.mockReturnValue(etatHookParDefaut({ isError: true, isEmpty: false, refetch }));
     const { getByText } = await renderAvecProviders();
     expect(getByText('Impossible de charger tes adresses')).toBeTruthy();
-    fireEvent.press(getByText('Réessayer'));
+    await fireEvent.press(getByText('Réessayer'));
     expect(refetch).toHaveBeenCalled();
   });
 
@@ -74,7 +74,7 @@ describe('Adresses', () => {
     useAdressesMock.mockReturnValue(etatHookParDefaut());
     const { getByText, findByLabelText } = await renderAvecProviders();
     expect(getByText('Aucune adresse enregistrée')).toBeTruthy();
-    fireEvent.press(getByText('Ajouter une adresse'));
+    await fireEvent.press(getByText('Ajouter une adresse'));
     expect(await findByLabelText('Libellé')).toBeTruthy();
   });
 
@@ -83,13 +83,13 @@ describe('Adresses', () => {
     useAdressesMock.mockReturnValue(etatHookParDefaut({ ajouter }));
 
     const { getByText, findByLabelText } = await renderAvecProviders();
-    fireEvent.press(getByText('Ajouter une adresse'));
+    await fireEvent.press(getByText('Ajouter une adresse'));
 
-    fireEvent.changeText(await findByLabelText('Libellé'), 'Domicile');
-    fireEvent.changeText(await findByLabelText('Rue et numéro'), 'Rue du Rhône 12');
-    fireEvent.changeText(await findByLabelText('NPA'), '1000');
-    fireEvent.changeText(await findByLabelText('Ville'), 'Lausanne');
-    fireEvent.press(await findByLabelText('Enregistrer'));
+    await fireEvent.changeText(await findByLabelText('Libellé'), 'Domicile');
+    await fireEvent.changeText(await findByLabelText('Rue et numéro'), 'Rue du Rhône 12');
+    await fireEvent.changeText(await findByLabelText('NPA'), '1000');
+    await fireEvent.changeText(await findByLabelText('Ville'), 'Lausanne');
+    await fireEvent.press(await findByLabelText('Enregistrer'));
 
     await waitFor(() =>
       expect(ajouter).toHaveBeenCalledWith({ libelle: 'Domicile', rue: 'Rue du Rhône 12', npa: '1000', ville: 'Lausanne', estDefaut: false }),
@@ -101,13 +101,13 @@ describe('Adresses', () => {
     useAdressesMock.mockReturnValue(etatHookParDefaut({ ajouter }));
 
     const { getByText, findByLabelText } = await renderAvecProviders();
-    fireEvent.press(getByText('Ajouter une adresse'));
+    await fireEvent.press(getByText('Ajouter une adresse'));
 
-    fireEvent.changeText(await findByLabelText('Libellé'), 'Domicile');
-    fireEvent.changeText(await findByLabelText('Rue et numéro'), 'Rue du Rhône 12');
-    fireEvent.changeText(await findByLabelText('NPA'), '12');
-    fireEvent.changeText(await findByLabelText('Ville'), 'Lausanne');
-    fireEvent.press(await findByLabelText('Enregistrer'));
+    await fireEvent.changeText(await findByLabelText('Libellé'), 'Domicile');
+    await fireEvent.changeText(await findByLabelText('Rue et numéro'), 'Rue du Rhône 12');
+    await fireEvent.changeText(await findByLabelText('NPA'), '12');
+    await fireEvent.changeText(await findByLabelText('Ville'), 'Lausanne');
+    await fireEvent.press(await findByLabelText('Enregistrer'));
 
     await waitFor(() => expect(ajouter).not.toHaveBeenCalled());
   });
@@ -125,11 +125,11 @@ describe('Adresses', () => {
     useAdressesMock.mockReturnValue(etatHookParDefaut({ isEmpty: false, adresses: [adresse({ id: 'a-1' })], retirer }));
 
     const { getByLabelText, getByText, findByText } = await renderAvecProviders();
-    fireEvent.press(getByLabelText('Retirer Domicile'));
+    await fireEvent.press(getByLabelText('Retirer Domicile'));
     expect(await findByText("Retirer l'adresse Domicile ?")).toBeTruthy();
     expect(retirer).not.toHaveBeenCalled();
 
-    fireEvent.press(getByText('Confirmer'));
+    await fireEvent.press(getByText('Confirmer'));
     await waitFor(() => expect(retirer).toHaveBeenCalledWith('a-1'));
   });
 });

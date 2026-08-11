@@ -11,17 +11,18 @@ import { fetchSynonymesAllergenes, type SynonymeAllergene } from '@/lib/allergen
 import { normaliserAllergie } from '@/lib/compatibiliteRecette';
 import { isSupabaseConfigured } from '@/lib/supabase';
 
-export function useSynonymesAllergenes(): Map<string, string> | null {
+export function useSynonymesAllergenes(enabled = true): Map<string, string> | null {
   const query = useQuery({
     queryKey: ['synonymes-allergenes'],
     queryFn: (): Promise<SynonymeAllergene[]> => (isSupabaseConfigured ? fetchSynonymesAllergenes() : Promise.resolve([])),
+    enabled: enabled && isSupabaseConfigured,
     staleTime: Infinity,
   });
 
   return useMemo(() => {
-    if (!isSupabaseConfigured) return null;
+    if (!isSupabaseConfigured || !enabled) return null;
     const map = new Map<string, string>();
     for (const s of query.data ?? []) map.set(normaliserAllergie(s.terme), s.code);
     return map;
-  }, [query.data]);
+  }, [enabled, query.data]);
 }

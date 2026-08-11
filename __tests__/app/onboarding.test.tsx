@@ -42,6 +42,7 @@ describe('Onboarding', () => {
   });
 
   afterEach(() => {
+    jest.restoreAllMocks();
     jest.clearAllMocks();
   });
 
@@ -59,14 +60,14 @@ describe('Onboarding', () => {
     const { getByRole } = await renderAvecProviders();
     expect(getByRole('checkbox').props.accessibilityState?.checked).toBe(false);
 
-    fireEvent.press(getByRole('checkbox'));
+    await fireEvent.press(getByRole('checkbox'));
 
     await waitFor(() => expect(getByRole('checkbox').props.accessibilityState?.checked).toBe(true));
   });
 
   it('etape 1 : saisir le prenom met a jour les donnees partielles', async () => {
     const { getByLabelText } = await renderAvecProviders();
-    fireEvent.changeText(getByLabelText('Prénom'), 'Alex');
+    await fireEvent.changeText(getByLabelText('Prénom'), 'Alex');
     expect(useOnboardingStore.getState().donneesPartielles.prenom).toBe('Alex');
   });
 
@@ -78,7 +79,7 @@ describe('Onboarding', () => {
     useOnboardingStore.getState().mettreAJourDonnees({ prenom: 'Alex', enfants_ages: [4, 9] });
 
     const { getByText } = await renderAvecProviders();
-    fireEvent.press(getByText('Terminer'));
+    await fireEvent.press(getByText('Terminer'));
 
     await waitFor(() => expect(initRevenueCat).toHaveBeenCalledWith('u-1'));
     expect(upsert).toHaveBeenCalledWith(expect.objectContaining({ id: 'u-1', enfants_ages: [4, 9] }));
@@ -96,7 +97,7 @@ describe('Onboarding', () => {
     useOnboardingStore.getState().setEtape(5);
 
     const { getByText } = await renderAvecProviders();
-    fireEvent.press(getByText('Terminer'));
+    await fireEvent.press(getByText('Terminer'));
 
     await waitFor(() => expect(router.replace).toHaveBeenCalledWith('/(auth)/connexion'));
     expect(router.replace).not.toHaveBeenCalledWith('/(tabs)');
@@ -107,6 +108,7 @@ describe('Onboarding', () => {
   });
 
   it('finalisation : un echec d enregistrement bloque l entree dans l app', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: { user: { id: 'u-1' } } } });
     (supabase.from as jest.Mock).mockReturnValue({
       upsert: jest.fn().mockResolvedValue({ error: new Error('reseau') }),
@@ -114,10 +116,14 @@ describe('Onboarding', () => {
     useOnboardingStore.getState().setEtape(5);
 
     const { getByText } = await renderAvecProviders();
-    fireEvent.press(getByText('Terminer'));
+    await fireEvent.press(getByText('Terminer'));
 
     await waitFor(() => expect(toast.erreur).toHaveBeenCalled());
     expect(router.replace).not.toHaveBeenCalledWith('/(tabs)');
     expect(useProfilStore.getState().profil).toBeNull();
+    expect(warnSpy).toHaveBeenCalledWith(
+      '[onboarding] Echec de l enregistrement du profil',
+      expect.any(Error),
+    );
   });
 });

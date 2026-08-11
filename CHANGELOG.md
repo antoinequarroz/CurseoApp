@@ -4,6 +4,16 @@ Format basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
 ## [Unreleased]
 
+### COUR-64 — Stabilisation operationnelle de la beta
+
+- Remplace la sauvegarde GitHub en echec par des exports Supabase CLI chiffres
+  avant publication dans le depot public.
+- Ajoute les procedures de controle, de restauration et de rotation des cles.
+- Formalise les limites et l'arret d'urgence de la demonstration TestFlight des
+  prix live.
+- Nettoie les avertissements React des principaux tests asynchrones sans masquer
+  les erreurs de test.
+
 ### Observabilité
 
 - Active Sentry en production pour `coursia-mobile`, avec filtrage des données

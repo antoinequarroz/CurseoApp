@@ -12,7 +12,7 @@ jest.mock('@/lib/prixRepository');
 const fetchComparatifPrixMock = prixRepository.fetchComparatifPrix as jest.Mock;
 
 function wrapper({ children }: { children: React.ReactNode }) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
 

@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react-native';
+import { act, renderHook } from '@testing-library/react-native';
 import { useAbonnement } from '@/hooks/useAbonnement';
 import { useProfilStore } from '@/stores/profilStore';
 import type { NiveauAbonnement, Profil } from '@/types';
@@ -52,7 +52,9 @@ describe('useAbonnement', () => {
     const { result, rerender } = await renderHook(() => useAbonnement());
     expect(result.current.estAuMoins('famille')).toBe(true);
 
-    useProfilStore.getState().refleterAbonnementLocal('gratuit');
+    await act(async () => {
+      useProfilStore.getState().refleterAbonnementLocal('gratuit');
+    });
     await rerender({});
 
     expect(result.current.niveau).toBe('gratuit');

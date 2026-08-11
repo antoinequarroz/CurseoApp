@@ -19,7 +19,8 @@ import { filtrerParContraintes, type ResultatCompatibilite } from '@/lib/compati
 import type { MembreFoyer, Recette } from '@/types';
 
 export function useCompatibiliteMembres(recettes: Recette[], membresSelectionnes: MembreFoyer[]): ResultatCompatibilite {
-  const synonymes = useSynonymesAllergenes();
+  const doitChargerSynonymes = membresSelectionnes.some((membre) => membre.allergies.length > 0);
+  const synonymes = useSynonymesAllergenes(doitChargerSynonymes);
 
   return useMemo(() => {
     if (membresSelectionnes.length === 0) {

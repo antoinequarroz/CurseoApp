@@ -20,7 +20,7 @@ jest.mock('@/lib/supabase', () => ({
 const fetchComparatifPrixMock = prixRepository.fetchComparatifPrix as jest.Mock;
 
 function renderAvecProviders(ui: React.ReactElement) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
   return render(
     <QueryClientProvider client={client}>
       <ThemeProvider>{ui}</ThemeProvider>
@@ -50,7 +50,7 @@ const profilBase: Profil = {
 };
 
 describe('ComparateurPrix', () => {
-  afterEach(() => {
+  beforeEach(() => {
     useProfilStore.getState().reset();
     fetchComparatifPrixMock.mockReset();
   });
@@ -104,7 +104,7 @@ describe('ComparateurPrix', () => {
       <ComparateurPrix produit="Riz basmati" onChoisirPalier={jest.fn()} />,
     );
     expect(fetchComparatifPrixMock).not.toHaveBeenCalled();
-    fireEvent.press(getByText('Comparer les prix'));
+    await fireEvent.press(getByText('Comparer les prix'));
     await findByText('1kg');
     expect(getByText('500g')).toBeTruthy();
     expect(getByText('CHF 4.20')).toBeTruthy();
@@ -137,7 +137,7 @@ describe('ComparateurPrix', () => {
     const { getByText, findByText } = await renderAvecProviders(
       <ComparateurPrix produit="Riz basmati" onChoisirPalier={jest.fn()} />,
     );
-    fireEvent.press(getByText('Comparer les prix'));
+    await fireEvent.press(getByText('Comparer les prix'));
     expect(await findByText('-7%')).toBeTruthy();
   });
 
@@ -167,7 +167,7 @@ describe('ComparateurPrix', () => {
     const { getByText, findByText } = await renderAvecProviders(
       <ComparateurPrix produit="Riz basmati" onChoisirPalier={jest.fn()} />,
     );
-    fireEvent.press(getByText('Comparer les prix'));
+    await fireEvent.press(getByText('Comparer les prix'));
     expect(await findByText(/peut-être dépassé/)).toBeTruthy();
   });
 
@@ -210,7 +210,7 @@ describe('ComparateurPrix', () => {
     const { getByText, findAllByText } = await renderAvecProviders(
       <ComparateurPrix produit="Riz basmati" onChoisirPalier={jest.fn()} />,
     );
-    fireEvent.press(getByText('Comparer les prix'));
+    await fireEvent.press(getByText('Comparer les prix'));
     const badges = await findAllByText('Meilleur prix');
     expect(badges).toHaveLength(2);
   });
@@ -222,7 +222,7 @@ describe('ComparateurPrix', () => {
     const { getByText, findByText } = await renderAvecProviders(
       <ComparateurPrix produit="Produit inconnu" onChoisirPalier={jest.fn()} />,
     );
-    fireEvent.press(getByText('Comparer les prix'));
+    await fireEvent.press(getByText('Comparer les prix'));
     expect(await findByText("Ce produit n'est pas encore suivi par le comparateur.")).toBeTruthy();
   });
 
@@ -238,7 +238,7 @@ describe('ComparateurPrix', () => {
     const { getByText, findByText } = await renderAvecProviders(
       <ComparateurPrix produit="Riz basmati" onChoisirPalier={jest.fn()} />,
     );
-    fireEvent.press(getByText('Comparer les prix'));
+    await fireEvent.press(getByText('Comparer les prix'));
     await waitFor(() => findByText('Aucun prix collecté pour ce produit pour le moment.'));
   });
 });

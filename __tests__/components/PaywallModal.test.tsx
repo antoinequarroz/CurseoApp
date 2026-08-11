@@ -30,6 +30,7 @@ describe('PaywallModal', () => {
   });
 
   afterEach(() => {
+    jest.restoreAllMocks();
     jest.clearAllMocks();
   });
 
@@ -48,7 +49,7 @@ describe('PaywallModal', () => {
     const { getByLabelText } = await renderWithTheme(
       <PaywallModal visible onClose={onClose} onChoisir={jest.fn()} />,
     );
-    fireEvent.press(getByLabelText('Fermer'));
+    await fireEvent.press(getByLabelText('Fermer'));
     expect(onClose).toHaveBeenCalled();
   });
 
@@ -77,7 +78,7 @@ describe('PaywallModal', () => {
       <PaywallModal visible onClose={jest.fn()} onChoisir={jest.fn()} />,
     );
     await findByLabelText(/Choisir le palier Standard/);
-    fireEvent.press(getByText('Continuer'));
+    await fireEvent.press(getByText('Continuer'));
 
     // COUR-38 : pendant l'achat, le bouton perd son texte (ActivityIndicator)
     // — on interroge le Pressable par son accessibilityLabel plutot que par
@@ -85,18 +86,21 @@ describe('PaywallModal', () => {
     await waitFor(() => expect(getByLabelText('Continuer').props.accessibilityState?.disabled).toBe(true));
 
     resoudreAchat({ annule: false, niveau: null });
+    await waitFor(() => expect(getByLabelText('Continuer').props.accessibilityState?.disabled).toBe(false));
   });
 
   it("erreur : un achat qui echoue affiche un toast sans planter", async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     fetchOffreCouranteMock.mockResolvedValue([packageStandard()]);
     acheterPackageMock.mockRejectedValue(new Error('reseau'));
     const { getByText, getByLabelText, findByLabelText } = await renderWithTheme(
       <PaywallModal visible onClose={jest.fn()} onChoisir={jest.fn()} />,
     );
     await findByLabelText(/Choisir le palier Standard/);
-    fireEvent.press(getByText('Continuer'));
+    await fireEvent.press(getByText('Continuer'));
 
     await waitFor(() => expect(toast.erreur).toHaveBeenCalledWith("L'achat n'a pas abouti. Réessaie ou vérifie ta connexion."));
     await waitFor(() => expect(getByLabelText('Continuer').props.accessibilityState?.disabled).toBe(false));
+    expect(warnSpy).toHaveBeenCalledWith('[paywall] Echec achat', expect.any(Error));
   });
 });

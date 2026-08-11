@@ -1,24 +1,84 @@
 name: Daily Supabase Backup
+
 on:
   schedule:
-    - cron: '0 2 * * *' # Tous les jours à 2h du matin
+    - cron: '0 2 * * *'
   workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-production-backup
+  cancel-in-progress: false
+
 jobs:
   backup:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      BACKUP_ENCRYPTION_PASSPHRASE: ${{ secrets.BACKUP_ENCRYPTION_PASSPHRASE }}
+      PROJECT_REF: bpycfeyapuekmesmxnvd
+
     steps:
-      - name: Dump Supabase DB
+      - name: Recuperer le depot
+        uses: actions/checkout@v5
+
+      - name: Installer Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.113.0
+
+      - name: Verifier les secrets requis
+        shell: bash
         run: |
-          pg_dump "$DATABASE_URL" \
-            --no-owner \
-            --no-acl \
-            --format=custom \
-            --file=backup_$(date +%Y%m%d).dump
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      - name: Upload to GitHub Artifacts
+          set -euo pipefail
+          test -n "$SUPABASE_ACCESS_TOKEN" || { echo "SUPABASE_ACCESS_TOKEN absent" >&2; exit 1; }
+          test -n "$BACKUP_ENCRYPTION_PASSPHRASE" || { echo "BACKUP_ENCRYPTION_PASSPHRASE absent" >&2; exit 1; }
+
+      - name: Lier le projet Supabase
+        run: supabase link --project-ref "$PROJECT_REF" --yes
+
+      - name: Exporter schema, donnees et roles
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p backup
+          supabase db dump --linked --file backup/schema.sql
+          supabase db dump --linked --data-only --use-copy --file backup/data.sql
+          supabase db dump --linked --role-only --file backup/roles.sql
+          test -s backup/schema.sql
+          test -s backup/data.sql
+          test -s backup/roles.sql
+          sha256sum backup/*.sql > backup/SHA256SUMS
+
+      - name: Chiffrer la sauvegarde avant publication
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="coursia-supabase-$(date -u +%Y%m%dT%H%M%SZ).tar.gz"
+          tar -czf "$archive" backup
+          printf '%s' "$BACKUP_ENCRYPTION_PASSPHRASE" | gpg \
+            --batch \
+            --yes \
+            --pinentry-mode loopback \
+            --passphrase-fd 0 \
+            --symmetric \
+            --cipher-algo AES256 \
+            --compress-algo none \
+            --output "$archive.gpg" \
+            "$archive"
+          test -s "$archive.gpg"
+          sha256sum "$archive.gpg" > "$archive.gpg.sha256"
+          rm -rf backup "$archive"
+
+      - name: Conserver uniquement l'archive chiffree
         uses: actions/upload-artifact@v4
         with:
-          name: db-backup-${{ github.run_id }}
-          path: backup_*.dump
+          name: coursia-supabase-backup-${{ github.run_id }}
+          path: |
+            coursia-supabase-*.tar.gz.gpg
+            coursia-supabase-*.tar.gz.gpg.sha256
+          if-no-files-found: error
           retention-days: 30

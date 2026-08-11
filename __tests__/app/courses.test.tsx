@@ -145,7 +145,7 @@ describe('Courses', () => {
     const { getByText, getByRole } = await renderAvecProviders();
 
     expect(getByText('La liste reste disponible ici. La sauvegarde en ligne attend.')).toBeTruthy();
-    fireEvent.press(getByRole('button', { name: 'Réessayer' }));
+    await fireEvent.press(getByRole('button', { name: 'Réessayer' }));
     expect(reessayerSynchronisationMock).toHaveBeenCalledTimes(1);
   });
 
@@ -171,7 +171,7 @@ describe('Courses', () => {
   it('mode : choisir un mode reserve sans le palier Standard ouvre le paywall', async () => {
     mockStateCoursesStore.items = [{ nom: 'Pommes', coche: false, rayon: 'fruits_legumes' }];
     const { getByText, findByLabelText } = await renderAvecProviders();
-    fireEvent.press(getByText('Équilibré'));
+    await fireEvent.press(getByText('Équilibré'));
     expect(await findByLabelText('Fermer')).toBeTruthy();
     expect(mockStatePanierStore.setMode).not.toHaveBeenCalled();
   });
@@ -179,7 +179,7 @@ describe('Courses', () => {
   it('mode : prix minimum reste accessible sans palier Standard', async () => {
     mockStateCoursesStore.items = [{ nom: 'Pommes', coche: false, rayon: 'fruits_legumes' }];
     const { getByText } = await renderAvecProviders();
-    fireEvent.press(getByText('Prix minimum'));
+    await fireEvent.press(getByText('Prix minimum'));
     expect(mockStatePanierStore.setMode).toHaveBeenCalledWith('prix_minimum');
   });
 
@@ -191,7 +191,7 @@ describe('Courses', () => {
     mockStateCoursesStore.items = [{ nom: 'Pommes', coche: false, rayon: 'fruits_legumes' }];
     mockStatePanierStore.recap = { paniers: [], montant_total: 10, economies: 2 };
     const { getByText } = await renderAvecProviders();
-    fireEvent.press(getByText('Enregistrer la simulation — CHF 10.00'));
+    await fireEvent.press(getByText('Enregistrer la simulation — CHF 10.00'));
 
     await waitFor(() =>
       expect(toast.erreur).toHaveBeenCalledWith(

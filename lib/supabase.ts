@@ -12,7 +12,7 @@ const supabaseUrl = (extra.supabaseUrl as string | undefined) ?? '';
 const supabaseAnonKey = (extra.supabaseAnonKey as string | undefined) ?? '';
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
-if (!isSupabaseConfigured) {
+if (!isSupabaseConfigured && process.env.NODE_ENV !== 'test') {
   // On ne throw pas : permet de lancer l'app en mode demo/mocks sans backend configure.
   console.warn(
     '[supabase] SUPABASE_URL / SUPABASE_ANON_KEY manquants — verifie ton .env (voir .env.example).',

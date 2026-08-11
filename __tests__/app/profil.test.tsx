@@ -82,6 +82,7 @@ describe('Profil', () => {
   });
 
   afterEach(() => {
+    jest.restoreAllMocks();
     jest.clearAllMocks();
   });
 
@@ -101,7 +102,7 @@ describe('Profil', () => {
   it('abonnement : ouvrir la section affiche les 4 paliers et le bouton restaurer', async () => {
     useProfilStore.getState().setProfil(profilBase);
     const { getByLabelText, findByText } = await renderAvecProviders();
-    fireEvent.press(getByLabelText('Abonnement'));
+    await fireEvent.press(getByLabelText('Abonnement'));
     expect(await findByText('Restaurer mes achats')).toBeTruthy();
     expect(await findByText('Famille')).toBeTruthy();
   });
@@ -110,27 +111,29 @@ describe('Profil', () => {
     useProfilStore.getState().setProfil(profilBase);
     (restaurerAchats as jest.Mock).mockResolvedValue('famille');
     const { getByLabelText, findByText } = await renderAvecProviders();
-    fireEvent.press(getByLabelText('Abonnement'));
-    fireEvent.press(await findByText('Restaurer mes achats'));
+    await fireEvent.press(getByLabelText('Abonnement'));
+    await fireEvent.press(await findByText('Restaurer mes achats'));
 
     await waitFor(() => expect(toast.succes).toHaveBeenCalledWith('Achats restaurés.'));
     expect(useProfilStore.getState().profil?.abonnement).toBe('famille');
   });
 
   it('restauration : echec affiche un toast d\'erreur sans planter', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     useProfilStore.getState().setProfil(profilBase);
     (restaurerAchats as jest.Mock).mockRejectedValue(new Error('reseau'));
     const { getByLabelText, findByText } = await renderAvecProviders();
-    fireEvent.press(getByLabelText('Abonnement'));
-    fireEvent.press(await findByText('Restaurer mes achats'));
+    await fireEvent.press(getByLabelText('Abonnement'));
+    await fireEvent.press(await findByText('Restaurer mes achats'));
 
     await waitFor(() => expect(toast.erreur).toHaveBeenCalledWith('Impossible de restaurer tes achats. Vérifie ta connexion et réessaie.'));
+    expect(warnSpy).toHaveBeenCalledWith('[profil] Echec restauration achats', expect.any(Error));
   });
 
   it('apparence : selectionner un theme le marque comme selectionne', async () => {
     const { getByLabelText, findByText, getAllByRole } = await renderAvecProviders();
-    fireEvent.press(getByLabelText('Apparence'));
-    fireEvent.press(await findByText('Sombre'));
+    await fireEvent.press(getByLabelText('Apparence'));
+    await fireEvent.press(await findByText('Sombre'));
 
     const radios = getAllByRole('radio');
     const sombre = radios.find((r) => r.props.accessibilityState?.selected);
@@ -142,7 +145,7 @@ describe('Profil', () => {
     const { getAllByRole } = await renderAvecProviders();
     // Ordre de rendu (app/(tabs)/profil.tsx) : planning, budget, promos, bilan.
     const switches = getAllByRole('switch');
-    fireEvent(switches[1]!, 'valueChange', false);
+    await fireEvent(switches[1]!, 'valueChange', false);
 
     expect(useProfilStore.getState().profil?.notifications_budget).toBe(false);
   });
@@ -151,7 +154,7 @@ describe('Profil', () => {
     useAbonnementMock.mockReturnValue({ niveau: 'standard', estAuMoins: jest.fn(() => false) });
     const pushSpy = router.push as jest.Mock;
     const { getByLabelText, findByLabelText } = await renderAvecProviders();
-    fireEvent.press(getByLabelText('Membres du foyer'));
+    await fireEvent.press(getByLabelText('Membres du foyer'));
     expect(await findByLabelText('Fermer')).toBeTruthy();
     expect(pushSpy).not.toHaveBeenCalledWith('/membres-foyer');
   });
@@ -160,7 +163,7 @@ describe('Profil', () => {
     useAbonnementMock.mockReturnValue({ niveau: 'famille', estAuMoins: jest.fn(() => true) });
     const pushSpy = router.push as jest.Mock;
     const { getByLabelText } = await renderAvecProviders();
-    fireEvent.press(getByLabelText('Membres du foyer'));
+    await fireEvent.press(getByLabelText('Membres du foyer'));
     expect(pushSpy).toHaveBeenCalledWith('/membres-foyer');
   });
 
@@ -172,35 +175,35 @@ describe('Profil', () => {
   it('navigation : la carte Mon foyer ouvre /mon-foyer', async () => {
     const pushSpy = router.push as jest.Mock;
     const { getByLabelText } = await renderAvecProviders();
-    fireEvent.press(getByLabelText('Mon foyer'));
+    await fireEvent.press(getByLabelText('Mon foyer'));
     expect(pushSpy).toHaveBeenCalledWith('/mon-foyer');
   });
 
   it('navigation : la carte On cerne vos gouts ouvre /gouts', async () => {
     const pushSpy = router.push as jest.Mock;
     const { getByLabelText } = await renderAvecProviders();
-    fireEvent.press(getByLabelText('On cerne vos goûts'));
+    await fireEvent.press(getByLabelText('On cerne vos goûts'));
     expect(pushSpy).toHaveBeenCalledWith('/gouts');
   });
 
   it('navigation : la carte Adresses de livraison ouvre /adresses', async () => {
     const pushSpy = router.push as jest.Mock;
     const { getByLabelText } = await renderAvecProviders();
-    fireEvent.press(getByLabelText('Adresses de livraison'));
+    await fireEvent.press(getByLabelText('Adresses de livraison'));
     expect(pushSpy).toHaveBeenCalledWith('/adresses');
   });
 
   it('navigation : la carte Aide & support ouvre /aide', async () => {
     const pushSpy = router.push as jest.Mock;
     const { getByLabelText } = await renderAvecProviders();
-    fireEvent.press(getByLabelText('Aide & support'));
+    await fireEvent.press(getByLabelText('Aide & support'));
     expect(pushSpy).toHaveBeenCalledWith('/aide');
   });
 
   it('deconnexion : signOut + reset stores + redirection', async () => {
     const replaceSpy = router.replace as jest.Mock;
     const { getByLabelText } = await renderAvecProviders();
-    fireEvent.press(getByLabelText('Déconnexion'));
+    await fireEvent.press(getByLabelText('Déconnexion'));
     await waitFor(() => expect(supabase.auth.signOut).toHaveBeenCalled());
     expect(resetUserStores).toHaveBeenCalled();
     expect(replaceSpy).toHaveBeenCalledWith('/(auth)/connexion');
@@ -208,7 +211,7 @@ describe('Profil', () => {
 
   it('suppression de compte : le bouton de confirmation est desactive tant que l\'email est vide', async () => {
     const { getByLabelText, findByLabelText } = await renderAvecProviders();
-    fireEvent.press(getByLabelText('Supprimer mon compte'));
+    await fireEvent.press(getByLabelText('Supprimer mon compte'));
     const bouton = await findByLabelText('Confirmer la suppression');
     expect(bouton.props.accessibilityState?.disabled).toBe(true);
   });
@@ -216,9 +219,9 @@ describe('Profil', () => {
   it('suppression de compte : succes appelle delete-account puis redirige', async () => {
     const replaceSpy = router.replace as jest.Mock;
     const { getByLabelText, findByLabelText } = await renderAvecProviders();
-    fireEvent.press(getByLabelText('Supprimer mon compte'));
-    fireEvent.changeText(await findByLabelText('Confirme ton email pour supprimer le compte'), 'alex@coursia.test');
-    fireEvent.press(await findByLabelText('Confirmer la suppression'));
+    await fireEvent.press(getByLabelText('Supprimer mon compte'));
+    await fireEvent.changeText(await findByLabelText('Confirme ton email pour supprimer le compte'), 'alex@coursia.test');
+    await fireEvent.press(await findByLabelText('Confirmer la suppression'));
 
     await waitFor(() =>
       expect(supabase.functions.invoke).toHaveBeenCalledWith('delete-account', { body: { userId: 'u-1' } }),
@@ -230,9 +233,9 @@ describe('Profil', () => {
   it('suppression de compte : erreur serveur affiche un toast sans deconnecter', async () => {
     (supabase.functions.invoke as jest.Mock).mockResolvedValueOnce({ error: new Error('echec') });
     const { getByLabelText, findByLabelText } = await renderAvecProviders();
-    fireEvent.press(getByLabelText('Supprimer mon compte'));
-    fireEvent.changeText(await findByLabelText('Confirme ton email pour supprimer le compte'), 'alex@coursia.test');
-    fireEvent.press(await findByLabelText('Confirmer la suppression'));
+    await fireEvent.press(getByLabelText('Supprimer mon compte'));
+    await fireEvent.changeText(await findByLabelText('Confirme ton email pour supprimer le compte'), 'alex@coursia.test');
+    await fireEvent.press(await findByLabelText('Confirmer la suppression'));
 
     await waitFor(() => expect(toast.erreur).toHaveBeenCalledWith('La suppression a échoué, réessaie dans un instant'));
     expect(resetUserStores).not.toHaveBeenCalled();

@@ -66,7 +66,7 @@ function etatHookParDefaut(overrides: Partial<ReturnType<typeof useMembresFoyer>
 }
 
 describe('MembresFoyer', () => {
-  afterEach(() => {
+  beforeEach(() => {
     useProfilStore.getState().reset();
     useMembresFoyerMock.mockReset();
   });
@@ -86,7 +86,7 @@ describe('MembresFoyer', () => {
     useMembresFoyerMock.mockReturnValue(etatHookParDefaut());
 
     const { getByText, findByLabelText } = await renderAvecProviders();
-    fireEvent.press(getByText('Débloquer avec Famille'));
+    await fireEvent.press(getByText('Débloquer avec Famille'));
 
     expect(await findByLabelText('Fermer')).toBeTruthy();
   });
@@ -107,7 +107,7 @@ describe('MembresFoyer', () => {
     const { getByText } = await renderAvecProviders();
     expect(getByText('Impossible de charger les membres')).toBeTruthy();
 
-    fireEvent.press(getByText('Réessayer'));
+    await fireEvent.press(getByText('Réessayer'));
     expect(refetch).toHaveBeenCalled();
   });
 
@@ -118,7 +118,7 @@ describe('MembresFoyer', () => {
     const { getByText, findByText } = await renderAvecProviders();
     expect(getByText('Aucun membre ajouté')).toBeTruthy();
 
-    fireEvent.press(getByText('Ajouter un membre'));
+    await fireEvent.press(getByText('Ajouter un membre'));
     expect(await findByText('Prénom')).toBeTruthy();
   });
 
@@ -128,10 +128,10 @@ describe('MembresFoyer', () => {
     useMembresFoyerMock.mockReturnValue(etatHookParDefaut({ ajouter }));
 
     const { getByText, findByLabelText, findByText } = await renderAvecProviders();
-    fireEvent.press(getByText('Ajouter un membre'));
+    await fireEvent.press(getByText('Ajouter un membre'));
 
-    fireEvent.changeText(await findByLabelText('Prénom'), 'Léo');
-    fireEvent.press(await findByText('Enregistrer'));
+    await fireEvent.changeText(await findByLabelText('Prénom'), 'Léo');
+    await fireEvent.press(await findByText('Enregistrer'));
 
     await waitFor(() => expect(ajouter).toHaveBeenCalledWith({ prenom: 'Léo', age: null, regime: [], allergies: [] }));
   });
@@ -142,8 +142,8 @@ describe('MembresFoyer', () => {
     useMembresFoyerMock.mockReturnValue(etatHookParDefaut({ ajouter }));
 
     const { getByText, findByText } = await renderAvecProviders();
-    fireEvent.press(getByText('Ajouter un membre'));
-    fireEvent.press(await findByText('Enregistrer'));
+    await fireEvent.press(getByText('Ajouter un membre'));
+    await fireEvent.press(await findByText('Enregistrer'));
 
     expect(ajouter).not.toHaveBeenCalled();
   });
@@ -166,11 +166,11 @@ describe('MembresFoyer', () => {
     useMembresFoyerMock.mockReturnValue(etatHookParDefaut({ isEmpty: false, membres: [membre({ id: 'm-1', prenom: 'Léo' })], retirer }));
 
     const { getByLabelText, getByText, findByText } = await renderAvecProviders();
-    fireEvent.press(getByLabelText('Retirer Léo'));
+    await fireEvent.press(getByLabelText('Retirer Léo'));
     expect(await findByText('Retirer Léo du foyer ?')).toBeTruthy();
     expect(retirer).not.toHaveBeenCalled();
 
-    fireEvent.press(getByText('Confirmer'));
+    await fireEvent.press(getByText('Confirmer'));
     await waitFor(() => expect(retirer).toHaveBeenCalledWith('m-1'));
   });
 

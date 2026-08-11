@@ -26,7 +26,7 @@ function recette(overrides: Partial<Recette> = {}): Recette {
 }
 
 function wrapper({ children }: { children: React.ReactNode }) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
 
@@ -135,11 +135,11 @@ describe('useRepasSemaine', () => {
     );
     await waitFor(() => expect(result.current.planning.lundi.midi?.recette.id).toBe('recette-semaine-1'));
 
-    rerender({ semaine: LUNDI_S2 });
+    await rerender({ semaine: LUNDI_S2 });
     await waitFor(() => expect(result.current.planning.lundi.midi?.recette.id).toBe('recette-semaine-2'));
 
     // Revenir a S1 ne redemande pas au reseau (cache distinct par semaine, deja rempli) et n'affiche jamais les donnees de S2.
-    rerender({ semaine: LUNDI_S1 });
+    await rerender({ semaine: LUNDI_S1 });
     await waitFor(() => expect(result.current.planning.lundi.midi?.recette.id).toBe('recette-semaine-1'));
   });
 
@@ -164,7 +164,7 @@ describe('useRepasSemaine', () => {
     expect(result.current.synchronisationsEnAttente).toBe(1);
 
     await act(async () => {
-      rerender({ horsLigne: false });
+      await rerender({ horsLigne: false });
       await new Promise((resolve) => setTimeout(resolve, 20));
     });
     await waitFor(() => expect(assignerRepasMock).toHaveBeenCalledWith('u-1', '2026-07-21', 'soir', expect.any(Object)));

@@ -31,7 +31,7 @@ const profilBase: Profil = {
 };
 
 describe('MonFoyer', () => {
-  afterEach(() => useProfilStore.getState().reset());
+  beforeEach(() => useProfilStore.getState().reset());
 
   it('sans profil : affiche un message plutot que de planter', async () => {
     const { getByText } = await renderAvecProviders();
@@ -48,7 +48,7 @@ describe('MonFoyer', () => {
     useProfilStore.getState().setProfil(profilBase);
     const { getByLabelText } = await renderAvecProviders();
 
-    fireEvent.press(getByLabelText("Augmenter l'âge de Nombre de personnes"));
+    await fireEvent.press(getByLabelText("Augmenter l'âge de Nombre de personnes"));
     await waitFor(() => expect(useProfilStore.getState().profil?.nb_personnes).toBe(3));
   });
 
@@ -56,10 +56,10 @@ describe('MonFoyer', () => {
     useProfilStore.getState().setProfil(profilBase);
     const { getByLabelText } = await renderAvecProviders();
 
-    fireEvent.press(getByLabelText('Végétarien'));
+    await fireEvent.press(getByLabelText('Végétarien'));
     await waitFor(() => expect(useProfilStore.getState().profil?.regime).toContain('vegetarien'));
 
-    fireEvent.press(getByLabelText('Végétarien'));
+    await fireEvent.press(getByLabelText('Végétarien'));
     await waitFor(() => expect(useProfilStore.getState().profil?.regime).not.toContain('vegetarien'));
   });
 
@@ -67,12 +67,12 @@ describe('MonFoyer', () => {
     useProfilStore.getState().setProfil(profilBase);
     const { getByLabelText, getByText } = await renderAvecProviders();
 
-    fireEvent.changeText(getByLabelText('Précise une allergie ou intolérance…'), 'Arachide');
+    await fireEvent.changeText(getByLabelText('Précise une allergie ou intolérance…'), 'Arachide');
     await waitFor(() => expect(getByLabelText('Ajouter').props.accessibilityState.disabled).toBe(false));
-    fireEvent.press(getByLabelText('Ajouter'));
+    await fireEvent.press(getByLabelText('Ajouter'));
     await waitFor(() => expect(useProfilStore.getState().profil?.allergies).toContain('Arachide'));
 
-    fireEvent.press(getByText('Arachide ✕'));
+    await fireEvent.press(getByText('Arachide ✕'));
     await waitFor(() => expect(useProfilStore.getState().profil?.allergies).not.toContain('Arachide'));
   });
 
@@ -80,7 +80,7 @@ describe('MonFoyer', () => {
     useProfilStore.getState().setProfil(profilBase);
     const { getByLabelText } = await renderAvecProviders();
 
-    fireEvent.press(getByLabelText('Migros'));
+    await fireEvent.press(getByLabelText('Migros'));
     await waitFor(() => expect(useProfilStore.getState().profil?.enseignes_favorites).toContain('migros'));
   });
 });

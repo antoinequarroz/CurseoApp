@@ -43,7 +43,7 @@ function wrapper({ children }: { children: React.ReactNode }) {
 
 describe('useSwissGroceriesEligibility', () => {
   beforeEach(() => {
-    queryClient = new QueryClient({ defaultOptions: { queries: { retryDelay: 0 } } });
+    queryClient = new QueryClient({ defaultOptions: { queries: { retryDelay: 0, gcTime: Infinity } } });
     useProfilStore.getState().reset();
     fetchEligibilityMock.mockReset();
   });
