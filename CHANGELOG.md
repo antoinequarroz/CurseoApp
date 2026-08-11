@@ -4,6 +4,15 @@ Format basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
 ## [Unreleased]
 
+### COUR-65 — Exercice automatique de restauration
+
+- Exclut des sauvegardes logiques les tables vectorielles Storage que Supabase
+  interdit de restaurer par `psql`.
+- Verifie les sommes avant et apres dechiffrement, puis restaure chaque nouvelle
+  sauvegarde dans une pile Supabase ephemere.
+- Controle apres restauration le schema, la RLS, le catalogue et la presence
+  des comptes applicatifs, sans publier de donnees en clair.
+
 ### COUR-64 — Stabilisation operationnelle de la beta
 
 - Remplace la sauvegarde GitHub en echec par des exports Supabase CLI chiffres

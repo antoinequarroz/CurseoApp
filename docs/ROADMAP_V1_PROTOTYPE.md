@@ -106,3 +106,5 @@ critiques executes sur appareil ou simulateur.
 - `COUR-62` - Activation mobile du canary pilotée exclusivement par le serveur.
 - `COUR-64` - Stabilisation des sauvegardes, de l'observabilite et de
   l'exploitation pendant la recette TestFlight.
+- `COUR-65` - Restauration automatique de chaque sauvegarde chiffree dans une
+  cible ephemere et verification de la reprise.

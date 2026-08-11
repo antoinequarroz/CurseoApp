@@ -18,6 +18,16 @@ artefacts, aux logs ou a Git.
 Les schemas geres par la plateforme, notamment certains elements internes
 `auth` et `storage`, suivent les exclusions documentees du Supabase CLI. Les
 objets binaires de Storage ne sont pas contenus dans une sauvegarde Postgres.
+`storage.buckets_vectors` et `storage.vector_indexes` sont explicitement exclus
+des donnees : Supabase les gere et refuse leur restauration logique avec le role
+Postgres du projet.
+
+Apres chaque sauvegarde verte sur `main`, le workflow
+`Supabase Backup Restore Drill` telecharge uniquement l'artefact chiffre, le
+dechiffre sur un runner GitHub ephemere, puis execute
+`scripts/verify-backup-restore.sh` dans une pile Supabase vierge. Aucun dump en
+clair ni log de donnees n'est conserve en artefact. La cible et les fichiers
+dechiffres sont detruits meme en cas d'echec.
 
 ## Secrets GitHub
 
@@ -33,7 +43,9 @@ externe approuve. GitHub ne permet pas de relire la valeur d'un secret Actions.
 
 1. ouvrir l'execution `Daily Supabase Backup` ;
 2. verifier que les exports et le chiffrement sont verts ;
-3. telecharger l'artefact et comparer sa somme :
+3. verifier que l'execution `Supabase Backup Restore Drill` associee est verte ;
+4. si un controle manuel est requis, telecharger l'artefact et comparer sa
+   somme :
 
 ```bash
 sha256sum -c coursia-supabase-*.tar.gz.gpg.sha256
@@ -52,8 +64,8 @@ gpg --batch --yes --pinentry-mode loopback `
 ```
 
 Extraire ensuite l'archive dans un dossier temporaire et verifier
-`backup/SHA256SUMS`. Une restauration doit d'abord etre exercee sur un projet
-Supabase vierge, jamais directement sur la production.
+`backup/SHA256SUMS`. Restaurer avec `scripts/verify-backup-restore.sh` dans une
+pile Supabase vierge, jamais directement sur la production.
 
 ## Rotation ou incident
 

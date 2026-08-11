@@ -46,12 +46,18 @@ jobs:
           set -euo pipefail
           mkdir -p backup
           supabase db dump --linked --file backup/schema.sql
-          supabase db dump --linked --data-only --use-copy --file backup/data.sql
+          # Les tables vectorielles Storage sont gerees par la plateforme et
+          # refusent une restauration logique via postgres. Supabase les exclut
+          # explicitement dans sa procedure officielle de backup/restore.
+          supabase db dump --linked --data-only --use-copy \
+            --exclude storage.buckets_vectors \
+            --exclude storage.vector_indexes \
+            --file backup/data.sql
           supabase db dump --linked --role-only --file backup/roles.sql
           test -s backup/schema.sql
           test -s backup/data.sql
           test -s backup/roles.sql
-          sha256sum backup/*.sql > backup/SHA256SUMS
+          (cd backup && sha256sum ./*.sql > SHA256SUMS)
 
       - name: Chiffrer la sauvegarde avant publication
         shell: bash
