@@ -44,6 +44,26 @@ describe('filtrerParContraintes', () => {
     expect(resultat.recettes.map((r) => r.id)).toEqual(['vegetarien-et-sans-gluten']);
   });
 
+  it('pescetarien : accepte poisson, vegetarien et vegan, mais jamais une recette de viande seule', () => {
+    const source = [
+      recette({ id: 'saumon', regime: ['poisson'] }),
+      recette({ id: 'vegetarienne', regime: ['vegetarien'] }),
+      recette({ id: 'vegane', regime: ['vegan', 'vegetarien'] }),
+      recette({ id: 'boeuf', regime: [] }),
+    ];
+    const resultat = filtrerParContraintes(source, ['poisson'], [], null);
+    expect(resultat.recettes.map((r) => r.id)).toEqual(['saumon', 'vegetarienne', 'vegane']);
+  });
+
+  it('vegetarien et pescetarien dans un foyer : conserve les recettes vegetariennes communes', () => {
+    const source = [
+      recette({ id: 'saumon', regime: ['poisson'] }),
+      recette({ id: 'vegetarienne', regime: ['vegetarien'] }),
+    ];
+    const resultat = filtrerParContraintes(source, ['vegetarien', 'poisson'], [], null);
+    expect(resultat.recettes.map((r) => r.id)).toEqual(['vegetarienne']);
+  });
+
   it("contraintes contradictoires de plusieurs membres : aucune recette ne satisfait tout le monde -> liste vide, pas d'erreur", () => {
     const source = [
       recette({ id: 'vegetarien-uniquement', regime: ['vegetarien'] }),

@@ -122,6 +122,24 @@ describe('useRepasSemaine', () => {
     expect(retirerRepasDateMock).toHaveBeenCalledWith('u-1', '2026-07-20', 'midi');
   });
 
+  it('deplacer : assigne la destination avant de retirer le creneau d origine', async () => {
+    const { result } = await renderHook(() => useRepasSemaine('u-1', LUNDI_S1), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    const repas = { recette: recette({ id: 'a-deplacer' }), portions: 3 };
+
+    await act(async () => {
+      await result.current.deplacer(
+        { jour: 'lundi', moment: 'midi' },
+        { jour: 'vendredi', moment: 'soir' },
+        repas,
+      );
+    });
+
+    expect(assignerRepasMock).toHaveBeenCalledWith('u-1', '2026-07-24', 'soir', repas);
+    expect(retirerRepasDateMock).toHaveBeenCalledWith('u-1', '2026-07-20', 'midi');
+    expect(assignerRepasMock.mock.invocationCallOrder[0]!).toBeLessThan(retirerRepasDateMock.mock.invocationCallOrder[0]!);
+  });
+
   it('COUR-27 : changer de semaine ne melange jamais les repas d\'une autre (meme cache, requetes distinctes)', async () => {
     const planningS1 = { ...PLANNING_VIDE, lundi: { midi: { recette: recette({ id: 'recette-semaine-1' }) } } };
     const planningS2 = { ...PLANNING_VIDE, lundi: { midi: { recette: recette({ id: 'recette-semaine-2' }) } } };

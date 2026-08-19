@@ -19,6 +19,7 @@ import { useProfilStore } from '@/stores/profilStore';
 import { SwipeRecette } from '@/components/recettes/SwipeRecette';
 import { RecetteCard } from '@/components/recettes/RecetteCard';
 import { PlanningSemaine } from '@/components/planning/PlanningSemaine';
+import { SelecteurRepasSwipe, type SelectionRepas } from '@/components/planning/SelecteurRepasSwipe';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { OfflineBannerView } from '@/components/ui/OfflineBanner';
 import { SkeletonRecetteCard, SkeletonPlanningJour } from '@/components/ui/Skeleton';
@@ -113,7 +114,7 @@ function CatalogueNotice({ message, onRetry }: { message: string; onRetry: () =>
 export default function Planifier() {
   const haptics = useHaptics();
   const { colors } = useTheme();
-  const { paddingHorizontal } = useResponsive();
+  const { paddingHorizontal, height } = useResponsive();
   const { estHorsLigne } = useNetworkStatus();
   const profil = useProfilStore((s) => s.profil);
   const genererCoursesDepuisPlanning = useCoursesStore((s) => s.genererDepuisPlanning);
@@ -123,6 +124,9 @@ export default function Planifier() {
   const [indexCourant, setIndexCourant] = useState(0);
   const [slotChoix, setSlotChoix] = useState<{ jour: JourSemaine; moment: 'midi' | 'soir' } | null>(null);
   const [portionsChoix, setPortionsChoix] = useState<number | null>(null);
+  const [modeChoixRecette, setModeChoixRecette] = useState(false);
+  const [deplacementOuvert, setDeplacementOuvert] = useState(false);
+  const [destinationDeplacement, setDestinationDeplacement] = useState<SelectionRepas | null>(null);
   // COUR-25 : membres du foyer concernes par le repas en cours d'assignation
   // — vide = comportement historique (portions manuelles, aucun filtrage
   // supplementaire par rapport au foyer entier deja applique ci-dessus).
@@ -131,6 +135,8 @@ export default function Planifier() {
   // semaine a sa propre entree de cache (voir useRepasSemaine), changer de
   // semaine ne melange jamais les repas d'une autre.
   const [semaineAffichee, setSemaineAffichee] = useState(() => dates.debutSemaine(dates.maintenant()));
+  const [selectionSwipeManuelle, setSelectionSwipeManuelle] = useState<SelectionRepas | null>(null);
+  const [portionsSwipe, setPortionsSwipe] = useState<number | null>(null);
 
   const {
     data,
@@ -182,10 +188,12 @@ export default function Planifier() {
     synchronisationsEnAttente,
     peutAnnuler,
     assignerPlusieurs,
+    deplacer,
     retirer,
     annulerDerniereAction,
   } = useRepasSemaine(profil?.id, semaineAffichee, estHorsLigne);
   const prochainSlot = useMemo(() => trouverProchainSlot(planning), [planning]);
+  const slotSwipe = selectionSwipeManuelle ?? prochainSlot;
   const nombreRepasPlanifies = useMemo(
     () => Object.values(planning).reduce((total, jour) => total + Number(Boolean(jour.midi)) + Number(Boolean(jour.soir)), 0),
     [planning],
@@ -198,6 +206,7 @@ export default function Planifier() {
     [planning],
   );
   const semaineActuelle = dates.estMemeSemaine(semaineAffichee, dates.maintenant());
+  const repasSlotChoix = slotChoix ? planning[slotChoix.jour][slotChoix.moment] : undefined;
 
   // Le picker de membres n'a de sens que pour le palier Famille (COUR-24) —
   // enabled=false ailleurs pour ne jamais forcer la creation d'un foyer.
@@ -212,8 +221,29 @@ export default function Planifier() {
 
   const ouvrirChoixSlot = (jour: JourSemaine, moment: 'midi' | 'soir') => {
     setSlotChoix({ jour, moment });
-    setPortionsChoix(profil?.nb_personnes ?? 1);
-    setMembresChoisisIds([]);
+    const repasExistant = planning[jour][moment];
+    setPortionsChoix(repasExistant?.portions ?? profil?.nb_personnes ?? 1);
+    setMembresChoisisIds(repasExistant?.membreIds ?? []);
+    setModeChoixRecette(!repasExistant);
+    setDeplacementOuvert(false);
+    setDestinationDeplacement(null);
+  };
+
+  const selectionnerSlotSwipe = (selection: SelectionRepas) => {
+    const repasExistant = planning[selection.jour][selection.moment];
+    setSelectionSwipeManuelle(selection);
+    setPortionsSwipe(repasExistant?.portions ?? null);
+  };
+
+  const changerSemaine = (delta: number) => {
+    setSelectionSwipeManuelle(null);
+    setPortionsSwipe(null);
+    setSemaineAffichee((semaine) => dates.ajouterSemaines(semaine, delta));
+  };
+
+  const avancerRecette = () => {
+    if (indexCourant + 2 >= recettes.length && hasNextPage) void fetchNextPage();
+    setIndexCourant((index) => index + 1);
   };
 
   const toggleMembreChoisi = (membreId: string) => {
@@ -245,7 +275,7 @@ export default function Planifier() {
       </View>
 
       {sousOnglet === 'recettes' && (
-        <View style={{ flex: 1, paddingHorizontal, paddingTop: 16, paddingBottom: 96, justifyContent: 'center' }}>
+        <View style={{ flex: 1, paddingHorizontal, paddingTop: 10, paddingBottom: 96, justifyContent: 'flex-start' }}>
           {estHorsLigne && (
             <View style={{ marginBottom: 12 }}>
               <OfflineBannerView visible message={t('planning.hors_ligne_cache')} />
@@ -285,6 +315,14 @@ export default function Planifier() {
               ctaLabel={t('planning.modifier_profil')}
               onCta={() => router.push('/(tabs)/profil')}
             />
+          ) : !slotSwipe ? (
+            <EmptyState
+              illustration="favoris"
+              titre={t('planning.tout_planifie_titre')}
+              sousTitre={t('planning.swipe_semaine_complete')}
+              ctaLabel={t('planning.voir_planning')}
+              onCta={() => setSousOnglet('planning')}
+            />
           ) : recetteActuelle ? (
             <View style={{ gap: 10 }}>
               {isError && !estHorsLigne ? (
@@ -295,6 +333,22 @@ export default function Planifier() {
                   {t('planning.allergies_non_reconnues', { allergies: allergiesNonReconnues.join(', ') })}
                 </Caption>
               )}
+              <SelecteurRepasSwipe
+                planning={planning}
+                semaineDebut={semaineAffichee}
+                selection={slotSwipe}
+                portions={portionsSwipe ?? profil?.nb_personnes ?? 1}
+                onSelectionChange={selectionnerSlotSwipe}
+                onPortionsChange={setPortionsSwipe}
+                onChangerSemaine={changerSemaine}
+                onIgnorer={() => {
+                  void haptics.selection();
+                  void ignorer(slotSwipe.jour, slotSwipe.moment);
+                  setSelectionSwipeManuelle(null);
+                  setPortionsSwipe(null);
+                  if (estHorsLigne) toast.info(t('planning.sauvegarde_hors_ligne'));
+                }}
+              />
               <SwipeRecette
                 key={recetteActuelle.id}
                 recette={recetteActuelle}
@@ -302,10 +356,21 @@ export default function Planifier() {
                 profilId={profil?.id ?? 'demo-user'}
                 alerteAllergenes={alertesParRecette[recetteActuelle.id]}
                 onTapDetail={() => router.push(`/recette/${recetteActuelle.id}`)}
+                compact={height < 900}
                 onSwiped={(aime) => {
                   enregistrerSwipe(recetteActuelle.id, aime);
-                  if (indexCourant + 2 >= recettes.length && hasNextPage) void fetchNextPage();
-                  setIndexCourant((i) => i + 1);
+                  if (aime) {
+                    const portionsFoyer = profil?.nb_personnes ?? 1;
+                    const portionsSelectionnees = portionsSwipe ?? portionsFoyer;
+                    void assigner(slotSwipe.jour, slotSwipe.moment, {
+                      recette: recetteActuelle,
+                      portions: portionsSelectionnees !== portionsFoyer ? portionsSelectionnees : undefined,
+                    });
+                    setSelectionSwipeManuelle(null);
+                    setPortionsSwipe(null);
+                    if (estHorsLigne) toast.info(t('planning.sauvegarde_hors_ligne'));
+                  }
+                  avancerRecette();
                 }}
               />
               {profil?.allergies?.length ? <Caption style={{ textAlign: 'center' }}>{t('planning.disclaimer_medical')}</Caption> : null}
@@ -323,7 +388,7 @@ export default function Planifier() {
       )}
 
       {sousOnglet === 'planning' && (
-        <ScreenScroll style={{ flex: 1 }} contentContainerStyle={{ gap: 20 }} padded>
+        <ScreenScroll style={{ flex: 1 }} contentContainerStyle={{ gap: 20, paddingBottom: 120 }} padded>
           {estHorsLigne && <OfflineBannerView visible />}
           <View
             accessibilityRole="summary"
@@ -396,7 +461,7 @@ export default function Planifier() {
                   void haptics.selection();
                   void retirer(jour, moment);
                 }}
-                onChangerSemaine={(delta) => setSemaineAffichee((s) => dates.ajouterSemaines(s, delta))}
+                onChangerSemaine={changerSemaine}
                 onRetourAujourdhui={() => setSemaineAffichee(dates.debutSemaine(dates.maintenant()))}
               />
               <Button
@@ -460,7 +525,7 @@ export default function Planifier() {
 
       <Modal visible={!!slotChoix} animationType="slide" onRequestClose={() => setSlotChoix(null)}>
         <ScreenScroll contentContainerStyle={{ gap: 12 }} tabBar={false}>
-          <DisplayLG>{t('planning.choisir_recette')}</DisplayLG>
+          <DisplayLG>{repasSlotChoix && !modeChoixRecette ? t('planning.modifier_repas') : t('planning.choisir_recette')}</DisplayLG>
 
           {estAuMoins('famille') && membres.length > 0 && (
             <View style={{ gap: 6 }}>
@@ -522,13 +587,123 @@ export default function Planifier() {
             )}
           </View>
 
+          {repasSlotChoix && slotChoix && !modeChoixRecette ? (
+            <View style={{ gap: 12 }}>
+              <RecetteCard recette={repasSlotChoix.recette} />
+              <Button
+                label={t('planning.enregistrer_portions')}
+                onPress={() => {
+                  const portionsFoyer = profil?.nb_personnes ?? 1;
+                  const portionsFinales = membresChoisisIds.length > 0 ? membresChoisisIds.length : (portionsChoix ?? portionsFoyer);
+                  void assigner(slotChoix.jour, slotChoix.moment, {
+                    recette: repasSlotChoix.recette,
+                    portions: portionsFinales !== portionsFoyer ? portionsFinales : undefined,
+                    membreIds: membresChoisisIds.length > 0 ? membresChoisisIds : undefined,
+                  });
+                  setSlotChoix(null);
+                }}
+              />
+              <Button label={t('planning.remplacer_recette')} variant="secondary" onPress={() => setModeChoixRecette(true)} />
+              <Button
+                label={t('planning.deplacer_repas')}
+                variant="secondary"
+                onPress={() => {
+                  setDeplacementOuvert((ouvert) => !ouvert);
+                  setDestinationDeplacement(null);
+                }}
+              />
+
+              {deplacementOuvert ? (
+                <View style={{ gap: 10, padding: 12, borderRadius: 16, backgroundColor: colors.bgWarm }}>
+                  <Subheading>{t('planning.deplacer_vers')}</Subheading>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                    {JOURS_SEMAINE.map((jour) => {
+                      const selectionne = destinationDeplacement?.jour === jour;
+                      return (
+                        <Pressable
+                          key={jour}
+                          onPress={() => setDestinationDeplacement({ jour, moment: destinationDeplacement?.moment ?? slotChoix.moment })}
+                          accessibilityRole="button"
+                          accessibilityState={{ selected: selectionne }}
+                          style={{
+                            minHeight: 44,
+                            paddingHorizontal: 12,
+                            borderRadius: 14,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: selectionne ? colors.primary : colors.bgSecondary,
+                          }}
+                        >
+                          <BodySm style={{ color: selectionne ? '#FFFFFF' : colors.textPrimary }}>
+                            {t(`planning.jour_${jour}`).slice(0, 3)}
+                          </BodySm>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    {(['midi', 'soir'] as const).map((moment) => {
+                      const selectionne = destinationDeplacement?.moment === moment;
+                      return (
+                        <Pressable
+                          key={moment}
+                          onPress={() => setDestinationDeplacement({ jour: destinationDeplacement?.jour ?? slotChoix.jour, moment })}
+                          accessibilityRole="button"
+                          accessibilityState={{ selected: selectionne }}
+                          style={{
+                            flex: 1,
+                            minHeight: 44,
+                            borderRadius: 14,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: selectionne ? colors.primary : colors.bgSecondary,
+                          }}
+                        >
+                          <BodySm style={{ color: selectionne ? '#FFFFFF' : colors.textPrimary }}>{t(`planning.slot_${moment}`)}</BodySm>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                  <Button
+                    label={t('planning.confirmer_deplacement')}
+                    disabled={!destinationDeplacement}
+                    onPress={() => {
+                      if (!destinationDeplacement) return;
+                      void deplacer(slotChoix, destinationDeplacement, repasSlotChoix);
+                      setSlotChoix(null);
+                    }}
+                  />
+                  {destinationDeplacement && planning[destinationDeplacement.jour][destinationDeplacement.moment] ? (
+                    <Caption style={{ color: colors.warning, textAlign: 'center' }}>
+                      {t('planning.deplacement_remplace', {
+                        titre: planning[destinationDeplacement.jour][destinationDeplacement.moment]?.recette.titre ?? '',
+                      })}
+                    </Caption>
+                  ) : null}
+                </View>
+              ) : null}
+
+              <Pressable
+                onPress={() => {
+                  void retirer(slotChoix.jour, slotChoix.moment);
+                  setSlotChoix(null);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={t('planning.supprimer_repas')}
+                style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}
+              >
+                <BodySm style={{ color: colors.error, fontWeight: '600' }}>{t('planning.supprimer_repas')}</BodySm>
+              </Pressable>
+            </View>
+          ) : null}
+
           {allergiesMembresNonReconnues.length > 0 && (
             <Caption style={{ color: colors.warning }}>
               {t('planning.allergies_non_reconnues', { allergies: allergiesMembresNonReconnues.join(', ') })}
             </Caption>
           )}
 
-          {recettesAimees.length === 0 ? (
+          {(modeChoixRecette || !repasSlotChoix) && (recettesAimees.length === 0 ? (
             <EmptyState illustration="favoris" titre={t('planning.empty_favoris_titre')} sousTitre={t('planning.empty_favoris_soustitre')} />
           ) : recettesAimeesCompatibles.length === 0 ? (
             <EmptyState
@@ -559,7 +734,7 @@ export default function Planifier() {
                 <RecetteCard recette={r} alerteAllergenes={alertesMembresParRecette[r.id]} />
               </Pressable>
             ))
-          )}
+          ))}
           <Button label={t('commun.fermer')} variant="secondary" onPress={() => setSlotChoix(null)} />
         </ScreenScroll>
       </Modal>

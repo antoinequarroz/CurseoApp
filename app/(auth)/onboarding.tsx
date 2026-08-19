@@ -546,6 +546,7 @@ export default function Onboarding() {
                   onPress={() => setAutresOuvert((v) => !v)}
                 />
               </View>
+              <Caption>{t('onboarding.regime_pescetarien_hint')}</Caption>
 
               {autresOuvert && (
                 <View style={{ gap: 8 }}>

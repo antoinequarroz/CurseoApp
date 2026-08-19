@@ -46,6 +46,7 @@ interface SwipeRecetteProps {
   alerteAllergenes?: AlerteAllergene[];
   onSwiped: (aime: boolean) => void;
   onTapDetail: () => void;
+  compact?: boolean;
 }
 
 export function SwipeRecette({
@@ -55,6 +56,7 @@ export function SwipeRecette({
   alerteAllergenes,
   onSwiped,
   onTapDetail,
+  compact = false,
 }: SwipeRecetteProps) {
   const { colors } = useTheme();
   const haptics = useHaptics();
@@ -221,7 +223,7 @@ export function SwipeRecette({
           <Animated.View style={[{ position: 'absolute', top: 24, left: 24, zIndex: 3 }, xOpacity]}>
             <X size={54} color={colors.textPrimary} />
           </Animated.View>
-          <RecetteCard recette={recette} variant="hero" alerteAllergenes={alerteAllergenes} />
+          <RecetteCard recette={recette} variant={compact ? 'heroCompact' : 'hero'} alerteAllergenes={alerteAllergenes} />
         </Animated.View>
       </GestureDetector>
 

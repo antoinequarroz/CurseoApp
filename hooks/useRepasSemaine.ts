@@ -157,6 +157,17 @@ export function useRepasSemaine(
     executerLot([{ jour, moment, action: 'retirer' }]);
   const assignerPlusieurs = (assignations: { jour: JourSemaine; moment: MomentRepas; donnees: DonneesAssignation }[]) =>
     executerLot(assignations.map((item) => ({ ...item, action: 'assigner' as const })));
+  const deplacer = (
+    depuis: { jour: JourSemaine; moment: MomentRepas },
+    vers: { jour: JourSemaine; moment: MomentRepas },
+    donnees: DonneesAssignation,
+  ) => {
+    if (depuis.jour === vers.jour && depuis.moment === vers.moment) return Promise.resolve();
+    return executerLot([
+      { ...vers, action: 'assigner', donnees },
+      { ...depuis, action: 'retirer' },
+    ]);
+  };
   const annulerDerniereAction = async () => {
     if (!derniereAnnulation) return;
     const inverse = derniereAnnulation;
@@ -178,6 +189,7 @@ export function useRepasSemaine(
     peutAnnuler: Boolean(derniereAnnulation),
     assigner,
     assignerPlusieurs,
+    deplacer,
     ignorer,
     retirer,
     annulerDerniereAction,

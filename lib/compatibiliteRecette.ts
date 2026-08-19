@@ -19,6 +19,18 @@ export interface ResultatCompatibilite {
   allergiesNonReconnues: string[];
 }
 
+/**
+ * `poisson` est le code historique du regime pescetarien. Une personne
+ * pescetarienne peut aussi manger une recette vegetarienne ou vegane : exiger
+ * uniquement le tag `poisson` excluait a tort ces deux familles de recettes.
+ */
+function satisfaitRegime(recette: Recette, regime: Regime): boolean {
+  if (regime === 'poisson') {
+    return recette.regime.some((tag) => tag === 'poisson' || tag === 'vegetarien' || tag === 'vegan');
+  }
+  return recette.regime.includes(regime);
+}
+
 /** Normalise pour une comparaison tolerante (accents, casse, espaces). */
 export function normaliserAllergie(v: string): string {
   return v
@@ -76,7 +88,7 @@ export function filtrerParContraintes(
   synonymes: Map<string, string> | null,
 ): ResultatCompatibilite {
   const filtreesParRegime = regimesRequis.length
-    ? source.filter((r) => regimesRequis.every((reg) => r.regime.includes(reg)))
+    ? source.filter((r) => regimesRequis.every((reg) => satisfaitRegime(r, reg)))
     : source;
 
   if (allergies.length === 0) {

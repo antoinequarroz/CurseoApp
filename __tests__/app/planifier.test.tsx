@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/lib/theme-context';
 import { useProfilStore } from '@/stores/profilStore';
@@ -173,5 +173,36 @@ describe('Planifier (onglet Recettes, par defaut au montage)', () => {
     );
     const { getByText } = await renderAvecProviders();
     expect(getByText('Salade César')).toBeTruthy();
+  });
+
+  it('aimer une recette l ajoute directement au prochain repas du planning', async () => {
+    const assigner = jest.fn();
+    useRepasSemaineMock.mockReturnValue({
+      planning: planningVide,
+      isLoading: false,
+      isError: false,
+      isEmpty: true,
+      isRefetching: false,
+      hasCachedData: true,
+      refetch: jest.fn(),
+      mutationEnCours: false,
+      synchronisationsEnAttente: 0,
+      peutAnnuler: false,
+      assigner,
+      assignerPlusieurs: jest.fn(),
+      deplacer: jest.fn(),
+      ignorer: jest.fn(),
+      retirer: jest.fn(),
+      annulerDerniereAction: jest.fn(),
+    });
+    const salade = recette({ titre: 'Salade planifiee' });
+    useRecettesMock.mockReturnValue(
+      etatRecettesParDefaut({ data: { pages: [[salade]] }, isEmpty: false, isCatalogueEmpty: false }),
+    );
+
+    const { getByTestId } = await renderAvecProviders();
+    fireEvent.press(getByTestId('recipe-like'));
+
+    await waitFor(() => expect(assigner).toHaveBeenCalledWith('lundi', 'midi', { recette: salade, portions: undefined }));
   });
 });

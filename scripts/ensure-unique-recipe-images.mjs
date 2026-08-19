@@ -25,7 +25,7 @@ const nouveauxVisuels = {
   'catalogue-v1-r-040': '1569718212165-3a8278d5f624',
   'catalogue-v1-r-041': '1569058242253-92a9c755a0ec',
   'catalogue-v1-r-042': '1529042410759-befb1204b468',
-  'catalogue-v1-r-043': '1484723091739-30a097e8f929',
+  'catalogue-v1-r-043': 'https://images.pexels.com/photos/17321469/pexels-photo-17321469.jpeg',
   'catalogue-v1-r-044': '1482049016688-2d3e1b311543',
   'catalogue-v1-r-045': '1473093295043-cdd812d0e601',
   'catalogue-v1-r-046': '1572449043416-55f4685c9bb7',
@@ -39,7 +39,7 @@ const nouveauxVisuels = {
   'catalogue-v1-r-055': '1543352634-a1c51d9f1fa7',
 };
 
-const urlPour = (id) => `https://images.unsplash.com/photo-${id}`;
+const urlPour = (id) => id.startsWith('https://') ? id : `https://images.unsplash.com/photo-${id}`;
 
 function appliquerSelection() {
   const lignes = fs.readFileSync(catalogueExtension, 'utf8').split(/\r?\n/);
@@ -47,7 +47,7 @@ function appliquerSelection() {
     if (index === 0 || !ligne) return ligne;
     const cle = ligne.slice(0, ligne.indexOf(','));
     const imageId = nouveauxVisuels[cle];
-    return imageId ? ligne.replace(/https:\/\/images\.unsplash\.com\/[^,"]+/, urlPour(imageId)) : ligne;
+    return imageId ? ligne.replace(/https:\/\/images\.(?:unsplash|pexels)\.com\/[^,"]+/, urlPour(imageId)) : ligne;
   });
   fs.writeFileSync(catalogueExtension, resultat.join('\n'), 'utf8');
 }
@@ -57,7 +57,7 @@ function verifierUnicite() {
   for (const fichier of [catalogueInitial, catalogueExtension]) {
     const lignes = fs.readFileSync(fichier, 'utf8').split(/\r?\n/).slice(1);
     for (const ligne of lignes) {
-      const url = ligne.match(/https:\/\/images\.unsplash\.com\/[^,"]+/)?.[0];
+      const url = ligne.match(/https:\/\/images\.(?:unsplash|pexels)\.com\/[^,"]+/)?.[0];
       if (url) urls.push(url);
     }
   }
