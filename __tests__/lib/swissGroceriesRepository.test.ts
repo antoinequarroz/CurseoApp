@@ -229,6 +229,156 @@ describe('swissGroceriesRepository', () => {
     });
   });
 
+  it('relance automatiquement les articles non trouvés et les ajoute au panier enseigne', async () => {
+    mockInvoke
+      .mockResolvedValueOnce({
+        error: null,
+        data: {
+          meta: { source: 'SwissGroceries', collectedAt: '2026-08-19T12:00:00.000Z' },
+          primary: {
+            strategy: 'absolute_cheapest',
+            totalChf: 0,
+            stops: [],
+            unmatchedItems: [{ query: 'papier cuisson' }],
+          },
+          alternatives: [],
+        },
+      })
+      .mockResolvedValueOnce({
+        error: null,
+        data: {
+          byChain: {
+            coop: [
+              {
+                id: 'papier-coop',
+                name: 'Papier cuisson en feuilles',
+                brand: 'Coop',
+                price: { current: 2.4, currency: 'CHF' },
+              },
+            ],
+          },
+        },
+      });
+
+    const resultat = await optimiserListeCoursesLive({
+      items: [
+        {
+          id: 'papier',
+          produit: 'papier cuisson',
+          quantite: 1,
+          unite: 'unite',
+          rayon: 'Epicerie',
+          coche: false,
+        },
+      ],
+      npa: '1003',
+      mode: 'prix_minimum',
+    });
+
+    expect(mockInvoke).toHaveBeenNthCalledWith(2, 'swissgroceries', {
+      body: {
+        action: 'search',
+        query: 'papier cuisson',
+        chains: ['migros', 'coop', 'aldi', 'lidl', 'ottos'],
+        limit: 4,
+      },
+    });
+    expect(resultat.articlesNonTrouves).toEqual([]);
+    expect(resultat.montantTotal).toBe(2.4);
+    expect(resultat.arrets).toEqual([
+      expect.objectContaining({
+        enseigne: 'coop',
+        articles: [
+          expect.objectContaining({
+            produitId: 'papier-coop',
+            selectionAutomatique: true,
+            validationRequise: false,
+          }),
+        ],
+      }),
+    ]);
+  });
+
+  it('ne casse pas une option mono-enseigne avec une variante contradictoire', async () => {
+    mockInvoke
+      .mockResolvedValueOnce({
+        error: null,
+        data: {
+          primary: {
+            strategy: 'single_store',
+            totalChf: 3.5,
+            stops: [
+              {
+                store: { chain: 'coop' },
+                subtotalChf: 3.5,
+                items: [
+                  {
+                    requested: { query: 'pommes', quantity: 1 },
+                    matched: {
+                      chain: 'coop',
+                      id: 'pommes-coop',
+                      name: 'Pommes Gala',
+                      price: { current: 3.5, currency: 'CHF' },
+                    },
+                    lineTotal: 3.5,
+                  },
+                ],
+              },
+            ],
+            unmatchedItems: [{ query: 'lait entier' }],
+          },
+          alternatives: [],
+        },
+      })
+      .mockResolvedValueOnce({
+        error: null,
+        data: {
+          byChain: {
+            migros: [
+              {
+                id: 'lait-migros',
+                name: 'Lait entier',
+                price: { current: 1.8, currency: 'CHF' },
+              },
+            ],
+            coop: [
+              {
+                id: 'lait-coop',
+                name: 'Lait écrémé',
+                price: { current: 1.6, currency: 'CHF' },
+              },
+            ],
+          },
+        },
+      });
+
+    const resultat = await optimiserListeCoursesLive({
+      items: [
+        {
+          id: 'p',
+          produit: 'pommes',
+          quantite: 1,
+          unite: 'kg',
+          rayon: 'Fruits & Legumes',
+          coche: false,
+        },
+        {
+          id: 'l',
+          produit: 'lait entier',
+          quantite: 1,
+          unite: 'l',
+          rayon: 'Produits laitiers',
+          coche: false,
+        },
+      ],
+      npa: '1003',
+      mode: 'equilibre',
+    });
+
+    expect(resultat.arrets.map((arret) => arret.enseigne)).toEqual(['coop']);
+    expect(resultat.articlesNonTrouves).toEqual(['lait entier']);
+  });
+
   it('ajoute le filtre bio et propage une reponse MCP invalide', async () => {
     mockInvoke.mockResolvedValueOnce({ error: null, data: { invalid: true } });
     const items: ItemCourse[] = [

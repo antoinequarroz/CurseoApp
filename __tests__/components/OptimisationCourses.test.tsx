@@ -51,7 +51,7 @@ describe('OptimisationCourses', () => {
     expect(onDebloquer).toHaveBeenCalledTimes(1);
   });
 
-  it('affiche le parcours multi-enseignes et les articles non trouvés', async () => {
+  it('affiche le parcours multi-enseignes et les articles indisponibles en ligne', async () => {
     optimiserMock.mockResolvedValue({
       strategie: 'absolute_cheapest',
       montantTotal: 7.5,
@@ -83,7 +83,7 @@ describe('OptimisationCourses', () => {
     await waitFor(() => expect(getAllByText('CHF 7.50')).toHaveLength(3));
     expect(getByText('Migros')).toBeTruthy();
     expect(getByText('Pommes Gala')).toBeTruthy();
-    expect(getByText('1 article(s) à choisir sur place')).toBeTruthy();
+    expect(getByText('1 article(s) indisponible(s) en ligne')).toBeTruthy();
     expect(getByText('Source : SwissGroceries · relevé le 10 août à 14:34')).toBeTruthy();
     expect(optimiserMock).toHaveBeenCalledWith(expect.objectContaining({ npa: '1003', items }));
   });

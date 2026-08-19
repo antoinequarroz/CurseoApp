@@ -152,14 +152,6 @@ function RootLayout() {
                       options={{ headerShown: true, title: t('checkout.titre') }}
                     />
                     <Stack.Screen
-                      name="remplacer-produit"
-                      options={{
-                        presentation: 'modal',
-                        headerShown: true,
-                        title: t('checkout.remplacer_titre'),
-                      }}
-                    />
-                    <Stack.Screen
                       name="commande-demo"
                       options={{
                         headerShown: true,

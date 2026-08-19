@@ -6,6 +6,7 @@ import {
   calculerPaquets,
   classerSelonPreferences,
   evaluerCorrespondance,
+  normaliserProduit,
   type NiveauCorrespondance,
 } from './correspondanceProduit';
 import type { Enseigne, ItemCourse, ModeOptimisation, PreferencesCoursesEnLigne } from '@/types';
@@ -45,6 +46,7 @@ export interface ProduitRechercheLive {
   taille?: { value: number; unit: string };
   prix: number;
   pertinence: NiveauCorrespondance;
+  scoreCorrespondance?: number;
   validationRequise: boolean;
   raisonsCorrespondance?: ('nom' | 'partiel' | 'variante_a_verifier')[];
 }
@@ -124,6 +126,7 @@ export interface LigneCoursesOptimisee {
   formatCompatible: boolean;
   pertinence: NiveauCorrespondance;
   validationRequise: boolean;
+  selectionAutomatique?: boolean;
   raisonsCorrespondance?: ('nom' | 'partiel' | 'variante_a_verifier')[];
   disponibilite: 'resultat_catalogue';
 }
@@ -161,15 +164,16 @@ function formatProduit(produit: ProduitLive): string {
 }
 
 /** Résultats explicites pour remplacer une ligne du brouillon COUR-71. */
-export async function rechercherProduitsLive(
+async function rechercherProduitsLiveDansEnseignes(
   nomProduit: string,
+  enseignes: readonly EnseigneSwissGroceries[],
   preferences?: PreferencesCoursesEnLigne,
 ): Promise<ProduitRechercheLive[]> {
   const { data, error } = await supabase.functions.invoke<ReponseLive>('swissgroceries', {
-    body: { action: 'search', query: nomProduit, chains: ENSEIGNES_SWISS_GROCERIES, limit: 4 },
+    body: { action: 'search', query: nomProduit, chains: enseignes, limit: 4 },
   });
   if (error) throw error;
-  const produits = ENSEIGNES_SWISS_GROCERIES.flatMap((enseigne) =>
+  const produits = enseignes.flatMap((enseigne) =>
     (data?.byChain?.[enseigne] ?? []).flatMap((produit) =>
       produit.price?.current > 0
         ? [
@@ -184,6 +188,7 @@ export async function rechercherProduitsLive(
                 taille: produit.size,
                 prix: produit.price.current,
                 pertinence: correspondance.niveau,
+                scoreCorrespondance: correspondance.score,
                 validationRequise: correspondance.validationRequise,
                 raisonsCorrespondance: correspondance.raisons,
               };
@@ -192,7 +197,16 @@ export async function rechercherProduitsLive(
         : [],
     ),
   );
-  return classerSelonPreferences(produits, preferences);
+  const classesPreferences = classerSelonPreferences(produits, preferences);
+  const rang: Record<NiveauCorrespondance, number> = { forte: 2, moyenne: 1, faible: 0 };
+  return classesPreferences.sort((a, b) => rang[b.pertinence] - rang[a.pertinence]);
+}
+
+export async function rechercherProduitsLive(
+  nomProduit: string,
+  preferences?: PreferencesCoursesEnLigne,
+): Promise<ProduitRechercheLive[]> {
+  return rechercherProduitsLiveDansEnseignes(nomProduit, ENSEIGNES_SWISS_GROCERIES, preferences);
 }
 
 /**
@@ -257,6 +271,7 @@ export async function optimiserListeCoursesLive(params: {
   npa: string;
   mode: ModeOptimisation;
   enseignesFavorites?: Enseigne[];
+  preferences?: PreferencesCoursesEnLigne;
 }): Promise<OptimisationCoursesLive> {
   const itemsActifs = params.items.filter((item) => !item.coche).slice(0, 40);
   if (itemsActifs.length === 0) throw new Error('Aucun article a optimiser');
@@ -329,6 +344,7 @@ export async function optimiserListeCoursesLive(params: {
           formatCompatible: paquets.formatCompatible,
           pertinence: correspondance.niveau,
           validationRequise: correspondance.validationRequise,
+          selectionAutomatique: true,
           raisonsCorrespondance: correspondance.raisons,
           disponibilite: 'resultat_catalogue' as const,
         };
@@ -336,6 +352,93 @@ export async function optimiserListeCoursesLive(params: {
     })),
     articlesNonTrouves: plan.unmatchedItems.map((item) => item.query),
   });
+
+  const requetesNonTrouvees = Array.from(
+    new Set(
+      [parsed.primary, ...parsed.alternatives]
+        .flatMap((plan) => plan.unmatchedItems.map((item) => item.query.trim()))
+        .filter(Boolean),
+    ),
+  );
+  const resolutions = new Map<string, ProduitRechercheLive[]>();
+  const estCandidatAutomatique = (produit: ProduitRechercheLive) =>
+    produit.raisonsCorrespondance?.some((raison) => raison === 'nom' || raison === 'partiel') === true &&
+    !produit.raisonsCorrespondance?.includes('variante_a_verifier');
+  for (let index = 0; index < requetesNonTrouvees.length; index += 4) {
+    const lot = requetesNonTrouvees.slice(index, index + 4);
+    const resultats = await Promise.allSettled(
+      lot.map(async (requete) => {
+        let produits = await rechercherProduitsLiveDansEnseignes(requete, chains, params.preferences);
+        const requeteSimplifiee = normaliserProduit(requete).join(' ');
+        if (
+          !produits.some(estCandidatAutomatique) &&
+          requeteSimplifiee &&
+          requeteSimplifiee !== requete.toLowerCase()
+        ) {
+          const produitsSimplifies = await rechercherProduitsLiveDansEnseignes(
+            requeteSimplifiee,
+            chains,
+            params.preferences,
+          );
+          produits = [...produits, ...produitsSimplifies];
+        }
+        return { requete, produits };
+      }),
+    );
+    resultats.forEach((resultat) => {
+      if (resultat.status === 'fulfilled') resolutions.set(resultat.value.requete, resultat.value.produits);
+    });
+  }
+
+  const resoudreAutomatiquement = (
+    option: OptionOptimisationCoursesLive,
+  ): OptionOptimisationCoursesLive => {
+    const arrets = option.arrets.map((arret) => ({ ...arret, articles: [...arret.articles] }));
+    const nonResolus: string[] = [];
+    for (const demande of option.articlesNonTrouves) {
+      const enseignesOption = option.strategie === 'single_store'
+        ? new Set(arrets.map((arret) => arret.enseigne))
+        : null;
+      const candidat = (resolutions.get(demande) ?? []).find(
+        (produit) =>
+          (!enseignesOption || enseignesOption.has(produit.enseigne)) &&
+          estCandidatAutomatique(produit),
+      );
+      const besoin = itemsActifs.find(
+        (item) => item.produit.trim().toLowerCase() === demande.trim().toLowerCase(),
+      );
+      if (!candidat || !besoin) {
+        nonResolus.push(demande);
+        continue;
+      }
+      const paquets = calculerPaquets(besoin, candidat.taille);
+      const article: LigneCoursesOptimisee = {
+        produitId: candidat.id,
+        demande,
+        produit: candidat.nom,
+        marque: candidat.marque,
+        format: candidat.format,
+        taillePaquet: candidat.taille,
+        quantite: paquets.nombrePaquets,
+        prixUnitaire: candidat.prix,
+        montant: candidat.prix * paquets.nombrePaquets,
+        besoinQuantite: besoin.quantite,
+        besoinUnite: besoin.unite,
+        nombrePaquets: paquets.nombrePaquets,
+        formatCompatible: paquets.formatCompatible,
+        pertinence: candidat.pertinence,
+        validationRequise: false,
+        selectionAutomatique: true,
+        raisonsCorrespondance: candidat.raisonsCorrespondance,
+        disponibilite: 'resultat_catalogue',
+      };
+      const arret = arrets.find((element) => element.enseigne === candidat.enseigne);
+      if (arret) arret.articles.push(article);
+      else arrets.push({ enseigne: candidat.enseigne, montant: 0, articles: [article] });
+    }
+    return { ...option, arrets, articlesNonTrouves: nonResolus };
+  };
+
   const finaliserTotal = (option: OptionOptimisationCoursesLive): OptionOptimisationCoursesLive => {
     const arrets = option.arrets.map((arret) => {
       const montant = arret.articles.reduce((total, article) => total + article.montant, 0);
@@ -343,9 +446,10 @@ export async function optimiserListeCoursesLive(params: {
     });
     return { ...option, arrets, montantTotal: arrets.reduce((total, arret) => total + arret.montant, 0) };
   };
-  const primaire = finaliserTotal(versOption(parsed.primary));
+  const primaire = finaliserTotal(resoudreAutomatiquement(versOption(parsed.primary)));
   const alternatives = parsed.alternatives
     .map(versOption)
+    .map(resoudreAutomatiquement)
     .map(finaliserTotal)
     .filter(
       (option, index, options) =>

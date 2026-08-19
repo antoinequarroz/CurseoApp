@@ -34,16 +34,14 @@ const base: BrouillonPanierLive = {
 };
 
 describe('reconcilierPanier', () => {
-  it('bloque une correspondance non confirmée et une quantité insuffisante', () => {
+  it('automatise la correspondance et bloque seulement une quantité insuffisante', () => {
     const resultat = reconcilierPanier(base);
     expect(resultat.estPret).toBe(false);
-    expect(resultat.bloquants.map((probleme) => probleme.code)).toEqual([
-      'correspondance_a_valider',
-      'quantite_insuffisante',
-    ]);
+    expect(resultat.bloquants.map((probleme) => probleme.code)).toEqual(['quantite_insuffisante']);
+    expect(resultat.attentions.map((probleme) => probleme.code)).toContain('correspondance_automatique');
   });
 
-  it('distingue les avertissements des points bloquants', () => {
+  it('bloque le checkout si un produit est absent ou non confirmé en ligne', () => {
     const resultat = reconcilierPanier({
       ...base,
       articlesNonTrouves: ['papier cuisson'],
@@ -62,11 +60,11 @@ describe('reconcilierPanier', () => {
         },
       ],
     });
-    expect(resultat.estPret).toBe(true);
-    expect(resultat.attentions.map((probleme) => probleme.code)).toEqual([
-      'format_inconnu',
+    expect(resultat.estPret).toBe(false);
+    expect(resultat.bloquants.map((probleme) => probleme.code)).toEqual([
       'disponibilite_inconnue',
       'produit_introuvable',
     ]);
+    expect(resultat.attentions.map((probleme) => probleme.code)).toEqual(['format_inconnu']);
   });
 });

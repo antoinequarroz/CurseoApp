@@ -11,6 +11,7 @@ import type { Enseigne } from '@/types';
 import type { NiveauCorrespondance } from '@/lib/correspondanceProduit';
 import { calculerPaquets } from '@/lib/correspondanceProduit';
 import type { CommandeDemo } from '@/lib/commandesDemoRepository';
+import type { ResultatLigneRafraichie } from '@/lib/rafraichissementPanier';
 
 export interface LignePanierLive {
   id: string;
@@ -30,6 +31,7 @@ export interface LignePanierLive {
   pertinence?: NiveauCorrespondance;
   validationRequise?: boolean;
   validationUtilisateur?: boolean;
+  selectionAutomatique?: boolean;
   raisonsCorrespondance?: ('nom' | 'partiel' | 'variante_a_verifier')[];
   remplacementDe?: { produit: string; montant: number };
   disponibilite?: 'resultat_catalogue' | 'non_confirmee';
@@ -92,7 +94,10 @@ function versPaniers(option: OptionOptimisationCoursesLive): PanierLive[] {
       formatCompatible: article.formatCompatible,
       pertinence: article.pertinence,
       validationRequise: article.validationRequise,
-      validationUtilisateur: !article.validationRequise,
+      // COUR-91 : la reference vient du catalogue de l'enseigne et est choisie
+      // automatiquement. L'utilisateur valide le panier global, pas chaque SKU.
+      validationUtilisateur: true,
+      selectionAutomatique: article.selectionAutomatique,
       raisonsCorrespondance: article.raisonsCorrespondance,
       disponibilite: article.disponibilite,
     })),
@@ -135,7 +140,7 @@ interface PanierLiveState {
   remplacerArticle: (ligneId: string, produit: ProduitRechercheLive) => void;
   validerCorrespondance: (ligneId: string) => void;
   appliquerRafraichissement: (
-    resultats: { ligneId: string; produit: ProduitRechercheLive | null }[],
+    resultats: ResultatLigneRafraichie[],
     collecteLe: string,
   ) => void;
   reprendreDepuisCommande: (commande: CommandeDemo) => void;
@@ -272,7 +277,7 @@ export const usePanierLiveStore = create<PanierLiveState>()(
       appliquerRafraichissement: (resultats, collecteLe) =>
         set((state) => {
           if (!state.brouillon) return state;
-          const parLigne = new Map(resultats.map((resultat) => [resultat.ligneId, resultat.produit]));
+          const parLigne = new Map(resultats.map((resultat) => [resultat.ligneId, resultat]));
           return {
             brouillon: {
               ...state.brouillon,
@@ -281,17 +286,41 @@ export const usePanierLiveStore = create<PanierLiveState>()(
                 ...panier,
                 articles: panier.articles.map((article) => {
                   if (!parLigne.has(article.id)) return article;
-                  const produit = parLigne.get(article.id);
-                  if (!produit || produit.id !== article.produitId) {
+                  const resultat = parLigne.get(article.id);
+                  const produit = resultat?.produit;
+                  if (!produit) {
                     return { ...article, disponibilite: 'non_confirmee', derniereVerificationLe: collecteLe };
                   }
+                  const paquets = calculerPaquets(
+                    {
+                      quantite: article.besoinQuantite ?? article.quantite,
+                      unite: article.besoinUnite ?? 'piece',
+                    },
+                    produit.taille,
+                  );
                   return {
                     ...article,
+                    produitId: produit.id,
+                    produit: produit.nom,
+                    marque: produit.marque,
+                    format: produit.format,
+                    taillePaquet: produit.taille,
                     prixUnitaire: produit.prix,
+                    quantite: paquets.nombrePaquets,
+                    nombrePaquets: paquets.nombrePaquets,
+                    formatCompatible: paquets.formatCompatible,
                     pertinence: produit.pertinence,
                     validationRequise: produit.validationRequise,
-                    validationUtilisateur: !produit.validationRequise,
+                    validationUtilisateur: true,
+                    selectionAutomatique: true,
                     raisonsCorrespondance: produit.raisonsCorrespondance,
+                    remplacementDe:
+                      resultat.resolution === 'equivalent_automatique'
+                        ? {
+                            produit: article.produit,
+                            montant: Math.round(article.prixUnitaire * article.quantite * 100) / 100,
+                          }
+                        : article.remplacementDe,
                     disponibilite: 'resultat_catalogue',
                     derniereVerificationLe: collecteLe,
                   };

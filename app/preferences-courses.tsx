@@ -13,7 +13,9 @@ import { PREFERENCES_COURSES_DEFAUT } from '@/lib/preferencesCoursesRepository';
 import { t } from '@/lib/i18n';
 import type { CreneauLivraisonPrefere, Enseigne, ModeSubstitution, PreferencesCoursesEnLigne } from '@/types';
 
-const MODES: ModeSubstitution[] = ['demander', 'automatique_equivalent', 'jamais'];
+// Le mode historique « demander » reste accepté en base mais n'est plus
+// proposé : aucun SKU ne doit dépendre d'une sélection manuelle.
+const MODES: ModeSubstitution[] = ['automatique_equivalent', 'jamais'];
 const CRENEAUX: CreneauLivraisonPrefere[] = ['indifferent', 'matin', 'apres_midi', 'soir'];
 const ENSEIGNES: Enseigne[] = ['migros', 'coop', 'aldi', 'lidl', 'ottos'];
 
@@ -114,7 +116,13 @@ export default function PreferencesCourses() {
   const [donneesChargees, setDonneesChargees] = useState(query.data);
   if (query.data && query.data !== donneesChargees) {
     setDonneesChargees(query.data);
-    setFormulaire(query.data);
+    setFormulaire({
+      ...query.data,
+      substitutionMode:
+        query.data.substitutionMode === 'demander'
+          ? 'automatique_equivalent'
+          : query.data.substitutionMode,
+    });
     setMarquesPreferees(query.data.marquesPreferees.join(', '));
     setMarquesRefusees(query.data.marquesRefusees.join(', '));
   }

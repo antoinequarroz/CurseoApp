@@ -2,7 +2,7 @@ import { normaliserProduit } from '@/lib/correspondanceProduit';
 import type { BrouillonPanierLive, LignePanierLive } from '@/stores/panierLiveStore';
 
 export type CodeReconciliation =
-  | 'correspondance_a_valider'
+  | 'correspondance_automatique'
   | 'quantite_insuffisante'
   | 'format_inconnu'
   | 'disponibilite_inconnue'
@@ -39,8 +39,8 @@ export function reconcilierPanier(brouillon: BrouillonPanierLive): Reconciliatio
       if (ligne.validationRequise && !ligne.validationUtilisateur) {
         problemes.push({
           id: `validation:${ligne.id}`,
-          code: 'correspondance_a_valider',
-          severite: 'bloquant',
+          code: 'correspondance_automatique',
+          severite: 'attention',
           ligneId: ligne.id,
           produit: ligne.produit,
         });
@@ -67,7 +67,7 @@ export function reconcilierPanier(brouillon: BrouillonPanierLive): Reconciliatio
         problemes.push({
           id: `disponibilite:${ligne.id}`,
           code: 'disponibilite_inconnue',
-          severite: 'attention',
+          severite: 'bloquant',
           ligneId: ligne.id,
           produit: ligne.produit,
         });
@@ -90,7 +90,7 @@ export function reconcilierPanier(brouillon: BrouillonPanierLive): Reconciliatio
     problemes.push({
       id: `introuvable:${produit}`,
       code: 'produit_introuvable',
-      severite: 'attention',
+      severite: 'bloquant',
       produit,
     });
   }

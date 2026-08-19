@@ -16,7 +16,7 @@ import {
   type OptionOptimisationCoursesLive,
 } from '@/lib/swissGroceriesRepository';
 import { t } from '@/lib/i18n';
-import type { Enseigne, ItemCourse, ModeOptimisation } from '@/types';
+import type { Enseigne, ItemCourse, ModeOptimisation, PreferencesCoursesEnLigne } from '@/types';
 
 const NOM_ENSEIGNE: Record<string, string> = {
   coop: 'Coop',
@@ -30,6 +30,7 @@ interface Props {
   items: ItemCourse[];
   mode: ModeOptimisation;
   enseignesFavorites: Enseigne[];
+  preferences?: PreferencesCoursesEnLigne;
   estStandard: boolean;
   onDebloquer: () => void;
   onPreparerPaniers: (
@@ -43,6 +44,7 @@ export function OptimisationCourses({
   items,
   mode,
   enseignesFavorites,
+  preferences,
   estStandard,
   onDebloquer,
   onPreparerPaniers,
@@ -81,7 +83,7 @@ export function OptimisationCourses({
     setChargement(true);
     setErreur(null);
     try {
-      const data = await optimiserListeCoursesLive({ items, npa, mode, enseignesFavorites });
+      const data = await optimiserListeCoursesLive({ items, npa, mode, enseignesFavorites, preferences });
       setResultat({ data, signature, mode });
     } catch {
       setErreur(
@@ -340,6 +342,9 @@ function ResultatOptimisation({
             {t('courses.optimisation_non_trouves_titre', { count: option.articlesNonTrouves.length })}
           </BodySm>
           <Caption style={{ color: colors.chipTextWarning }}>{option.articlesNonTrouves.join(', ')}</Caption>
+          <Caption style={{ color: colors.chipTextWarning }}>
+            {t('courses.optimisation_non_trouves_description')}
+          </Caption>
         </View>
       ) : null}
 

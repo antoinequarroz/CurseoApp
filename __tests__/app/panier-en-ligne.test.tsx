@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { render, waitFor } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@/lib/theme-context';
 import PanierEnLigne from '@/app/panier-en-ligne';
@@ -65,7 +65,7 @@ describe('Panier en ligne', () => {
     usePanierLiveStore.getState().creerDepuisOptimisation(resultat, option, '1003');
   });
 
-  it('bloque la livraison jusqu à la confirmation d une correspondance incertaine', async () => {
+  it('laisse continuer sans confirmation produit par produit', async () => {
     const ecran = await render(
       <SafeAreaProvider initialMetrics={METRICS}>
         <ThemeProvider>
@@ -74,14 +74,12 @@ describe('Panier en ligne', () => {
       </SafeAreaProvider>,
     );
 
-    expect(
-      ecran.getByRole('button', { name: 'Corrige les points bloquants' }).props.accessibilityState,
-    ).toEqual(expect.objectContaining({ disabled: true }));
-    await fireEvent.press(ecran.getByRole('button', { name: 'Confirmer ce produit' }));
     await waitFor(() =>
       expect(
         ecran.getByRole('button', { name: 'Choisir l’adresse et la livraison' }).props.accessibilityState.disabled,
       ).toBeFalsy(),
     );
+    expect(ecran.queryByText('Confirmer ce produit')).toBeNull();
+    expect(ecran.queryByText('Changer')).toBeNull();
   });
 });

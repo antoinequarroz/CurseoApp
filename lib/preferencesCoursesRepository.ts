@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabase';
 import type { PreferencesCoursesEnLigne } from '@/types';
 
 export const PREFERENCES_COURSES_DEFAUT: PreferencesCoursesEnLigne = {
-  substitutionMode: 'demander',
+  substitutionMode: 'automatique_equivalent',
   variationPrixMaxPct: 10,
   marquesPreferees: [],
   marquesRefusees: [],

@@ -70,7 +70,6 @@ export default function PanierEnLigne() {
   const definirQuantite = usePanierLiveStore((state) => state.definirQuantite);
   const retirerArticle = usePanierLiveStore((state) => state.retirerArticle);
   const appliquerRafraichissement = usePanierLiveStore((state) => state.appliquerRafraichissement);
-  const validerCorrespondance = usePanierLiveStore((state) => state.validerCorrespondance);
   const profil = useProfilStore((state) => state.profil);
   const preferences = usePreferencesCourses(profil?.id);
   const [rafraichissement, setRafraichissement] = useState(false);
@@ -95,7 +94,9 @@ export default function PanierEnLigne() {
     setRafraichissement(true);
     setErreurRafraichissement(false);
     try {
-      const lignes = brouillon.paniers.flatMap((panier) => panier.articles);
+      const lignes = brouillon.paniers.flatMap((panier) =>
+        panier.articles.map((ligne) => ({ ligne, enseigne: panier.enseigne })),
+      );
       const resultat = await rafraichirPrixPanier(lignes, preferences.data);
       appliquerRafraichissement(resultat.resultats, resultat.collecteLe);
     } catch {
@@ -188,13 +189,6 @@ export default function PanierEnLigne() {
             }}
           >
             <BodySm>{t(`checkout.reconciliation_${probleme.code}`, { produit: probleme.produit })}</BodySm>
-            {probleme.code === 'correspondance_a_valider' && probleme.ligneId ? (
-              <Button
-                variant="secondary"
-                label={t('checkout.valider_correspondance')}
-                onPress={() => validerCorrespondance(probleme.ligneId!)}
-              />
-            ) : null}
           </View>
         ))}
       </Card>
@@ -235,6 +229,9 @@ export default function PanierEnLigne() {
                     </Caption>
                   ) : null}
                   <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+                    {article.selectionAutomatique ? (
+                      <Badge label={t('checkout.selection_automatique')} variant="success" />
+                    ) : null}
                     <Badge
                       label={t(`checkout.pertinence_${article.pertinence ?? 'moyenne'}`)}
                       variant={article.validationRequise ? 'warning' : 'neutral'}
@@ -278,21 +275,6 @@ export default function PanierEnLigne() {
                   <Plus size={18} color={colors.primary} accessible={false} />
                 </BoutonIcone>
                 <View style={{ flex: 1 }} />
-                <Pressable
-                  onPress={() =>
-                    router.push({
-                      pathname: '/remplacer-produit',
-                      params: { ligneId: article.id, demande: article.demande },
-                    })
-                  }
-                  accessibilityRole="button"
-                  accessibilityLabel={t('checkout.remplacer_produit', { produit: article.produit })}
-                  style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 10 }}
-                >
-                  <BodySm style={{ color: colors.primary, fontWeight: '700' }}>
-                    {t('checkout.changer')}
-                  </BodySm>
-                </Pressable>
                 <BoutonIcone
                   label={t('checkout.retirer_produit', { produit: article.produit })}
                   onPress={() => retirerArticle(article.id)}
@@ -307,8 +289,9 @@ export default function PanierEnLigne() {
 
       {brouillon.articlesNonTrouves.length > 0 ? (
         <Card style={{ padding: 16, gap: 6 }}>
-          <Badge label={t('checkout.a_choisir_sur_place')} variant="warning" />
+          <Badge label={t('checkout.non_disponibles_en_ligne')} variant="warning" />
           <BodySm>{brouillon.articlesNonTrouves.join(', ')}</BodySm>
+          <Caption>{t('checkout.non_disponibles_description')}</Caption>
         </Card>
       ) : null}
 

@@ -27,6 +27,9 @@ jest.mock('@/hooks/useCoursesSync', () => ({
 }));
 jest.mock('@/hooks/useAbonnement');
 jest.mock('@/hooks/useSwissGroceriesEligibility');
+jest.mock('@/hooks/usePreferencesCourses', () => ({
+  usePreferencesCourses: () => ({ data: undefined }),
+}));
 jest.mock('@/lib/toast', () => ({ toast: { succes: jest.fn(), erreur: jest.fn(), economies: jest.fn() } }));
 jest.mock('@/lib/supabase', () => ({
   supabase: { from: jest.fn(() => ({ insert: jest.fn().mockResolvedValue({ error: null }) })) },

@@ -123,7 +123,7 @@ describe('panierLiveStore', () => {
     expect(totalLivraisons(usePanierLiveStore.getState().brouillon!)).toBe(7.9);
   });
 
-  it('actualise seulement le même produit et conserve le choix sinon', () => {
+  it('remplace automatiquement une référence disparue par un équivalent résolu', () => {
     usePanierLiveStore.getState().creerDepuisOptimisation(resultat, option, '1003');
     const ligne = usePanierLiveStore.getState().brouillon!.paniers[0]!.articles[0]!;
     usePanierLiveStore.getState().appliquerRafraichissement(
@@ -138,13 +138,28 @@ describe('panierLiveStore', () => {
             pertinence: 'moyenne',
             validationRequise: false,
           },
+          resolution: 'equivalent_automatique',
         },
       ],
       '2026-08-19T11:00:00.000Z',
     );
-    const conservee = usePanierLiveStore.getState().brouillon!.paniers[0]!.articles[0]!;
-    expect(conservee.produitId).toBe('pomme-1');
-    expect(conservee.prixUnitaire).toBe(5);
-    expect(conservee.disponibilite).toBe('non_confirmee');
+    const remplacee = usePanierLiveStore.getState().brouillon!.paniers[0]!.articles[0]!;
+    expect(remplacee.produitId).toBe('autre-produit');
+    expect(remplacee.prixUnitaire).toBe(1);
+    expect(remplacee.disponibilite).toBe('resultat_catalogue');
+    expect(remplacee.selectionAutomatique).toBe(true);
+    expect(remplacee.remplacementDe?.produit).toBe('Pommes Gala');
+  });
+
+  it('bloque la disponibilité quand aucun équivalent fiable n existe', () => {
+    usePanierLiveStore.getState().creerDepuisOptimisation(resultat, option, '1003');
+    const ligne = usePanierLiveStore.getState().brouillon!.paniers[0]!.articles[0]!;
+    usePanierLiveStore.getState().appliquerRafraichissement(
+      [{ ligneId: ligne.id, produit: null, resolution: 'indisponible' }],
+      '2026-08-19T11:00:00.000Z',
+    );
+    expect(usePanierLiveStore.getState().brouillon!.paniers[0]!.articles[0]!.disponibilite).toBe(
+      'non_confirmee',
+    );
   });
 });
