@@ -14,6 +14,7 @@ import { formatPrix } from '@/lib/format';
 import { t } from '@/lib/i18n';
 import { useProfilStore } from '@/stores/profilStore';
 import { fetchCommandeDemo } from '@/lib/commandesDemoRepository';
+import { dates } from '@/lib/dates';
 
 const NOMS_ENSEIGNES: Record<string, string> = {
   migros: 'Migros',
@@ -42,11 +43,13 @@ export default function CommandeDemo() {
       articles: panier.articles,
       montant: panier.montant,
       referenceSimulation: panier.referenceSimulation,
+      creneau: commande.livraisons.find((livraison) => livraison.enseigne === panier.enseigne)?.creneau,
     })) ??
     brouillon?.paniers.map((panier) => ({
       ...panier,
       montant: sousTotalPanier(panier),
       referenceSimulation: undefined,
+      creneau: brouillon.livraisons.find((livraison) => livraison.enseigne === panier.enseigne)?.creneau,
     })) ??
     [];
 
@@ -93,6 +96,13 @@ export default function CommandeDemo() {
             <BodySm>{formatPrix(panier.montant)}</BodySm>
           </View>
           <Caption>{t('checkout.articles_count', { count: panier.articles.length })}</Caption>
+          {panier.creneau ? (
+            <Caption>
+              {t('checkout.creneau_confirme', {
+                date: dates.formatDateHeureCourte(new Date(panier.creneau.debut)),
+              })}
+            </Caption>
+          ) : null}
           {panier.referenceSimulation ? <Caption selectable>{panier.referenceSimulation}</Caption> : null}
           <BodySm style={{ color: colors.chipTextWarning }}>{t('checkout.non_transmise')}</BodySm>
         </Card>

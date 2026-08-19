@@ -25,6 +25,12 @@ marchande. L'application affiche sa fraîcheur et exige une confirmation
 explicite avant de poursuivre avec une observation ancienne. Une actualisation
 ne remplace jamais silencieusement le produit choisi par un autre résultat.
 
+Avant le checkout, une réconciliation locale distingue les blocages qui exigent
+une décision humaine (correspondance incertaine, quantité insuffisante) des
+simples avertissements (format, disponibilité, doublon, produit introuvable).
+Les substitutions passent par un écran de comparaison explicite. Les créneaux
+sont générés localement et restent marqués simulés dans tout l'instantané.
+
 ## Raisons
 
 - démontrer toute l'expérience sans prétendre commander chez une enseigne ;

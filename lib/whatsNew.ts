@@ -18,23 +18,50 @@ export interface Release {
 // Ordre du plus recent au plus ancien — RELEASES[0] est toujours la derniere version.
 export const RELEASES: Release[] = [
   {
+    version: '1.0.1',
+    date: '2026-08-19',
+    nouveautes: [
+      {
+        emoji: '✅',
+        titre: 'Panier mieux vérifié',
+        description:
+          'CoursIA signale les quantités insuffisantes et te demande de confirmer les correspondances incertaines.',
+      },
+      {
+        emoji: '🔄',
+        titre: 'Remplacements transparents',
+        description:
+          'Compare le produit actuel, le prix et le nombre de paquets avant de confirmer un remplacement.',
+      },
+      {
+        emoji: '🚚',
+        titre: 'Créneaux de démonstration',
+        description:
+          'Choisis un créneau simulé pour chaque enseigne. Aucune commande réelle n’est transmise.',
+      },
+    ],
+  },
+  {
     version: '1.0.0',
     date: '2026-07-15',
     nouveautes: [
       {
         emoji: '🍽️',
         titre: 'Swipe de recettes',
-        description: "Decouvrez des recettes en un swipe et construisez votre planning de la semaine sans effort.",
+        description:
+          'Decouvrez des recettes en un swipe et construisez votre planning de la semaine sans effort.',
       },
       {
         emoji: '🛒',
         titre: 'Liste de courses automatique',
-        description: 'Votre planning genere une liste de courses classee par rayon, synchronisee meme hors ligne.',
+        description:
+          'Votre planning genere une liste de courses classee par rayon, synchronisee meme hors ligne.',
       },
       {
         emoji: '💰',
         titre: 'Comparateur de prix',
-        description: 'Comparez les prix entre enseignes et repérez les meilleures promotions avant de valider votre panier.',
+        description:
+          'Comparez les prix entre enseignes et repérez les meilleures promotions avant de valider votre panier.',
       },
     ],
   },
@@ -58,7 +85,8 @@ export function getCurrentVersion(): string {
 
 export function useWhatsNew() {
   const currentVersion = getCurrentVersion();
-  const currentRelease = RELEASES.find((release) => release.version === currentVersion) ?? RELEASES[0] ?? null;
+  const currentRelease =
+    RELEASES.find((release) => release.version === currentVersion) ?? RELEASES[0] ?? null;
 
   const [lastSeenVersion, setLastSeenVersion] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);

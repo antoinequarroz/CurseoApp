@@ -19,6 +19,7 @@ export interface LignePanierLive {
   produit: string;
   marque?: string;
   format?: string;
+  taillePaquet?: { value: number; unit: string };
   quantite: number;
   prixUnitaire: number;
   urlProduit?: string;
@@ -28,6 +29,9 @@ export interface LignePanierLive {
   formatCompatible?: boolean;
   pertinence?: NiveauCorrespondance;
   validationRequise?: boolean;
+  validationUtilisateur?: boolean;
+  raisonsCorrespondance?: ('nom' | 'partiel' | 'variante_a_verifier')[];
+  remplacementDe?: { produit: string; montant: number };
   disponibilite?: 'resultat_catalogue' | 'non_confirmee';
   derniereVerificationLe?: string;
 }
@@ -43,6 +47,14 @@ export interface LivraisonDemo {
   id: string;
   libelle: string;
   prix: number;
+  creneau?: CreneauLivraisonDemo;
+}
+
+export interface CreneauLivraisonDemo {
+  id: string;
+  debut: string;
+  fin: string;
+  periode: 'matin' | 'apres_midi' | 'soir';
 }
 
 export interface BrouillonPanierLive {
@@ -70,6 +82,7 @@ function versPaniers(option: OptionOptimisationCoursesLive): PanierLive[] {
       produit: article.produit,
       marque: article.marque,
       format: article.format,
+      taillePaquet: article.taillePaquet,
       quantite: article.quantite,
       prixUnitaire: article.prixUnitaire,
       urlProduit: article.urlProduit,
@@ -79,6 +92,8 @@ function versPaniers(option: OptionOptimisationCoursesLive): PanierLive[] {
       formatCompatible: article.formatCompatible,
       pertinence: article.pertinence,
       validationRequise: article.validationRequise,
+      validationUtilisateur: !article.validationRequise,
+      raisonsCorrespondance: article.raisonsCorrespondance,
       disponibilite: article.disponibilite,
     })),
   }));
@@ -96,6 +111,18 @@ export function totalLivraisons(brouillon: BrouillonPanierLive): number {
   return brouillon.livraisons.reduce((total, livraison) => total + livraison.prix, 0);
 }
 
+export function trouverLignePanier(
+  brouillon: BrouillonPanierLive | null,
+  ligneId: string | undefined,
+): { ligne: LignePanierLive; enseigne: Enseigne } | null {
+  if (!brouillon || !ligneId) return null;
+  for (const panier of brouillon.paniers) {
+    const ligne = panier.articles.find((article) => article.id === ligneId);
+    if (ligne) return { ligne, enseigne: panier.enseigne };
+  }
+  return null;
+}
+
 interface PanierLiveState {
   brouillon: BrouillonPanierLive | null;
   creerDepuisOptimisation: (
@@ -106,6 +133,7 @@ interface PanierLiveState {
   definirQuantite: (ligneId: string, quantite: number) => void;
   retirerArticle: (ligneId: string) => void;
   remplacerArticle: (ligneId: string, produit: ProduitRechercheLive) => void;
+  validerCorrespondance: (ligneId: string) => void;
   appliquerRafraichissement: (
     resultats: { ligneId: string; produit: ProduitRechercheLive | null }[],
     collecteLe: string,
@@ -197,11 +225,20 @@ export const usePanierLiveStore = create<PanierLiveState>()(
             produit: produit.nom,
             marque: produit.marque,
             format: produit.format,
+            taillePaquet: produit.taille,
             prixUnitaire: produit.prix,
             quantite: paquets.nombrePaquets,
             urlProduit: undefined,
             pertinence: produit.pertinence,
             validationRequise: produit.validationRequise,
+            // Le remplacement est appliqué uniquement après le bouton de confirmation
+            // dédié : cette action vaut validation explicite de la correspondance choisie.
+            validationUtilisateur: true,
+            raisonsCorrespondance: produit.raisonsCorrespondance,
+            remplacementDe: {
+              produit: ligneSource.produit,
+              montant: Math.round(ligneSource.prixUnitaire * ligneSource.quantite * 100) / 100,
+            },
             disponibilite: 'resultat_catalogue',
             nombrePaquets: paquets.nombrePaquets,
             formatCompatible: paquets.formatCompatible,
@@ -216,6 +253,21 @@ export const usePanierLiveStore = create<PanierLiveState>()(
               )
             : [...sansSource, { enseigne: produit.enseigne, articles: [remplacee] }];
           return { brouillon: { ...state.brouillon, paniers, livraisons: [] } };
+        }),
+      validerCorrespondance: (ligneId) =>
+        set((state) => {
+          if (!state.brouillon) return state;
+          return {
+            brouillon: {
+              ...state.brouillon,
+              paniers: state.brouillon.paniers.map((panier) => ({
+                ...panier,
+                articles: panier.articles.map((article) =>
+                  article.id === ligneId ? { ...article, validationUtilisateur: true } : article,
+                ),
+              })),
+            },
+          };
         }),
       appliquerRafraichissement: (resultats, collecteLe) =>
         set((state) => {
@@ -238,6 +290,8 @@ export const usePanierLiveStore = create<PanierLiveState>()(
                     prixUnitaire: produit.prix,
                     pertinence: produit.pertinence,
                     validationRequise: produit.validationRequise,
+                    validationUtilisateur: !produit.validationRequise,
+                    raisonsCorrespondance: produit.raisonsCorrespondance,
                     disponibilite: 'resultat_catalogue',
                     derniereVerificationLe: collecteLe,
                   };

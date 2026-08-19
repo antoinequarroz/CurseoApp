@@ -18,7 +18,7 @@ const config: ExpoConfig = {
   // credentials App Store Connect deja enregistres.
   name: 'CoursIA',
   slug: 'courseo',
-  version: '1.0.0',
+  version: '1.0.1',
   orientation: 'portrait', // Une app de courses ne beneficie pas du paysage
   icon: './assets/icon.png',
   scheme: 'courseo', // courseo://recette/123
@@ -30,7 +30,7 @@ const config: ExpoConfig = {
     // prebuild (retombee sur le fallback 'development'), causant un mismatch
     // avec le profil de provisioning App Store lors de la signature.
     bundleIdentifier: 'ch.courseo.app',
-    buildNumber: '20',
+    buildNumber: '21',
     supportsTablet: false, // MVP telephone uniquement
     requireFullScreen: true,
     infoPlist: {

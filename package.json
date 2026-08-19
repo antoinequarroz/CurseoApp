@@ -1,6 +1,6 @@
 {
   "name": "coursia",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "expo-router/entry",
   "engines": {
     "node": ">=22.0.0"

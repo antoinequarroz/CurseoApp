@@ -3,17 +3,40 @@ import type { ItemCourse, PreferencesCoursesEnLigne } from '@/types';
 export type NiveauCorrespondance = 'forte' | 'moyenne' | 'faible';
 
 const MOTS_VIDES = new Set(['de', 'du', 'des', 'la', 'le', 'les', 'un', 'une', 'avec', 'sans']);
+const SYNONYMES = new Map<string, string>([
+  ['zucchini', 'courgette'],
+  ['courgettes', 'courgette'],
+  ['aubergines', 'aubergine'],
+  ['tomates', 'tomate'],
+  ['pommes', 'pomme'],
+  ['bananes', 'banane'],
+  ['oeufs', 'oeuf'],
+  ['œufs', 'oeuf'],
+  ['yogourt', 'yaourt'],
+  ['yogourts', 'yaourt'],
+  ['yaourts', 'yaourt'],
+  ['spaghettis', 'spaghetti'],
+  ['pois-chiches', 'pois_chiche'],
+  ['pois-chiche', 'pois_chiche'],
+  ['chickpeas', 'pois_chiche'],
+]);
+const QUALIFICATIFS_EXCLUSIFS = [
+  ['entier', 'ecreme'],
+  ['entier', 'demi-ecreme'],
+  ['sale', 'doux'],
+] as const;
 
-function normaliser(texte: string): string[] {
+export function normaliserProduit(texte: string): string[] {
   return texte
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/œ/g, 'oe')
+    .replace(/[^a-z0-9-]+/g, ' ')
     .trim()
     .split(/\s+/)
     .filter((mot) => mot.length > 1 && !MOTS_VIDES.has(mot))
-    .map((mot) => (mot.length > 4 && mot.endsWith('s') ? mot.slice(0, -1) : mot));
+    .map((mot) => SYNONYMES.get(mot) ?? (mot.length > 4 && mot.endsWith('s') ? mot.slice(0, -1) : mot));
 }
 
 export function evaluerCorrespondance(
@@ -24,13 +47,24 @@ export function evaluerCorrespondance(
   score: number;
   niveau: NiveauCorrespondance;
   validationRequise: boolean;
+  raisons: ('nom' | 'partiel' | 'variante_a_verifier')[];
 } {
-  const demandes = normaliser(demande);
-  const candidats = new Set(normaliser(`${produit} ${marque ?? ''}`));
+  const demandes = normaliserProduit(demande);
+  const candidatsListe = normaliserProduit(`${produit} ${marque ?? ''}`);
+  const candidats = new Set(candidatsListe);
   const correspondances = demandes.filter((mot) => candidats.has(mot)).length;
-  const score = demandes.length === 0 ? 0 : correspondances / demandes.length;
+  const conflit = QUALIFICATIFS_EXCLUSIFS.some(
+    ([a, b]) => (demandes.includes(a) && candidats.has(b)) || (demandes.includes(b) && candidats.has(a)),
+  );
+  const couverture = demandes.length === 0 ? 0 : correspondances / demandes.length;
+  const precision = candidatsListe.length === 0 ? 0 : correspondances / candidatsListe.length;
+  const score = Math.max(0, Math.min(1, couverture * 0.8 + precision * 0.2 - (conflit ? 0.45 : 0)));
   const niveau: NiveauCorrespondance = score >= 0.75 ? 'forte' : score >= 0.4 ? 'moyenne' : 'faible';
-  return { score, niveau, validationRequise: niveau === 'faible' };
+  const raisons: ('nom' | 'partiel' | 'variante_a_verifier')[] = [];
+  if (couverture === 1 && !conflit) raisons.push('nom');
+  else if (correspondances > 0) raisons.push('partiel');
+  if (conflit) raisons.push('variante_a_verifier');
+  return { score, niveau, validationRequise: niveau === 'faible' || conflit, raisons };
 }
 
 const FACTEURS: Record<string, { famille: 'masse' | 'volume' | 'piece'; facteur: number }> = {
@@ -60,6 +94,43 @@ export function calculerPaquets(
   const quantiteBesoin = item.quantite * besoin.facteur;
   const quantitePaquet = format!.value * paquet.facteur;
   return { nombrePaquets: Math.max(1, Math.ceil(quantiteBesoin / quantitePaquet)), formatCompatible: true };
+}
+
+export interface ComparaisonSubstitution {
+  nombrePaquets: number;
+  formatCompatible: boolean;
+  ancienMontant: number;
+  nouveauMontant: number;
+  ecartMontant: number;
+  changeEnseigne: boolean;
+}
+
+export function comparerSubstitution(
+  ligne: {
+    quantite: number;
+    prixUnitaire: number;
+    besoinQuantite?: number;
+    besoinUnite?: string;
+    enseigne?: string;
+  },
+  produit: { prix: number; taille?: { value: number; unit: string }; enseigne: string },
+): ComparaisonSubstitution {
+  const paquets = calculerPaquets(
+    {
+      quantite: ligne.besoinQuantite ?? ligne.quantite,
+      unite: ligne.besoinUnite ?? 'piece',
+    },
+    produit.taille,
+  );
+  const ancienMontant = Math.round(ligne.prixUnitaire * ligne.quantite * 100) / 100;
+  const nouveauMontant = Math.round(produit.prix * paquets.nombrePaquets * 100) / 100;
+  return {
+    ...paquets,
+    ancienMontant,
+    nouveauMontant,
+    ecartMontant: Math.round((nouveauMontant - ancienMontant) * 100) / 100,
+    changeEnseigne: Boolean(ligne.enseigne && ligne.enseigne !== produit.enseigne),
+  };
 }
 
 export function classerSelonPreferences<T extends { marque?: string; prix: number }>(

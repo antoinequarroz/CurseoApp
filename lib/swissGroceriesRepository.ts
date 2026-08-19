@@ -46,6 +46,7 @@ export interface ProduitRechercheLive {
   prix: number;
   pertinence: NiveauCorrespondance;
   validationRequise: boolean;
+  raisonsCorrespondance?: ('nom' | 'partiel' | 'variante_a_verifier')[];
 }
 
 const EligibiliteSchema = z.object({ eligible: z.boolean() });
@@ -112,6 +113,7 @@ export interface LigneCoursesOptimisee {
   produit: string;
   marque?: string;
   format?: string;
+  taillePaquet?: { value: number; unit: string };
   quantite: number;
   prixUnitaire: number;
   montant: number;
@@ -122,6 +124,7 @@ export interface LigneCoursesOptimisee {
   formatCompatible: boolean;
   pertinence: NiveauCorrespondance;
   validationRequise: boolean;
+  raisonsCorrespondance?: ('nom' | 'partiel' | 'variante_a_verifier')[];
   disponibilite: 'resultat_catalogue';
 }
 
@@ -182,6 +185,7 @@ export async function rechercherProduitsLive(
                 prix: produit.price.current,
                 pertinence: correspondance.niveau,
                 validationRequise: correspondance.validationRequise,
+                raisonsCorrespondance: correspondance.raisons,
               };
             })(),
           ]
@@ -314,6 +318,7 @@ export async function optimiserListeCoursesLive(params: {
           produit: ligne.matched.name,
           marque: ligne.matched.brand,
           format: formatTaille(ligne.matched.size),
+          taillePaquet: ligne.matched.size,
           quantite,
           prixUnitaire: ligne.matched.price.current,
           montant: ligne.matched.price.current * quantite,
@@ -324,6 +329,7 @@ export async function optimiserListeCoursesLive(params: {
           formatCompatible: paquets.formatCompatible,
           pertinence: correspondance.niveau,
           validationRequise: correspondance.validationRequise,
+          raisonsCorrespondance: correspondance.raisons,
           disponibilite: 'resultat_catalogue' as const,
         };
       }),

@@ -1,4 +1,10 @@
-import { calculerPaquets, classerSelonPreferences, evaluerCorrespondance } from '@/lib/correspondanceProduit';
+import {
+  calculerPaquets,
+  classerSelonPreferences,
+  comparerSubstitution,
+  evaluerCorrespondance,
+  normaliserProduit,
+} from '@/lib/correspondanceProduit';
 import { PREFERENCES_COURSES_DEFAUT } from '@/lib/preferencesCoursesRepository';
 
 describe('correspondanceProduit', () => {
@@ -14,6 +20,35 @@ describe('correspondanceProduit', () => {
     expect(evaluerCorrespondance('lait entier', 'Boisson avoine')).toMatchObject({
       niveau: 'faible',
       validationRequise: true,
+    });
+  });
+
+  it('normalise des synonymes sûrs mais signale les variantes contradictoires', () => {
+    expect(normaliserProduit('Œufs frais')).toEqual(['oeuf', 'frai']);
+    expect(evaluerCorrespondance('courgettes', 'Zucchini suisse')).toMatchObject({
+      niveau: 'forte',
+      validationRequise: false,
+    });
+    expect(evaluerCorrespondance('lait entier', 'Lait écrémé')).toMatchObject({
+      niveau: 'faible',
+      validationRequise: true,
+      raisons: expect.arrayContaining(['variante_a_verifier']),
+    });
+  });
+
+  it('compare le vrai coût et le nombre de paquets avant une substitution', () => {
+    expect(
+      comparerSubstitution(
+        { quantite: 1, prixUnitaire: 3, besoinQuantite: 1500, besoinUnite: 'g', enseigne: 'migros' },
+        { prix: 2.5, taille: { value: 1, unit: 'kg' }, enseigne: 'coop' },
+      ),
+    ).toEqual({
+      nombrePaquets: 2,
+      formatCompatible: true,
+      ancienMontant: 3,
+      nouveauMontant: 5,
+      ecartMontant: 2,
+      changeEnseigne: true,
     });
   });
 

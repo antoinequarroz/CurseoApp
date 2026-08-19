@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { AlertTriangle, Minus, Plus, ShoppingBasket, Trash2 } from 'lucide-react-native';
+import {
+  AlertCircle,
+  AlertTriangle,
+  CheckCircle2,
+  Minus,
+  Plus,
+  ShoppingBasket,
+  Trash2,
+} from 'lucide-react-native';
 import { router } from 'expo-router';
 import { ScreenScroll } from '@/components/ui/Screen';
 import { Card } from '@/components/ui/Card';
@@ -17,6 +25,7 @@ import { usePreferencesCourses } from '@/hooks/usePreferencesCourses';
 import { useProfilStore } from '@/stores/profilStore';
 import { t } from '@/lib/i18n';
 import { sousTotalPanier, totalProduits, usePanierLiveStore } from '@/stores/panierLiveStore';
+import { reconcilierPanier } from '@/lib/reconciliationPanier';
 
 const NOMS_ENSEIGNES: Record<string, string> = {
   migros: 'Migros',
@@ -61,6 +70,7 @@ export default function PanierEnLigne() {
   const definirQuantite = usePanierLiveStore((state) => state.definirQuantite);
   const retirerArticle = usePanierLiveStore((state) => state.retirerArticle);
   const appliquerRafraichissement = usePanierLiveStore((state) => state.appliquerRafraichissement);
+  const validerCorrespondance = usePanierLiveStore((state) => state.validerCorrespondance);
   const profil = useProfilStore((state) => state.profil);
   const preferences = usePreferencesCourses(profil?.id);
   const [rafraichissement, setRafraichissement] = useState(false);
@@ -80,6 +90,7 @@ export default function PanierEnLigne() {
   }
 
   const fraicheur = evaluerFraicheurPrix(brouillon.collecteLe);
+  const reconciliation = reconcilierPanier(brouillon);
   const actualiser = async () => {
     setRafraichissement(true);
     setErreurRafraichissement(false);
@@ -143,6 +154,49 @@ export default function PanierEnLigne() {
             {t('checkout.actualisation_erreur')}
           </BodySm>
         ) : null}
+      </Card>
+
+      <Card style={{ padding: 18, gap: 12 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          {reconciliation.estPret ? (
+            <CheckCircle2 size={21} color={colors.success} accessible={false} />
+          ) : (
+            <AlertCircle size={21} color={colors.error} accessible={false} />
+          )}
+          <View style={{ flex: 1 }}>
+            <Heading>
+              {reconciliation.estPret
+                ? t('checkout.reconciliation_prete')
+                : t('checkout.reconciliation_a_corriger')}
+            </Heading>
+            <Caption>
+              {t('checkout.reconciliation_resume', {
+                bloquants: reconciliation.bloquants.length,
+                attentions: reconciliation.attentions.length,
+              })}
+            </Caption>
+          </View>
+        </View>
+        {reconciliation.problemes.map((probleme) => (
+          <View
+            key={probleme.id}
+            style={{
+              gap: 8,
+              padding: 12,
+              borderRadius: 14,
+              backgroundColor: probleme.severite === 'bloquant' ? colors.swipePass : colors.warningBg,
+            }}
+          >
+            <BodySm>{t(`checkout.reconciliation_${probleme.code}`, { produit: probleme.produit })}</BodySm>
+            {probleme.code === 'correspondance_a_valider' && probleme.ligneId ? (
+              <Button
+                variant="secondary"
+                label={t('checkout.valider_correspondance')}
+                onPress={() => validerCorrespondance(probleme.ligneId!)}
+              />
+            ) : null}
+          </View>
+        ))}
       </Card>
 
       {brouillon.paniers.map((panier) => (
@@ -266,7 +320,13 @@ export default function PanierEnLigne() {
         <Caption>{t('checkout.livraison_ajoutee_apres')}</Caption>
       </Card>
 
-      <Button label={t('checkout.choisir_livraison')} onPress={() => router.push('/checkout-demo')} />
+      <Button
+        label={
+          reconciliation.estPret ? t('checkout.choisir_livraison') : t('checkout.corriger_avant_livraison')
+        }
+        disabled={!reconciliation.estPret}
+        onPress={() => router.push('/checkout-demo')}
+      />
     </ScreenScroll>
   );
 }
