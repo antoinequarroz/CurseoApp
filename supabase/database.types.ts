@@ -636,6 +636,63 @@ export type Database = {
           },
         ];
       };
+      preferences_courses_en_ligne: {
+        Row: {
+          creneau_prefere: string;
+          enseignes_autorisees: string[];
+          frais_livraison_max: number;
+          instructions_livraison: string;
+          livraison_sans_contact: boolean;
+          marques_preferees: string[];
+          marques_refusees: string[];
+          profil_id: string;
+          substitution_mode: string;
+          updated_at: string;
+          variation_prix_max_pct: number;
+        };
+        Insert: {
+          creneau_prefere?: string;
+          enseignes_autorisees?: string[];
+          frais_livraison_max?: number;
+          instructions_livraison?: string;
+          livraison_sans_contact?: boolean;
+          marques_preferees?: string[];
+          marques_refusees?: string[];
+          profil_id: string;
+          substitution_mode?: string;
+          updated_at?: string;
+          variation_prix_max_pct?: number;
+        };
+        Update: {
+          creneau_prefere?: string;
+          enseignes_autorisees?: string[];
+          frais_livraison_max?: number;
+          instructions_livraison?: string;
+          livraison_sans_contact?: boolean;
+          marques_preferees?: string[];
+          marques_refusees?: string[];
+          profil_id?: string;
+          substitution_mode?: string;
+          updated_at?: string;
+          variation_prix_max_pct?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'preferences_courses_en_ligne_profil_id_fkey';
+            columns: ['profil_id'];
+            isOneToOne: true;
+            referencedRelation: 'profils';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'preferences_courses_en_ligne_profil_id_fkey';
+            columns: ['profil_id'];
+            isOneToOne: true;
+            referencedRelation: 'profils_actifs';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       prix_historique: {
         Row: {
           collecte_le: string;

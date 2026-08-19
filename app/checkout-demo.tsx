@@ -14,6 +14,10 @@ import { genererLivraisonsDemo } from '@/lib/livraisonsDemo';
 import { enregistrerCommandeDemo } from '@/lib/commandesDemoRepository';
 import { formatPrix } from '@/lib/format';
 import { t } from '@/lib/i18n';
+import { usePreferencesCourses } from '@/hooks/usePreferencesCourses';
+import { PREFERENCES_COURSES_DEFAUT } from '@/lib/preferencesCoursesRepository';
+import { orchestrerCommandeDemo } from '@/lib/orchestrateurCommandeDemo';
+import { evaluerFraicheurPrix } from '@/lib/fiabilitePrix';
 
 export default function CheckoutDemo() {
   const { colors } = useTheme();
@@ -23,7 +27,9 @@ export default function CheckoutDemo() {
   const definirLivraisons = usePanierLiveStore((state) => state.definirLivraisons);
   const definirPaiementEnCours = usePanierLiveStore((state) => state.definirPaiementEnCours);
   const { adresses, isLoading, isError, refetch } = useAdresses(profil?.id);
+  const preferencesQuery = usePreferencesCourses(profil?.id);
   const [erreur, setErreur] = useState<string | null>(null);
+  const [prixAnciensConfirmes, setPrixAnciensConfirmes] = useState(false);
 
   if (!profil || !brouillon) {
     return (
@@ -41,10 +47,16 @@ export default function CheckoutDemo() {
   const livraisons = genererLivraisonsDemo(brouillon);
   const fraisLivraison = livraisons.reduce((total, livraison) => total + livraison.prix, 0);
   const montantTotal = totalProduits(brouillon) + fraisLivraison;
+  const prixAnciens = evaluerFraicheurPrix(brouillon.collecteLe).statut === 'ancien';
 
   const simulerPaiement = async () => {
     if (!adresseSelectionnee) {
       setErreur(t('checkout.choisir_adresse_erreur'));
+      return;
+    }
+    if (prixAnciens && !prixAnciensConfirmes) {
+      setPrixAnciensConfirmes(true);
+      setErreur(t('checkout.confirmer_prix_anciens'));
       return;
     }
     if (brouillon.paiementEnCours) return;
@@ -53,11 +65,23 @@ export default function CheckoutDemo() {
     definirPaiementEnCours(true);
     setErreur(null);
     try {
+      const preferences = preferencesQuery.data ?? PREFERENCES_COURSES_DEFAUT;
+      const orchestration = orchestrerCommandeDemo(
+        { ...brouillon, adresseId: adresseSelectionnee.id, livraisons },
+        livraisons,
+        preferences,
+      );
+      if (orchestration.echecs.length > 0) {
+        setErreur(t('checkout.simulation_marchand_erreur'));
+        definirPaiementEnCours(false);
+        return;
+      }
       const confirmation = await enregistrerCommandeDemo({
         profilId: profil.id,
         brouillon: { ...brouillon, adresseId: adresseSelectionnee.id, livraisons },
         adresse: adresseSelectionnee,
         livraisons,
+        confirmations: orchestration.confirmations,
       });
       router.replace({
         pathname: '/commande-demo',
@@ -150,6 +174,35 @@ export default function CheckoutDemo() {
         })}
       </View>
 
+      {preferencesQuery.data ? (
+        <Card style={{ padding: 16, gap: 6 }}>
+          <Heading>{t('checkout.preferences_resume')}</Heading>
+          <BodySm>{t(`preferences_courses.creneau_option.${preferencesQuery.data.creneauPrefere}`)}</BodySm>
+          <Caption>
+            {preferencesQuery.data.livraisonSansContact
+              ? t('preferences_courses.sans_contact_actif')
+              : t('preferences_courses.sans_contact_inactif')}
+          </Caption>
+          <Caption>{t('preferences_courses.non_transmises')}</Caption>
+        </Card>
+      ) : null}
+
+      {fraisLivraison > (preferencesQuery.data?.fraisLivraisonMax ?? Infinity) ? (
+        <BodySm accessibilityRole="alert" style={{ color: colors.error }}>
+          {t('checkout.frais_depasse_preferences')}
+        </BodySm>
+      ) : null}
+
+      {prixAnciens ? (
+        <View
+          accessibilityRole="alert"
+          style={{ padding: 14, borderRadius: 16, backgroundColor: colors.warningBg, gap: 4 }}
+        >
+          <BodySm style={{ color: colors.chipTextWarning }}>{t('checkout.prix_anciens_titre')}</BodySm>
+          <Caption style={{ color: colors.chipTextWarning }}>{t('checkout.prix_anciens_aide')}</Caption>
+        </View>
+      ) : null}
+
       <View style={{ gap: 10 }}>
         <Heading>{t('checkout.livraison_titre')}</Heading>
         {livraisons.map((livraison) => (
@@ -190,10 +243,14 @@ export default function CheckoutDemo() {
       ) : null}
 
       <Button
-        label={t('checkout.simuler_paiement', { montant: formatPrix(montantTotal) })}
+        label={
+          prixAnciens && prixAnciensConfirmes
+            ? t('checkout.continuer_prix_anciens')
+            : t('checkout.executer_simulation', { montant: formatPrix(montantTotal) })
+        }
         onPress={() => void simulerPaiement()}
         loading={brouillon.paiementEnCours}
-        accessibilityHint={t('checkout.simuler_paiement_hint')}
+        accessibilityHint={t('checkout.executer_simulation_hint')}
       />
     </ScreenScroll>
   );

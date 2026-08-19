@@ -4,7 +4,8 @@
  * etre typee ici — zero `any` toilere dans le reste du code.
  */
 
-export type Regime = 'vegetarien' | 'vegan' | 'halal' | 'sans_gluten' | 'sans_lactose' | 'sans_noix' | 'poisson';
+export type Regime =
+  'vegetarien' | 'vegan' | 'halal' | 'sans_gluten' | 'sans_lactose' | 'sans_noix' | 'poisson';
 export type EquipementCuisine =
   | 'plaques_cuisson'
   | 'four'
@@ -25,6 +26,8 @@ export type Objectif =
   | 'reduire_gaspillage';
 export type Enseigne = 'coop' | 'migros' | 'lidl' | 'aldi' | 'ottos' | 'manor_food';
 export type ModeOptimisation = 'prix_minimum' | 'equilibre' | 'premium' | 'bio' | 'sante';
+export type ModeSubstitution = 'demander' | 'automatique_equivalent' | 'jamais';
+export type CreneauLivraisonPrefere = 'indifferent' | 'matin' | 'apres_midi' | 'soir';
 export type NiveauAbonnement = 'gratuit' | 'standard' | 'premium' | 'famille';
 export type Difficulte = 'facile' | 'moyen' | 'difficile';
 export type Rayon =
@@ -100,6 +103,18 @@ export interface AdresseLivraison {
   estDefaut: boolean;
 }
 
+export interface PreferencesCoursesEnLigne {
+  substitutionMode: ModeSubstitution;
+  variationPrixMaxPct: number;
+  marquesPreferees: string[];
+  marquesRefusees: string[];
+  livraisonSansContact: boolean;
+  instructionsLivraison: string;
+  creneauPrefere: CreneauLivraisonPrefere;
+  fraisLivraisonMax: number;
+  enseignesAutorisees: Enseigne[];
+}
+
 export interface Ingredient {
   nom: string;
   quantite: number;
@@ -141,7 +156,13 @@ export interface Recette {
 /** Categorie utilisee pour le swipe "on cerne vos gouts" — derivee de la recette, pas stockee. */
 export type CategorieGout = 'viande' | 'poisson' | 'vegetarien' | 'petit_dejeuner' | 'dessert';
 
-export const CATEGORIES_GOUT: CategorieGout[] = ['viande', 'poisson', 'vegetarien', 'petit_dejeuner', 'dessert'];
+export const CATEGORIES_GOUT: CategorieGout[] = [
+  'viande',
+  'poisson',
+  'vegetarien',
+  'petit_dejeuner',
+  'dessert',
+];
 
 export type FrequenceRepas = 'jamais' | 'rarement' | 'parfois' | 'souvent' | 'quotidien';
 

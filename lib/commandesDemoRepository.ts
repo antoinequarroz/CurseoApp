@@ -1,7 +1,9 @@
 import { supabase } from '@/lib/supabase';
-import type { AdresseLivraison } from '@/types';
+import type { AdresseLivraison, Enseigne } from '@/types';
 import type { BrouillonPanierLive, LivraisonDemo } from '@/stores/panierLiveStore';
 import { sousTotalPanier, totalLivraisons, totalProduits } from '@/stores/panierLiveStore';
+import type { ResultatCommandeSimulee } from '@/lib/simulateurConnecteurMarchand';
+import { z } from 'zod';
 
 export interface ConfirmationCommandeDemo {
   id: string;
@@ -9,11 +11,116 @@ export interface ConfirmationCommandeDemo {
   montantTotal: number;
 }
 
+const LigneLiveSchema = z
+  .object({
+    id: z.string(),
+    produitId: z.string(),
+    demande: z.string(),
+    produit: z.string(),
+    quantite: z.number().positive(),
+    prixUnitaire: z.number().nonnegative(),
+    marque: z.string().optional(),
+    format: z.string().optional(),
+    besoinQuantite: z.number().optional(),
+    besoinUnite: z.string().optional(),
+    nombrePaquets: z.number().optional(),
+    pertinence: z.enum(['forte', 'moyenne', 'faible']).optional(),
+    validationRequise: z.boolean().optional(),
+  })
+  .passthrough();
+
+export interface CommandeDemo {
+  id: string;
+  reference: string | null;
+  montantTotal: number;
+  strategie: BrouillonPanierLive['strategie'];
+  source: string;
+  collecteLe: string;
+  createdAt: string;
+  paniers: {
+    enseigne: Enseigne;
+    montant: number;
+    articles: BrouillonPanierLive['paniers'][number]['articles'];
+    referenceSimulation?: string;
+  }[];
+  livraisons: LivraisonDemo[];
+  reprenable: boolean;
+}
+
+const SELECT_COMMANDE =
+  'id, paiement_reference, montant_total, strategie, source_prix, collecte_le, created_at, paniers, livraisons, nature';
+
+function mapperCommande(ligne: Record<string, unknown>): CommandeDemo | null {
+  if (ligne.nature !== 'simulation' || typeof ligne.id !== 'string') return null;
+  const paniersBruts = Array.isArray(ligne.paniers) ? ligne.paniers : [];
+  const paniers = paniersBruts.flatMap((panier) => {
+    if (!panier || typeof panier !== 'object') return [];
+    const brut = panier as Record<string, unknown>;
+    const enseigne = brut.enseigne as Enseigne;
+    const produits = Array.isArray(brut.produits) ? brut.produits : [];
+    const articles = produits.flatMap((produit) => {
+      const resultat = LigneLiveSchema.safeParse(produit);
+      return resultat.success
+        ? [resultat.data as BrouillonPanierLive['paniers'][number]['articles'][number]]
+        : [];
+    });
+    return [
+      {
+        enseigne,
+        montant: Number(brut.montant ?? 0),
+        articles,
+        referenceSimulation:
+          typeof brut.reference_simulation === 'string' ? brut.reference_simulation : undefined,
+      },
+    ];
+  });
+  return {
+    id: ligne.id,
+    reference: typeof ligne.paiement_reference === 'string' ? ligne.paiement_reference : null,
+    montantTotal: Number(ligne.montant_total ?? 0),
+    strategie: (ligne.strategie ?? 'split_cart') as CommandeDemo['strategie'],
+    source: typeof ligne.source_prix === 'string' ? ligne.source_prix : 'Estimation',
+    collecteLe: typeof ligne.collecte_le === 'string' ? ligne.collecte_le : String(ligne.created_at),
+    createdAt: String(ligne.created_at),
+    paniers,
+    livraisons: Array.isArray(ligne.livraisons) ? (ligne.livraisons as LivraisonDemo[]) : [],
+    reprenable: paniers.length > 0 && paniers.every((panier) => panier.articles.length > 0),
+  };
+}
+
+export async function fetchCommandesDemo(profilId: string): Promise<CommandeDemo[]> {
+  const { data, error } = await supabase
+    .from('commandes')
+    .select(SELECT_COMMANDE)
+    .eq('profil_id', profilId)
+    .eq('nature', 'simulation')
+    .order('created_at', { ascending: false })
+    .limit(50);
+  if (error) throw error;
+  return (data ?? []).flatMap((ligne) => {
+    const commande = mapperCommande(ligne as Record<string, unknown>);
+    return commande ? [commande] : [];
+  });
+}
+
+export async function fetchCommandeDemo(commandeId: string, profilId: string): Promise<CommandeDemo | null> {
+  const { data, error } = await supabase
+    .from('commandes')
+    .select(SELECT_COMMANDE)
+    .eq('id', commandeId)
+    .eq('profil_id', profilId)
+    .eq('nature', 'simulation')
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapperCommande(data as Record<string, unknown>) : null;
+}
+
 export async function enregistrerCommandeDemo(params: {
   profilId: string;
   brouillon: BrouillonPanierLive;
   adresse: AdresseLivraison;
   livraisons: LivraisonDemo[];
+  confirmations?: ResultatCommandeSimulee[];
 }): Promise<ConfirmationCommandeDemo> {
   const reference = `DEMO-${params.brouillon.id.replace(/[^a-zA-Z0-9-]/g, '')}`;
   const montantProduits = totalProduits(params.brouillon);
@@ -23,6 +130,10 @@ export async function enregistrerCommandeDemo(params: {
     enseigne: panier.enseigne,
     montant: Math.round(sousTotalPanier(panier) * 100) / 100,
     produits: panier.articles,
+    reference_simulation: params.confirmations?.find(
+      (confirmation) => confirmation.enseigne === panier.enseigne,
+    )?.reference,
+    transmise: false,
   }));
 
   const payload = {

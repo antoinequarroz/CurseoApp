@@ -33,6 +33,7 @@ export function useBudgetSemaine(profilId: string | undefined) {
           .from('commandes')
           .select('*')
           .eq('profil_id', profilId)
+          .neq('nature', 'simulation')
           .order('created_at', { ascending: false });
         setCommandes((data as Commande[] | null) ?? []);
       } catch {

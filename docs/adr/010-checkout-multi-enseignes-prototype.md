@@ -14,6 +14,17 @@ aucune carte et aucun paiement réel ne transitent dans l'application.
 Les capacités sont séparées en contrats indépendants. Une future API officielle
 Migros ou Coop implémentera panier et commande sans modifier les écrans métier.
 
+Le prototype utilise un simulateur local déterministe par enseigne. Il déroule
+les états panier, stock, substitutions, créneau et montant, puis produit une
+référence `SIM-*` toujours marquée non transmise. Les préférences de substitution
+et de livraison vivent dans une table privée dédiée. L'historique ne contient
+que des instantanés de démonstration reprenables dans un nouveau brouillon.
+
+Un prix SwissGroceries est une observation catalogue, jamais une confirmation
+marchande. L'application affiche sa fraîcheur et exige une confirmation
+explicite avant de poursuivre avec une observation ancienne. Une actualisation
+ne remplace jamais silencieusement le produit choisi par un autre résultat.
+
 ## Raisons
 
 - démontrer toute l'expérience sans prétendre commander chez une enseigne ;

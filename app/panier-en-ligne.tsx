@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { AlertTriangle, Minus, Plus, ShoppingBasket, Trash2 } from 'lucide-react-native';
 import { router } from 'expo-router';
@@ -11,6 +11,10 @@ import { Body, BodySm, Caption, DisplayLG, Heading, Price, Subheading } from '@/
 import { useTheme } from '@/lib/theme-context';
 import { formatPrix } from '@/lib/format';
 import { dates } from '@/lib/dates';
+import { evaluerFraicheurPrix } from '@/lib/fiabilitePrix';
+import { rafraichirPrixPanier } from '@/lib/rafraichissementPanier';
+import { usePreferencesCourses } from '@/hooks/usePreferencesCourses';
+import { useProfilStore } from '@/stores/profilStore';
 import { t } from '@/lib/i18n';
 import { sousTotalPanier, totalProduits, usePanierLiveStore } from '@/stores/panierLiveStore';
 
@@ -56,6 +60,11 @@ export default function PanierEnLigne() {
   const brouillon = usePanierLiveStore((state) => state.brouillon);
   const definirQuantite = usePanierLiveStore((state) => state.definirQuantite);
   const retirerArticle = usePanierLiveStore((state) => state.retirerArticle);
+  const appliquerRafraichissement = usePanierLiveStore((state) => state.appliquerRafraichissement);
+  const profil = useProfilStore((state) => state.profil);
+  const preferences = usePreferencesCourses(profil?.id);
+  const [rafraichissement, setRafraichissement] = useState(false);
+  const [erreurRafraichissement, setErreurRafraichissement] = useState(false);
 
   if (!brouillon || brouillon.paniers.length === 0) {
     return (
@@ -69,6 +78,21 @@ export default function PanierEnLigne() {
       </ScreenScroll>
     );
   }
+
+  const fraicheur = evaluerFraicheurPrix(brouillon.collecteLe);
+  const actualiser = async () => {
+    setRafraichissement(true);
+    setErreurRafraichissement(false);
+    try {
+      const lignes = brouillon.paniers.flatMap((panier) => panier.articles);
+      const resultat = await rafraichirPrixPanier(lignes, preferences.data);
+      appliquerRafraichissement(resultat.resultats, resultat.collecteLe);
+    } catch {
+      setErreurRafraichissement(true);
+    } finally {
+      setRafraichissement(false);
+    }
+  };
 
   return (
     <ScreenScroll tabBar={false} contentContainerStyle={{ gap: 20 }}>
@@ -91,9 +115,35 @@ export default function PanierEnLigne() {
         <BodySm style={{ flex: 1, color: colors.chipTextWarning }}>{t('checkout.demo_avertissement')}</BodySm>
       </View>
 
-      <Caption>
-        {t('checkout.prix_collectes', { date: dates.formatDateHeureCourte(new Date(brouillon.collecteLe)) })}
-      </Caption>
+      <Card style={{ padding: 16, gap: 10 }}>
+        <View
+          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}
+        >
+          <Badge
+            label={t(`checkout.fraicheur_${fraicheur.statut}`)}
+            variant={
+              fraicheur.statut === 'frais' ? 'success' : fraicheur.statut === 'ancien' ? 'error' : 'warning'
+            }
+          />
+          <Button
+            variant="ghost"
+            label={t('checkout.actualiser_prix')}
+            loading={rafraichissement}
+            onPress={() => void actualiser()}
+          />
+        </View>
+        <Caption>
+          {t('checkout.prix_interroges', {
+            date: dates.formatDateHeureCourte(new Date(brouillon.collecteLe)),
+          })}
+        </Caption>
+        <Caption>{t('checkout.disponibilite_non_confirmee')}</Caption>
+        {erreurRafraichissement ? (
+          <BodySm accessibilityRole="alert" style={{ color: colors.error }}>
+            {t('checkout.actualisation_erreur')}
+          </BodySm>
+        ) : null}
+      </Card>
 
       {brouillon.paniers.map((panier) => (
         <Card key={panier.enseigne} style={{ padding: 18, gap: 14 }}>
@@ -121,6 +171,29 @@ export default function PanierEnLigne() {
                   <Caption>
                     {[article.marque, article.format].filter(Boolean).join(' · ') || article.demande}
                   </Caption>
+                  {article.besoinQuantite != null ? (
+                    <Caption>
+                      {t('checkout.besoin_paquets', {
+                        quantite: article.besoinQuantite,
+                        unite: article.besoinUnite ?? '',
+                        count: article.nombrePaquets ?? article.quantite,
+                      })}
+                    </Caption>
+                  ) : null}
+                  <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+                    <Badge
+                      label={t(`checkout.pertinence_${article.pertinence ?? 'moyenne'}`)}
+                      variant={article.validationRequise ? 'warning' : 'neutral'}
+                    />
+                    <Badge
+                      label={
+                        article.disponibilite === 'resultat_catalogue'
+                          ? t('checkout.resultat_catalogue')
+                          : t('checkout.disponibilite_non_confirmee')
+                      }
+                      variant="neutral"
+                    />
+                  </View>
                 </View>
                 <BodySm style={{ fontVariant: ['tabular-nums'] }}>
                   {formatPrix(article.prixUnitaire * article.quantite)}

@@ -2,6 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { CheckCircle2, ShoppingBag } from 'lucide-react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
 import { ScreenScroll } from '@/components/ui/Screen';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -11,6 +12,8 @@ import { useTheme } from '@/lib/theme-context';
 import { sousTotalPanier, usePanierLiveStore } from '@/stores/panierLiveStore';
 import { formatPrix } from '@/lib/format';
 import { t } from '@/lib/i18n';
+import { useProfilStore } from '@/stores/profilStore';
+import { fetchCommandeDemo } from '@/lib/commandesDemoRepository';
 
 const NOMS_ENSEIGNES: Record<string, string> = {
   migros: 'Migros',
@@ -22,9 +25,30 @@ const NOMS_ENSEIGNES: Record<string, string> = {
 
 export default function CommandeDemo() {
   const { colors } = useTheme();
-  const params = useLocalSearchParams<{ reference?: string; montant?: string }>();
+  const params = useLocalSearchParams<{ commandeId?: string; reference?: string; montant?: string }>();
+  const profil = useProfilStore((state) => state.profil);
   const brouillon = usePanierLiveStore((state) => state.brouillon);
+  const reprendre = usePanierLiveStore((state) => state.reprendreDepuisCommande);
   const reset = usePanierLiveStore((state) => state.reset);
+  const commandeQuery = useQuery({
+    queryKey: ['commande-demo', params.commandeId, profil?.id],
+    queryFn: () => fetchCommandeDemo(params.commandeId!, profil!.id),
+    enabled: Boolean(params.commandeId && profil),
+  });
+  const commande = commandeQuery.data;
+  const paniers =
+    commande?.paniers.map((panier) => ({
+      enseigne: panier.enseigne,
+      articles: panier.articles,
+      montant: panier.montant,
+      referenceSimulation: panier.referenceSimulation,
+    })) ??
+    brouillon?.paniers.map((panier) => ({
+      ...panier,
+      montant: sousTotalPanier(panier),
+      referenceSimulation: undefined,
+    })) ??
+    [];
 
   const terminer = () => {
     reset();
@@ -53,21 +77,37 @@ export default function CommandeDemo() {
 
       <Card style={{ padding: 18, gap: 8 }}>
         <Caption>{t('checkout.reference_demo')}</Caption>
-        <Heading selectable>{params.reference ?? t('checkout.reference_indisponible')}</Heading>
-        {params.montant ? <PriceLG>{formatPrix(Number(params.montant))}</PriceLG> : null}
+        <Heading selectable>
+          {commande?.reference ?? params.reference ?? t('checkout.reference_indisponible')}
+        </Heading>
+        {commande || params.montant ? (
+          <PriceLG>{formatPrix(commande?.montantTotal ?? Number(params.montant))}</PriceLG>
+        ) : null}
       </Card>
 
-      {brouillon?.paniers.map((panier) => (
+      {paniers.map((panier) => (
         <Card key={panier.enseigne} style={{ padding: 18, gap: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <ShoppingBag size={20} color={colors.primary} accessible={false} />
             <Heading style={{ flex: 1 }}>{NOMS_ENSEIGNES[panier.enseigne] ?? panier.enseigne}</Heading>
-            <BodySm>{formatPrix(sousTotalPanier(panier))}</BodySm>
+            <BodySm>{formatPrix(panier.montant)}</BodySm>
           </View>
           <Caption>{t('checkout.articles_count', { count: panier.articles.length })}</Caption>
+          {panier.referenceSimulation ? <Caption selectable>{panier.referenceSimulation}</Caption> : null}
           <BodySm style={{ color: colors.chipTextWarning }}>{t('checkout.non_transmise')}</BodySm>
         </Card>
       ))}
+
+      {commande?.reprenable ? (
+        <Button
+          variant="secondary"
+          label={t('historique_demo.reprendre')}
+          onPress={() => {
+            reprendre(commande);
+            router.replace('/panier-en-ligne');
+          }}
+        />
+      ) : null}
 
       <Button label={t('checkout.terminer_demo')} onPress={terminer} />
     </ScreenScroll>

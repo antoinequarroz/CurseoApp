@@ -2,7 +2,13 @@ import Constants from 'expo-constants';
 import { z } from 'zod';
 import { supabase } from './supabase';
 import type { ComparatifPrixReel, OffrePrix } from './prixRepository';
-import type { Enseigne, ItemCourse, ModeOptimisation } from '@/types';
+import {
+  calculerPaquets,
+  classerSelonPreferences,
+  evaluerCorrespondance,
+  type NiveauCorrespondance,
+} from './correspondanceProduit';
+import type { Enseigne, ItemCourse, ModeOptimisation, PreferencesCoursesEnLigne } from '@/types';
 
 const extra = Constants.expoConfig?.extra ?? {};
 export const swissGroceriesBuildEnabled = extra.swissGroceriesEnabled === true;
@@ -36,7 +42,10 @@ export interface ProduitRechercheLive {
   nom: string;
   marque?: string;
   format?: string;
+  taille?: { value: number; unit: string };
   prix: number;
+  pertinence: NiveauCorrespondance;
+  validationRequise: boolean;
 }
 
 const EligibiliteSchema = z.object({ eligible: z.boolean() });
@@ -107,6 +116,13 @@ export interface LigneCoursesOptimisee {
   prixUnitaire: number;
   montant: number;
   urlProduit?: string;
+  besoinQuantite: number;
+  besoinUnite: string;
+  nombrePaquets: number;
+  formatCompatible: boolean;
+  pertinence: NiveauCorrespondance;
+  validationRequise: boolean;
+  disponibilite: 'resultat_catalogue';
 }
 
 export interface ArretCoursesOptimise {
@@ -142,27 +158,37 @@ function formatProduit(produit: ProduitLive): string {
 }
 
 /** Résultats explicites pour remplacer une ligne du brouillon COUR-71. */
-export async function rechercherProduitsLive(nomProduit: string): Promise<ProduitRechercheLive[]> {
+export async function rechercherProduitsLive(
+  nomProduit: string,
+  preferences?: PreferencesCoursesEnLigne,
+): Promise<ProduitRechercheLive[]> {
   const { data, error } = await supabase.functions.invoke<ReponseLive>('swissgroceries', {
     body: { action: 'search', query: nomProduit, chains: ENSEIGNES_SWISS_GROCERIES, limit: 4 },
   });
   if (error) throw error;
-  return ENSEIGNES_SWISS_GROCERIES.flatMap((enseigne) =>
+  const produits = ENSEIGNES_SWISS_GROCERIES.flatMap((enseigne) =>
     (data?.byChain?.[enseigne] ?? []).flatMap((produit) =>
       produit.price?.current > 0
         ? [
-            {
-              id: produit.id,
-              enseigne,
-              nom: produit.name,
-              marque: produit.brand,
-              format: produit.size ? `${produit.size.value} ${produit.size.unit}` : undefined,
-              prix: produit.price.current,
-            },
+            (() => {
+              const correspondance = evaluerCorrespondance(nomProduit, produit.name, produit.brand);
+              return {
+                id: produit.id,
+                enseigne,
+                nom: produit.name,
+                marque: produit.brand,
+                format: produit.size ? `${produit.size.value} ${produit.size.unit}` : undefined,
+                taille: produit.size,
+                prix: produit.price.current,
+                pertinence: correspondance.niveau,
+                validationRequise: correspondance.validationRequise,
+              };
+            })(),
           ]
         : [],
     ),
-  ).sort((a, b) => a.prix - b.prix);
+  );
+  return classerSelonPreferences(produits, preferences);
 }
 
 /**
@@ -259,23 +285,29 @@ export async function optimiserListeCoursesLive(params: {
   if (error) throw error;
 
   const parsed = PlanResultatSchema.parse(data);
-  const referenceUneEnseigne = [parsed.primary, ...parsed.alternatives]
-    .filter((plan) => plan.strategy === 'single_store' && plan.totalChf > 0)
-    .sort((a, b) => a.totalChf - b.totalChf)[0];
-  const economie = referenceUneEnseigne
-    ? Math.max(0, referenceUneEnseigne.totalChf - parsed.primary.totalChf)
-    : null;
-
   const versOption = (plan: z.infer<typeof PlanSchema>): OptionOptimisationCoursesLive => ({
     id: `${plan.strategy}:${plan.stops.map((stop) => stop.store.chain).join('+')}:${plan.totalChf}`,
     strategie: plan.strategy,
-    montantTotal: plan.totalChf,
+    montantTotal: 0,
     arrets: plan.stops.map((stop) => ({
       enseigne: stop.store.chain,
       magasin: stop.store.name,
-      montant: stop.subtotalChf,
+      montant: 0,
       articles: stop.items.map((ligne) => {
-        const quantite = Math.max(1, ligne.requested.quantity ?? 1);
+        const itemSource = itemsActifs.find(
+          (item) => item.produit.trim().toLowerCase() === ligne.requested.query.trim().toLowerCase(),
+        );
+        const besoin = itemSource ?? {
+          quantite: Math.max(1, ligne.requested.quantity ?? 1),
+          unite: 'piece',
+        };
+        const paquets = calculerPaquets(besoin, ligne.matched.size);
+        const correspondance = evaluerCorrespondance(
+          ligne.requested.query,
+          ligne.matched.name,
+          ligne.matched.brand,
+        );
+        const quantite = paquets.nombrePaquets;
         return {
           produitId: ligne.matched.id,
           demande: ligne.requested.query,
@@ -283,21 +315,43 @@ export async function optimiserListeCoursesLive(params: {
           marque: ligne.matched.brand,
           format: formatTaille(ligne.matched.size),
           quantite,
-          prixUnitaire: ligne.lineTotal / quantite,
-          montant: ligne.lineTotal,
+          prixUnitaire: ligne.matched.price.current,
+          montant: ligne.matched.price.current * quantite,
           urlProduit: ligne.matched.productUrl,
+          besoinQuantite: besoin.quantite,
+          besoinUnite: besoin.unite,
+          nombrePaquets: quantite,
+          formatCompatible: paquets.formatCompatible,
+          pertinence: correspondance.niveau,
+          validationRequise: correspondance.validationRequise,
+          disponibilite: 'resultat_catalogue' as const,
         };
       }),
     })),
     articlesNonTrouves: plan.unmatchedItems.map((item) => item.query),
   });
-  const primaire = versOption(parsed.primary);
+  const finaliserTotal = (option: OptionOptimisationCoursesLive): OptionOptimisationCoursesLive => {
+    const arrets = option.arrets.map((arret) => {
+      const montant = arret.articles.reduce((total, article) => total + article.montant, 0);
+      return { ...arret, montant };
+    });
+    return { ...option, arrets, montantTotal: arrets.reduce((total, arret) => total + arret.montant, 0) };
+  };
+  const primaire = finaliserTotal(versOption(parsed.primary));
   const alternatives = parsed.alternatives
     .map(versOption)
+    .map(finaliserTotal)
     .filter(
       (option, index, options) =>
         option.id !== primaire.id && options.findIndex((candidate) => candidate.id === option.id) === index,
     );
+
+  const referenceUneEnseigne = [primaire, ...alternatives]
+    .filter((plan) => plan.strategie === 'single_store' && plan.montantTotal > 0)
+    .sort((a, b) => a.montantTotal - b.montantTotal)[0];
+  const economie = referenceUneEnseigne
+    ? Math.max(0, referenceUneEnseigne.montantTotal - primaire.montantTotal)
+    : null;
 
   return {
     strategie: primaire.strategie,

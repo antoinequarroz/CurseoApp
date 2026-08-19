@@ -6,11 +6,14 @@
 import type { AdresseLivraison, Enseigne } from '@/types';
 
 export interface CapacitesConnecteurEnseigne {
+  mode: 'catalogue' | 'simulation' | 'marchand';
   catalogue: boolean;
   disponibilite: boolean;
   panier: boolean;
   livraison: boolean;
   commande: boolean;
+  paiement: boolean;
+  transmissionCommande: boolean;
 }
 
 export interface ProduitConnecteur {
@@ -40,17 +43,23 @@ export interface CommandeEnseigneConnecteur {
 }
 
 export const CAPACITES_SWISSGROCERIES: CapacitesConnecteurEnseigne = {
+  mode: 'catalogue',
   catalogue: true,
   disponibilite: true,
   panier: false,
   livraison: false,
   commande: false,
+  paiement: false,
+  transmissionCommande: false,
 };
 
 export const CAPACITES_SIMULATEUR_CHECKOUT: CapacitesConnecteurEnseigne = {
+  mode: 'simulation',
   catalogue: false,
   disponibilite: false,
   panier: true,
   livraison: true,
   commande: true,
+  paiement: false,
+  transmissionCommande: false,
 };

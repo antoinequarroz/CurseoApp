@@ -24,6 +24,13 @@ const option: OptionOptimisationCoursesLive = {
           prixUnitaire: 5,
           montant: 5,
           format: '1 kg',
+          besoinQuantite: 500,
+          besoinUnite: 'g',
+          nombrePaquets: 1,
+          formatCompatible: true,
+          pertinence: 'forte',
+          validationRequise: false,
+          disponibilite: 'resultat_catalogue',
         },
       ],
     },
@@ -39,6 +46,13 @@ const option: OptionOptimisationCoursesLive = {
           prixUnitaire: 3,
           montant: 3,
           format: '1 l',
+          besoinQuantite: 1,
+          besoinUnite: 'l',
+          nombrePaquets: 1,
+          formatCompatible: true,
+          pertinence: 'forte',
+          validationRequise: false,
+          disponibilite: 'resultat_catalogue',
         },
       ],
     },
@@ -78,6 +92,9 @@ describe('panierLiveStore', () => {
       nom: 'Pommes Bio',
       prix: 4.5,
       format: '1 kg',
+      taille: { value: 1, unit: 'kg' },
+      pertinence: 'forte',
+      validationRequise: false,
     });
     const brouillon = usePanierLiveStore.getState().brouillon!;
     expect(brouillon.paniers).toHaveLength(1);
@@ -104,5 +121,30 @@ describe('panierLiveStore', () => {
       { enseigne: 'coop', id: 'c', libelle: 'standard_demo', prix: 0 },
     ]);
     expect(totalLivraisons(usePanierLiveStore.getState().brouillon!)).toBe(7.9);
+  });
+
+  it('actualise seulement le même produit et conserve le choix sinon', () => {
+    usePanierLiveStore.getState().creerDepuisOptimisation(resultat, option, '1003');
+    const ligne = usePanierLiveStore.getState().brouillon!.paniers[0]!.articles[0]!;
+    usePanierLiveStore.getState().appliquerRafraichissement(
+      [
+        {
+          ligneId: ligne.id,
+          produit: {
+            id: 'autre-produit',
+            enseigne: 'migros',
+            nom: 'Autres pommes',
+            prix: 1,
+            pertinence: 'moyenne',
+            validationRequise: false,
+          },
+        },
+      ],
+      '2026-08-19T11:00:00.000Z',
+    );
+    const conservee = usePanierLiveStore.getState().brouillon!.paniers[0]!.articles[0]!;
+    expect(conservee.produitId).toBe('pomme-1');
+    expect(conservee.prixUnitaire).toBe(5);
+    expect(conservee.disponibilite).toBe('non_confirmee');
   });
 });

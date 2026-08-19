@@ -8,6 +8,9 @@ import type {
   ProduitRechercheLive,
 } from '@/lib/swissGroceriesRepository';
 import type { Enseigne } from '@/types';
+import type { NiveauCorrespondance } from '@/lib/correspondanceProduit';
+import { calculerPaquets } from '@/lib/correspondanceProduit';
+import type { CommandeDemo } from '@/lib/commandesDemoRepository';
 
 export interface LignePanierLive {
   id: string;
@@ -19,6 +22,14 @@ export interface LignePanierLive {
   quantite: number;
   prixUnitaire: number;
   urlProduit?: string;
+  besoinQuantite?: number;
+  besoinUnite?: string;
+  nombrePaquets?: number;
+  formatCompatible?: boolean;
+  pertinence?: NiveauCorrespondance;
+  validationRequise?: boolean;
+  disponibilite?: 'resultat_catalogue' | 'non_confirmee';
+  derniereVerificationLe?: string;
 }
 
 export interface PanierLive {
@@ -62,6 +73,13 @@ function versPaniers(option: OptionOptimisationCoursesLive): PanierLive[] {
       quantite: article.quantite,
       prixUnitaire: article.prixUnitaire,
       urlProduit: article.urlProduit,
+      besoinQuantite: article.besoinQuantite,
+      besoinUnite: article.besoinUnite,
+      nombrePaquets: article.nombrePaquets,
+      formatCompatible: article.formatCompatible,
+      pertinence: article.pertinence,
+      validationRequise: article.validationRequise,
+      disponibilite: article.disponibilite,
     })),
   }));
 }
@@ -88,6 +106,11 @@ interface PanierLiveState {
   definirQuantite: (ligneId: string, quantite: number) => void;
   retirerArticle: (ligneId: string) => void;
   remplacerArticle: (ligneId: string, produit: ProduitRechercheLive) => void;
+  appliquerRafraichissement: (
+    resultats: { ligneId: string; produit: ProduitRechercheLive | null }[],
+    collecteLe: string,
+  ) => void;
+  reprendreDepuisCommande: (commande: CommandeDemo) => void;
   definirAdresse: (adresseId: string) => void;
   definirLivraisons: (livraisons: LivraisonDemo[]) => void;
   definirPaiementEnCours: (enCours: boolean) => void;
@@ -160,6 +183,13 @@ export const usePanierLiveStore = create<PanierLiveState>()(
             }))
             .filter((panier) => panier.articles.length > 0);
           if (!ligneSource) return state;
+          const paquets = calculerPaquets(
+            {
+              quantite: ligneSource.besoinQuantite ?? ligneSource.quantite,
+              unite: ligneSource.besoinUnite ?? 'piece',
+            },
+            produit.taille,
+          );
           const remplacee: LignePanierLive = {
             ...ligneSource,
             id: `${produit.enseigne}:${produit.id}:${Date.now()}`,
@@ -168,8 +198,14 @@ export const usePanierLiveStore = create<PanierLiveState>()(
             marque: produit.marque,
             format: produit.format,
             prixUnitaire: produit.prix,
-            quantite: 1,
+            quantite: paquets.nombrePaquets,
             urlProduit: undefined,
+            pertinence: produit.pertinence,
+            validationRequise: produit.validationRequise,
+            disponibilite: 'resultat_catalogue',
+            nombrePaquets: paquets.nombrePaquets,
+            formatCompatible: paquets.formatCompatible,
+            derniereVerificationLe: new Date().toISOString(),
           };
           const cible = sansSource.find((panier) => panier.enseigne === produit.enseigne);
           const paniers = cible
@@ -180,6 +216,58 @@ export const usePanierLiveStore = create<PanierLiveState>()(
               )
             : [...sansSource, { enseigne: produit.enseigne, articles: [remplacee] }];
           return { brouillon: { ...state.brouillon, paniers, livraisons: [] } };
+        }),
+      appliquerRafraichissement: (resultats, collecteLe) =>
+        set((state) => {
+          if (!state.brouillon) return state;
+          const parLigne = new Map(resultats.map((resultat) => [resultat.ligneId, resultat.produit]));
+          return {
+            brouillon: {
+              ...state.brouillon,
+              collecteLe,
+              paniers: state.brouillon.paniers.map((panier) => ({
+                ...panier,
+                articles: panier.articles.map((article) => {
+                  if (!parLigne.has(article.id)) return article;
+                  const produit = parLigne.get(article.id);
+                  if (!produit || produit.id !== article.produitId) {
+                    return { ...article, disponibilite: 'non_confirmee', derniereVerificationLe: collecteLe };
+                  }
+                  return {
+                    ...article,
+                    prixUnitaire: produit.prix,
+                    pertinence: produit.pertinence,
+                    validationRequise: produit.validationRequise,
+                    disponibilite: 'resultat_catalogue',
+                    derniereVerificationLe: collecteLe,
+                  };
+                }),
+              })),
+            },
+          };
+        }),
+      reprendreDepuisCommande: (commande) =>
+        set({
+          brouillon: {
+            id: `reprise-${commande.id}-${Date.now()}`,
+            npa: '',
+            strategie: commande.strategie,
+            paniers: commande.paniers.map((panier) => ({
+              enseigne: panier.enseigne,
+              articles: panier.articles.map((article, index) => ({
+                ...article,
+                id: `reprise:${panier.enseigne}:${article.produitId}:${index}:${Date.now()}`,
+                disponibilite: 'non_confirmee',
+              })),
+            })),
+            articlesNonTrouves: [],
+            source: 'SwissGroceries',
+            collecteLe: commande.collecteLe,
+            adresseId: null,
+            livraisons: [],
+            paiementEnCours: false,
+            creeLe: new Date().toISOString(),
+          },
         }),
       definirAdresse: (adresseId) =>
         set((state) =>

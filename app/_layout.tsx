@@ -136,6 +136,14 @@ function RootLayout() {
                       options={{ presentation: 'modal', headerShown: true, title: 'Adresses de livraison' }}
                     />
                     <Stack.Screen
+                      name="preferences-courses"
+                      options={{
+                        presentation: 'modal',
+                        headerShown: true,
+                        title: t('preferences_courses.titre'),
+                      }}
+                    />
+                    <Stack.Screen
                       name="panier-en-ligne"
                       options={{ headerShown: true, title: t('checkout.paniers_titre') }}
                     />
@@ -158,6 +166,10 @@ function RootLayout() {
                         title: t('checkout.confirmation_header'),
                         gestureEnabled: false,
                       }}
+                    />
+                    <Stack.Screen
+                      name="commandes-demo"
+                      options={{ headerShown: true, title: t('historique_demo.titre') }}
                     />
                     <Stack.Screen
                       name="aide"

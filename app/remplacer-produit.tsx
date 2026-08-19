@@ -12,6 +12,9 @@ import { usePanierLiveStore } from '@/stores/panierLiveStore';
 import { formatPrix } from '@/lib/format';
 import { t } from '@/lib/i18n';
 import { useQuery } from '@tanstack/react-query';
+import { usePreferencesCourses } from '@/hooks/usePreferencesCourses';
+import { useProfilStore } from '@/stores/profilStore';
+import { Badge } from '@/components/ui/Badge';
 
 const NOMS_ENSEIGNES: Record<string, string> = {
   migros: 'Migros',
@@ -25,9 +28,11 @@ export default function RemplacerProduit() {
   const { colors } = useTheme();
   const { ligneId, demande } = useLocalSearchParams<{ ligneId?: string; demande?: string }>();
   const remplacerArticle = usePanierLiveStore((state) => state.remplacerArticle);
+  const profil = useProfilStore((state) => state.profil);
+  const preferences = usePreferencesCourses(profil?.id);
   const recherche = useQuery({
-    queryKey: ['swissgroceries', 'remplacement', demande],
-    queryFn: () => rechercherProduitsLive(demande!),
+    queryKey: ['swissgroceries', 'remplacement', demande, preferences.data],
+    queryFn: () => rechercherProduitsLive(demande!, preferences.data),
     enabled: Boolean(demande),
     staleTime: 60_000,
   });
@@ -83,6 +88,10 @@ export default function RemplacerProduit() {
                   .filter(Boolean)
                   .join(' · ')}
               </Caption>
+              <Badge
+                label={t(`checkout.pertinence_${produit.pertinence}`)}
+                variant={produit.validationRequise ? 'warning' : 'neutral'}
+              />
             </View>
             <Price>{formatPrix(produit.prix)}</Price>
             <Check size={18} color={colors.primary} accessible={false} />

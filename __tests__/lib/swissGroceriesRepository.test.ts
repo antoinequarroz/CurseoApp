@@ -166,8 +166,26 @@ describe('swissGroceriesRepository', () => {
         alternatives: [
           {
             strategy: 'single_store',
-            totalChf: 10,
-            stops: [],
+            totalChf: 5,
+            stops: [
+              {
+                store: { chain: 'coop' },
+                subtotalChf: 5,
+                items: [
+                  {
+                    requested: { query: 'pommes', quantity: 1 },
+                    matched: {
+                      chain: 'coop',
+                      id: 'p-2',
+                      name: 'Pommes Gala',
+                      size: { value: 1, unit: 'kg' },
+                      price: { current: 5, currency: 'CHF' },
+                    },
+                    lineTotal: 5,
+                  },
+                ],
+              },
+            ],
             unmatchedItems: [],
           },
         ],
@@ -195,19 +213,19 @@ describe('swissGroceriesRepository', () => {
       }),
     });
     expect(resultat).toMatchObject({
-      montantTotal: 7.5,
-      economieEstimee: 2.5,
+      montantTotal: 3.5,
+      economieEstimee: 1.5,
       source: 'SwissGroceries',
       collecteLe: '2026-08-10T12:34:00.000Z',
       articlesNonTrouves: ['papier cuisson'],
       arrets: [
         {
           enseigne: 'migros',
-          montant: 7.5,
+          montant: 3.5,
           articles: [{ produitId: 'p-1', quantite: 1, prixUnitaire: 3.5 }],
         },
       ],
-      alternatives: [{ strategie: 'single_store', montantTotal: 10 }],
+      alternatives: [{ strategie: 'single_store', montantTotal: 5 }],
     });
   });
 

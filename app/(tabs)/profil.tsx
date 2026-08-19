@@ -2,7 +2,22 @@
 import React, { useEffect, useState } from 'react';
 import { Pressable, Switch, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
-import { Bell, ChevronRight, CookingPot, Crown, HelpCircle, LogOut, MapPin, Palette, Sparkles, ShieldAlert, UserRound, Users } from 'lucide-react-native';
+import {
+  Bell,
+  ChevronRight,
+  Clock3,
+  CookingPot,
+  Crown,
+  HelpCircle,
+  LogOut,
+  MapPin,
+  Palette,
+  ShoppingBasket,
+  Sparkles,
+  ShieldAlert,
+  UserRound,
+  Users,
+} from 'lucide-react-native';
 import { useTheme, type ApparencePreference } from '@/lib/theme-context';
 import { useProfilStore } from '@/stores/profilStore';
 import { supabase } from '@/lib/supabase';
@@ -17,10 +32,25 @@ import { DisplayLG, Heading, Body, BodySm, Caption } from '@/components/ui/Typog
 import { toast } from '@/lib/toast';
 import { t } from '@/lib/i18n';
 
-function LigneNotification({ label, valeur, onChange }: { label: string; valeur: boolean; onChange: (v: boolean) => void }) {
+function LigneNotification({
+  label,
+  valeur,
+  onChange,
+}: {
+  label: string;
+  valeur: boolean;
+  onChange: (v: boolean) => void;
+}) {
   const { colors } = useTheme();
   return (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 }}>
+    <View
+      style={{
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 8,
+      }}
+    >
       <Body>{label}</Body>
       <Switch value={valeur} onValueChange={onChange} trackColor={{ true: colors.primary }} />
     </View>
@@ -52,14 +82,27 @@ function RowRepliable({
         accessibilityLabel={titre}
         style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}
       >
-        <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}>
+        <View
+          style={{
+            width: 42,
+            height: 42,
+            borderRadius: 21,
+            backgroundColor: colors.bgSecondary,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
           <Icon size={22} color={colors.primary} />
         </View>
         <View style={{ flex: 1 }}>
           <Heading>{titre}</Heading>
           {resume && <Caption>{resume}</Caption>}
         </View>
-        <ChevronRight size={20} color={colors.textMuted} style={{ transform: [{ rotate: ouvert ? '90deg' : '0deg' }] }} />
+        <ChevronRight
+          size={20}
+          color={colors.textMuted}
+          style={{ transform: [{ rotate: ouvert ? '90deg' : '0deg' }] }}
+        />
       </Pressable>
       {ouvert && <View style={{ marginTop: 14, gap: 10 }}>{children}</View>}
     </Card>
@@ -176,15 +219,33 @@ export default function Profil() {
         </View>
       </View>
 
-      <Pressable onPress={() => router.push('/mon-foyer')} accessibilityRole="button" accessibilityLabel={t('mon_foyer.titre')}>
+      <Pressable
+        onPress={() => router.push('/mon-foyer')}
+        accessibilityRole="button"
+        accessibilityLabel={t('mon_foyer.titre')}
+      >
         <Card style={{ padding: 20, gap: 4, borderRadius: 28, borderTopLeftRadius: 28 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}>
+            <View
+              style={{
+                width: 42,
+                height: 42,
+                borderRadius: 21,
+                backgroundColor: colors.bgSecondary,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
               <UserRound size={22} color={colors.primary} />
             </View>
             <View style={{ flex: 1 }}>
               <Heading>{t('mon_foyer.titre')}</Heading>
-              <Caption>{t('profil.personnes_enfants', { nb_personnes: profilAffiche.nb_personnes, nb_enfants: profilAffiche.nb_enfants })}</Caption>
+              <Caption>
+                {t('profil.personnes_enfants', {
+                  nb_personnes: profilAffiche.nb_personnes,
+                  nb_enfants: profilAffiche.nb_enfants,
+                })}
+              </Caption>
             </View>
             <ChevronRight size={20} color={colors.textMuted} />
           </View>
@@ -199,7 +260,10 @@ export default function Profil() {
         onToggle={() => setAbonnementOuvert((v) => !v)}
       >
         {PALIERS_ABONNEMENT.map((p) => (
-          <View key={p.id} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 }}>
+          <View
+            key={p.id}
+            style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 }}
+          >
             <Body style={{ fontWeight: profilAffiche.abonnement === p.id ? '700' : '400' }}>{p.nom}</Body>
             <Caption>{p.prix}</Caption>
           </View>
@@ -235,7 +299,9 @@ export default function Profil() {
                 backgroundColor: preference === o.id ? colors.primary : colors.bgSecondary,
               }}
             >
-              <BodySm style={{ color: preference === o.id ? '#FFFFFF' : colors.textPrimary }}>{o.label}</BodySm>
+              <BodySm style={{ color: preference === o.id ? '#FFFFFF' : colors.textPrimary }}>
+                {o.label}
+              </BodySm>
             </Pressable>
           ))}
         </View>
@@ -243,15 +309,40 @@ export default function Profil() {
 
       <Card style={{ padding: 20, borderRadius: 28, borderTopLeftRadius: 28 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-          <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}>
+          <View
+            style={{
+              width: 42,
+              height: 42,
+              borderRadius: 21,
+              backgroundColor: colors.bgSecondary,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
             <Bell size={22} color={colors.primary} />
           </View>
           <Heading>{t('profil.notifications')}</Heading>
         </View>
-        <LigneNotification label={t('profil.notif_planning')} valeur={profilAffiche.notifications_planning} onChange={(v) => mettreAJourPreferences({ notifications_planning: v })} />
-        <LigneNotification label={t('profil.notif_budget')} valeur={profilAffiche.notifications_budget} onChange={(v) => mettreAJourPreferences({ notifications_budget: v })} />
-        <LigneNotification label={t('profil.notif_promos')} valeur={profilAffiche.notifications_promos} onChange={(v) => mettreAJourPreferences({ notifications_promos: v })} />
-        <LigneNotification label={t('profil.notif_bilan')} valeur={profilAffiche.notifications_bilan} onChange={(v) => mettreAJourPreferences({ notifications_bilan: v })} />
+        <LigneNotification
+          label={t('profil.notif_planning')}
+          valeur={profilAffiche.notifications_planning}
+          onChange={(v) => mettreAJourPreferences({ notifications_planning: v })}
+        />
+        <LigneNotification
+          label={t('profil.notif_budget')}
+          valeur={profilAffiche.notifications_budget}
+          onChange={(v) => mettreAJourPreferences({ notifications_budget: v })}
+        />
+        <LigneNotification
+          label={t('profil.notif_promos')}
+          valeur={profilAffiche.notifications_promos}
+          onChange={(v) => mettreAJourPreferences({ notifications_promos: v })}
+        />
+        <LigneNotification
+          label={t('profil.notif_bilan')}
+          valeur={profilAffiche.notifications_bilan}
+          onChange={(v) => mettreAJourPreferences({ notifications_bilan: v })}
+        />
       </Card>
 
       <Pressable
@@ -261,7 +352,16 @@ export default function Profil() {
       >
         <Card style={{ padding: 20, gap: 4, borderRadius: 28, borderTopLeftRadius: 28 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}>
+            <View
+              style={{
+                width: 42,
+                height: 42,
+                borderRadius: 21,
+                backgroundColor: colors.bgSecondary,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
               <CookingPot size={22} color={colors.primary} />
             </View>
             <View style={{ flex: 1 }}>
@@ -284,7 +384,16 @@ export default function Profil() {
       >
         <Card style={{ padding: 20, gap: 4, borderRadius: 28, borderTopLeftRadius: 28 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}>
+            <View
+              style={{
+                width: 42,
+                height: 42,
+                borderRadius: 21,
+                backgroundColor: colors.bgSecondary,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
               <Sparkles size={22} color={colors.primary} />
             </View>
             <View style={{ flex: 1 }}>
@@ -297,13 +406,24 @@ export default function Profil() {
       </Pressable>
 
       <Pressable
-        onPress={() => (estAuMoins('famille') ? router.push('/membres-foyer') : setPaywallFamilleVisible(true))}
+        onPress={() =>
+          estAuMoins('famille') ? router.push('/membres-foyer') : setPaywallFamilleVisible(true)
+        }
         accessibilityRole="button"
         accessibilityLabel={t('famille.titre')}
       >
         <Card style={{ padding: 20, gap: 4, borderRadius: 28, borderTopLeftRadius: 28 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}>
+            <View
+              style={{
+                width: 42,
+                height: 42,
+                borderRadius: 21,
+                backgroundColor: colors.bgSecondary,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
               <Users size={22} color={colors.primary} />
             </View>
             <View style={{ flex: 1 }}>
@@ -321,10 +441,23 @@ export default function Profil() {
         featureOrigine="membres_foyer"
       />
 
-      <Pressable onPress={() => router.push('/adresses')} accessibilityRole="button" accessibilityLabel={t('adresses.titre')}>
+      <Pressable
+        onPress={() => router.push('/adresses')}
+        accessibilityRole="button"
+        accessibilityLabel={t('adresses.titre')}
+      >
         <Card style={{ padding: 20, gap: 4, borderRadius: 28, borderTopLeftRadius: 28 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}>
+            <View
+              style={{
+                width: 42,
+                height: 42,
+                borderRadius: 21,
+                backgroundColor: colors.bgSecondary,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
               <MapPin size={22} color={colors.primary} />
             </View>
             <View style={{ flex: 1 }}>
@@ -336,10 +469,79 @@ export default function Profil() {
         </Card>
       </Pressable>
 
-      <Pressable onPress={() => router.push('/aide')} accessibilityRole="button" accessibilityLabel={t('aide.titre')}>
+      <Pressable
+        onPress={() => router.push('/preferences-courses')}
+        accessibilityRole="button"
+        accessibilityLabel={t('preferences_courses.titre')}
+      >
         <Card style={{ padding: 20, gap: 4, borderRadius: 28, borderTopLeftRadius: 28 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}>
+            <View
+              style={{
+                width: 42,
+                height: 42,
+                borderRadius: 21,
+                backgroundColor: colors.bgSecondary,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <ShoppingBasket size={22} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Heading>{t('preferences_courses.titre')}</Heading>
+              <Caption>{t('preferences_courses.profil_resume')}</Caption>
+            </View>
+            <ChevronRight size={20} color={colors.textMuted} />
+          </View>
+        </Card>
+      </Pressable>
+
+      <Pressable
+        onPress={() => router.push('/commandes-demo')}
+        accessibilityRole="button"
+        accessibilityLabel={t('historique_demo.titre')}
+      >
+        <Card style={{ padding: 20, gap: 4, borderRadius: 28, borderTopLeftRadius: 28 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View
+              style={{
+                width: 42,
+                height: 42,
+                borderRadius: 21,
+                backgroundColor: colors.bgSecondary,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Clock3 size={22} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Heading>{t('historique_demo.titre')}</Heading>
+              <Caption>{t('historique_demo.profil_resume')}</Caption>
+            </View>
+            <ChevronRight size={20} color={colors.textMuted} />
+          </View>
+        </Card>
+      </Pressable>
+
+      <Pressable
+        onPress={() => router.push('/aide')}
+        accessibilityRole="button"
+        accessibilityLabel={t('aide.titre')}
+      >
+        <Card style={{ padding: 20, gap: 4, borderRadius: 28, borderTopLeftRadius: 28 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View
+              style={{
+                width: 42,
+                height: 42,
+                borderRadius: 21,
+                backgroundColor: colors.bgSecondary,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
               <HelpCircle size={22} color={colors.primary} />
             </View>
             <View style={{ flex: 1 }}>
@@ -355,14 +557,24 @@ export default function Profil() {
         onPress={() => void seDeconnecter()}
         accessibilityRole="button"
         accessibilityLabel={t('profil.deconnexion')}
-        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 4 }}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+          paddingVertical: 4,
+        }}
       >
         <LogOut size={16} color={colors.textPrimary} />
         <BodySm style={{ color: colors.textPrimary }}>{t('profil.deconnexion')}</BodySm>
       </Pressable>
 
       {!confirmationSuppression ? (
-        <Pressable onPress={() => setConfirmationSuppression(true)} accessibilityRole="button" accessibilityLabel={t('profil.supprimer_compte')}>
+        <Pressable
+          onPress={() => setConfirmationSuppression(true)}
+          accessibilityRole="button"
+          accessibilityLabel={t('profil.supprimer_compte')}
+        >
           <BodySm style={{ color: colors.error, textAlign: 'center' }}>{t('profil.supprimer_compte')}</BodySm>
         </Pressable>
       ) : (
@@ -376,7 +588,13 @@ export default function Profil() {
             placeholderTextColor={colors.textMuted}
             autoCapitalize="none"
             accessibilityLabel={t('profil.email_confirmation_label')}
-            style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 12, color: colors.textPrimary }}
+            style={{
+              borderWidth: 1,
+              borderColor: colors.border,
+              borderRadius: 12,
+              padding: 12,
+              color: colors.textPrimary,
+            }}
           />
           <Button
             label={t('profil.confirmer_suppression')}
