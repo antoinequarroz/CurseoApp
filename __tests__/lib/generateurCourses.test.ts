@@ -49,4 +49,48 @@ describe('genererListeCourses', () => {
     const items = genererListeCourses(planning, { nb_personnes: 2 }, [{ produit: 'Pâtes', quantite: 200, unite: 'g' }]);
     expect(items).toHaveLength(0);
   });
+
+  it('fusionne les synonymes usuels et convertit les cuilleres en volume', () => {
+    const recetteAlias: Recette = {
+      ...recetteTest,
+      id: 'r-alias',
+      titre: 'Alias',
+      portions: 2,
+      ingredients: [
+        { nom: 'Œufs', quantite: 2, unite: 'unités', rayon: 'Produits laitiers' },
+        { nom: 'Sauce', quantite: 1, unite: 'cs', rayon: 'Epicerie' },
+      ],
+    };
+    const recetteSingulier: Recette = {
+      ...recetteAlias,
+      id: 'r-singulier',
+      ingredients: [
+        { nom: 'Oeuf', quantite: 2, unite: 'unite', rayon: 'Produits laitiers' },
+        { nom: 'Sauce', quantite: 1, unite: 'cc', rayon: 'Epicerie' },
+      ],
+    };
+    const items = genererListeCourses(
+      { ...planningVide, lundi: { midi: { recette: recetteAlias }, soir: { recette: recetteSingulier } } },
+      { nb_personnes: 2 },
+    );
+
+    expect(items.find((item) => item.produit === 'Œufs')).toMatchObject({ quantite: 4, unite: 'unite' });
+    expect(items.find((item) => item.produit === 'Sauce')).toMatchObject({ quantite: 25, unite: 'cl' });
+  });
+
+  it('ne fusionne pas un conditionnement avec une unite generique', () => {
+    const recetteConditionnements: Recette = {
+      ...recetteTest,
+      ingredients: [
+        { nom: 'Basilic', quantite: 1, unite: 'botte', rayon: 'Fruits & Legumes' },
+        { nom: 'Basilic', quantite: 1, unite: 'unite', rayon: 'Fruits & Legumes' },
+      ],
+    };
+    const items = genererListeCourses(
+      { ...planningVide, lundi: { midi: { recette: recetteConditionnements } } },
+      { nb_personnes: 2 },
+    );
+    expect(items).toHaveLength(2);
+    expect(items.map((item) => item.unite)).toEqual(expect.arrayContaining(['botte', 'unite']));
+  });
 });

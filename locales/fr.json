@@ -366,7 +366,12 @@
     "prix_par_unite": "{{prix}}/{{unite}}",
     "maj_le": "Mis à jour le {{date}}",
     "prix_peut_etre_perime": "Prix du {{date}} — peut-être dépassé",
-    "source": "Source : {{source}}"
+    "source": "Source : {{source}}",
+    "fiabilite_demo": "Démo",
+    "fiabilite_live": "Test en direct",
+    "fiabilite_indicative": "Relevé indicatif",
+    "avertissement_test": "Comparaison indicative : vérifie le prix, le format et la disponibilité sur le site ou en magasin avant d'acheter.",
+    "enseignes_sans_resultat": "Aucun résultat dans ce test : {{enseignes}}. Cela ne signifie pas que le produit est indisponible."
   },
   "erreurs": {
     "boundary_titre": "Une erreur est survenue",

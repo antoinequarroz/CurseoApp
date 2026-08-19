@@ -85,6 +85,7 @@
     "test:coverage": "jest --coverage",
     "test:gateway": "npm --prefix services/swissgroceries-gateway test",
     "catalogue:check-images": "node scripts/ensure-unique-recipe-images.mjs --check",
+    "catalogue:audit": "node scripts/audit-catalogue-recettes.mjs",
     "supabase:types": "supabase gen types typescript --local > supabase/database.types.ts"
   },
   "private": true

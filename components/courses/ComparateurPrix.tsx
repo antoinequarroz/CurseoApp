@@ -1,7 +1,7 @@
 /** Tableau des prix par enseigne pour un produit — reserve aux abonnes Standard+. */
 import React, { useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { ChevronDown, RefreshCw } from 'lucide-react-native';
+import { ChevronDown, Info, RefreshCw } from 'lucide-react-native';
 import { useTheme } from '@/lib/theme-context';
 import { useAbonnement } from '@/hooks/useAbonnement';
 import { usePrix } from '@/hooks/usePrix';
@@ -25,6 +25,14 @@ const NOM_ENSEIGNE: Record<string, string> = {
   ottos: t('onboarding.enseigne_ottos'),
   manor_food: t('onboarding.enseigne_manor_food'),
 };
+
+const ENSEIGNES_COMPAREES = Object.keys(NOM_ENSEIGNE);
+
+function libelleFiabilite(offre: OffrePrix): string {
+  if (offre.source === 'mock') return t('comparateur.fiabilite_demo');
+  if (offre.source.toLowerCase().includes('live')) return t('comparateur.fiabilite_live');
+  return t('comparateur.fiabilite_indicative');
+}
 
 function LigneOffre({ offre, estMeilleurPrix }: { offre: OffrePrix; estMeilleurPrix: boolean }) {
   const { colors } = useTheme();
@@ -58,6 +66,7 @@ function LigneOffre({ offre, estMeilleurPrix }: { offre: OffrePrix; estMeilleurP
           {offre.format ? <Caption>{offre.format}</Caption> : null}
           {offre.promotion ? <Badge label={offre.promotion} variant="warning" /> : null}
           {estMeilleurPrix ? <Badge label={t('courses.meilleur_prix')} variant="meilleurPrix" /> : null}
+          <Badge label={libelleFiabilite(offre)} variant={perime ? 'warning' : 'neutral'} />
         </View>
         <View style={{ alignItems: 'flex-end' }}>
           <Price>{formatPrix(offre.prix)}</Price>
@@ -133,6 +142,7 @@ export function ComparateurPrix({
           alignItems: 'center',
           justifyContent: 'space-between',
           paddingVertical: 8,
+          minHeight: 44,
         }}
       >
         <BodySm style={{ color: colors.primary }}>
@@ -146,7 +156,7 @@ export function ComparateurPrix({
       </Pressable>
 
       {ouvert && (
-        <View style={{ gap: 8 }}>
+        <View style={{ gap: 8 }} accessibilityLiveRegion="polite">
           {estHorsLigne && !comparatif ? (
             <Caption style={{ color: colors.warning }}>{t('comparateur.hors_ligne')}</Caption>
           ) : isLoading ? (
@@ -170,6 +180,21 @@ export function ComparateurPrix({
             <Caption>{t('comparateur.aucun_prix')}</Caption>
           ) : (
             <>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'flex-start',
+                  gap: 8,
+                  padding: 12,
+                  borderRadius: 12,
+                  backgroundColor: colors.bgWarm,
+                }}
+              >
+                <Info size={16} color={colors.primary} accessibilityElementsHidden />
+                <Caption style={{ color: colors.textSecondary, flex: 1 }}>
+                  {t('comparateur.avertissement_test')}
+                </Caption>
+              </View>
               {estHorsLigne && (
                 <Caption style={{ color: colors.warning }}>{t('comparateur.cache_hors_ligne')}</Caption>
               )}
@@ -180,6 +205,18 @@ export function ComparateurPrix({
                   estMeilleurPrix={offre.prixUnitaire === comparatif.meilleurPrixUnitaire}
                 />
               ))}
+              {ENSEIGNES_COMPAREES.some(
+                (enseigne) => !comparatif.offres.some((offre) => offre.enseigne === enseigne),
+              ) ? (
+                <Caption>
+                  {t('comparateur.enseignes_sans_resultat', {
+                    enseignes: ENSEIGNES_COMPAREES
+                      .filter((enseigne) => !comparatif.offres.some((offre) => offre.enseigne === enseigne))
+                      .map((enseigne) => NOM_ENSEIGNE[enseigne])
+                      .join(', '),
+                  })}
+                </Caption>
+              ) : null}
             </>
           )}
         </View>

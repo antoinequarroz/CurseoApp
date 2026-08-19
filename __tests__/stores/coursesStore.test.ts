@@ -63,6 +63,23 @@ describe('coursesStore', () => {
     expect(useCoursesStore.getState().items.map((item) => item.produit)).toEqual(['Riz', 'Papier toilette']);
   });
 
+  it('preserve le cochage des ingredients encore presents lors d une regeneration', () => {
+    useCoursesStore.getState().genererDepuisPlanning(planning, { nb_personnes: 2 });
+    const id = useCoursesStore.getState().items[0]!.id;
+    useCoursesStore.getState().toggleCoche(id);
+    useCoursesStore.getState().genererDepuisPlanning(planning, { nb_personnes: 4 });
+
+    expect(useCoursesStore.getState().items[0]).toMatchObject({ produit: 'Riz', coche: true, quantite: 500 });
+  });
+
+  it('preserve le cochage quand l arrondi passe des grammes aux kilos', () => {
+    useCoursesStore.getState().genererDepuisPlanning(planning, { nb_personnes: 2 });
+    useCoursesStore.getState().toggleCoche(useCoursesStore.getState().items[0]!.id);
+    useCoursesStore.getState().genererDepuisPlanning(planning, { nb_personnes: 8 });
+
+    expect(useCoursesStore.getState().items[0]).toMatchObject({ coche: true, quantite: 1, unite: 'kg' });
+  });
+
   it('une regeneration vide retire les anciens ingredients mais garde les articles libres', () => {
     useCoursesStore.getState().genererDepuisPlanning(planning, { nb_personnes: 2 });
     useCoursesStore.getState().ajouterItemLibre('Savon', 'Hygiene');

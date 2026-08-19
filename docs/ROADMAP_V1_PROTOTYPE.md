@@ -81,9 +81,8 @@ critiques executes sur appareil ou simulateur.
 - URLs HTTPS publiques des CGVU, de la confidentialite et du support.
 - Projet Sentry, organisation, projet et secret de build.
 - Produits RevenueCat / App Store Connect / Play Console valides.
-- Historique Supabase a resynchroniser : neuf migrations distantes du
-  28.07.2026 sont absentes du depot et bloquent actuellement `db push`, meme
-  si la migration `20260809123024_add_profils_enfants_ages` est bien deployee.
+- Historique Supabase réconcilié jusqu'à la migration `20260817163042` ;
+  revalider l'alignement local/distant avant toute prochaine migration.
 - Accords ou base juridique pour les donnees de prix.
 
 ## Premieres stories
@@ -110,3 +109,12 @@ critiques executes sur appareil ou simulateur.
   cible ephemere et verification de la reprise.
 - `COUR-66` - Reconciliation de l'historique Supabase partage et reprise des
   deploiements de migrations sans nouvelle build mobile.
+- `COUR-67` - Audit reproductible des 50 recettes et de leurs métadonnées.
+- `COUR-68` - Passage Planning → liste fiable, avec unités et état local préservé.
+- `COUR-69` - Comparateur de prix explicitement présenté comme un test indicatif.
+- `COUR-70` - Équipements de cuisine dans l'onboarding et le profil, avec filtre
+  « compatible avec ma cuisine » et avertissement sur l'équipement manquant.
+- `COUR-71` - Prototype de transfert vers les courses en ligne : adresse,
+  contact et préférences de livraison préremplis, puis remise sécurisée au site
+  marchand via API, OAuth ou lien officiel. Aucun mot de passe, carte bancaire
+  ou session magasin n'est stocké par CoursIA.

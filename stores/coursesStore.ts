@@ -8,7 +8,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { ItemCourse, PlanningHebdomadaire, Profil, Rayon } from '@/types';
-import { genererListeCourses } from '@/lib/generateurCourses';
+import { cleItemCourse, genererListeCourses } from '@/lib/generateurCourses';
 import {
   chargerDerniereListeCourses,
   enregistrerListeCourses,
@@ -45,16 +45,28 @@ export const useCoursesStore = create<CoursesState>()(
       revision: 0,
       cycleSession: 0,
       genererDepuisPlanning: (planning, profil, planningId) =>
-        set((state) => ({
-          // Les articles libres (sans recette_origine) sont preserves lors d'une
-          // regeneration — sinon la liste "papier toilette / yogourts" ajoutee a
-          // la main disparaitrait des qu'on re-planifie la semaine.
-          items: [...genererListeCourses(planning, profil), ...state.items.filter((i) => !i.recette_origine)],
-          planningId: planningId ?? get().planningId,
-          syncEnAttente: true,
-          erreurSynchronisation: false,
-          revision: state.revision + 1,
-        })),
+        set((state) => {
+          const etatParCle = new Map(
+            state.items
+              .filter((item) => Boolean(item.recette_origine))
+              .map((item) => [cleItemCourse(item), item] as const),
+          );
+          const generes = genererListeCourses(planning, profil).map((item) => {
+            const precedent = etatParCle.get(cleItemCourse(item));
+            return precedent ? { ...item, coche: precedent.coche } : item;
+          });
+
+          return {
+            // Les articles libres (sans recette_origine) sont preserves lors d'une
+            // regeneration — sinon la liste "papier toilette / yogourts" ajoutee a
+            // la main disparaitrait des qu'on re-planifie la semaine.
+            items: [...generes, ...state.items.filter((i) => !i.recette_origine)],
+            planningId: planningId ?? get().planningId,
+            syncEnAttente: true,
+            erreurSynchronisation: false,
+            revision: state.revision + 1,
+          };
+        }),
       toggleCoche: (id) =>
         set((state) => ({
           items: state.items.map((item) => (item.id === id ? { ...item, coche: !item.coche } : item)),

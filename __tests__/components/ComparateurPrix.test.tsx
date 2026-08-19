@@ -100,7 +100,7 @@ describe('ComparateurPrix', () => {
       meilleurPrixUnitaire: 4.2,
     } satisfies ComparatifPrixReel);
 
-    const { getByText, findByText } = await renderAvecProviders(
+    const { getByText, getAllByText, findByText } = await renderAvecProviders(
       <ComparateurPrix produit="Riz basmati" onChoisirPalier={jest.fn()} />,
     );
     expect(fetchComparatifPrixMock).not.toHaveBeenCalled();
@@ -109,6 +109,29 @@ describe('ComparateurPrix', () => {
     expect(getByText('500g')).toBeTruthy();
     expect(getByText('CHF 4.20')).toBeTruthy();
     expect(getByText('CHF 2.30')).toBeTruthy();
+    expect(getByText('Comparaison indicative : vérifie le prix, le format et la disponibilité sur le site ou en magasin avant d\'acheter.')).toBeTruthy();
+    expect(getAllByText('Relevé indicatif')).toHaveLength(2);
+    expect(getByText(/Aucun résultat dans ce test/)).toBeTruthy();
+  });
+
+  it('identifie explicitement une source live comme un test a verifier', async () => {
+    useProfilStore.getState().setProfil({ ...profilBase, abonnement: 'standard' });
+    fetchComparatifPrixMock.mockResolvedValue({
+      produitCanoniqueId: 'live-riz',
+      nom: 'Riz',
+      offres: [{
+        offreId: 'live-1', enseigne: 'coop', format: '1 kg', quantite: 1, unite: 'kg',
+        prix: 3.9, prixUnitaire: 3.9, promotion: null, source: 'SwissGroceries (live)',
+        collecteLe: new Date().toISOString(), expire: false,
+      }],
+      meilleurPrixUnitaire: 3.9,
+    } satisfies ComparatifPrixReel);
+
+    const { getByText, findByText } = await renderAvecProviders(
+      <ComparateurPrix produit="Riz" onChoisirPalier={jest.fn()} />,
+    );
+    fireEvent.press(getByText('Comparer les prix'));
+    expect(await findByText('Test en direct')).toBeTruthy();
   });
 
   it('promotion : le badge de promotion est affiche', async () => {
