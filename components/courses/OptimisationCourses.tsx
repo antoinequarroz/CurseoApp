@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { TextInput, View } from 'react-native';
+import { Pressable, TextInput, View } from 'react-native';
 import { AlertTriangle, MapPin, Route, Store } from 'lucide-react-native';
 import { useTheme } from '@/lib/theme-context';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
@@ -13,6 +13,7 @@ import { dates } from '@/lib/dates';
 import {
   optimiserListeCoursesLive,
   type OptimisationCoursesLive,
+  type OptionOptimisationCoursesLive,
 } from '@/lib/swissGroceriesRepository';
 import { t } from '@/lib/i18n';
 import type { Enseigne, ItemCourse, ModeOptimisation } from '@/types';
@@ -31,9 +32,21 @@ interface Props {
   enseignesFavorites: Enseigne[];
   estStandard: boolean;
   onDebloquer: () => void;
+  onPreparerPaniers: (
+    resultat: OptimisationCoursesLive,
+    option: OptionOptimisationCoursesLive,
+    npa: string,
+  ) => void;
 }
 
-export function OptimisationCourses({ items, mode, enseignesFavorites, estStandard, onDebloquer }: Props) {
+export function OptimisationCourses({
+  items,
+  mode,
+  enseignesFavorites,
+  estStandard,
+  onDebloquer,
+  onPreparerPaniers,
+}: Props) {
   const { colors } = useTheme();
   const { estHorsLigne } = useNetworkStatus();
   const [npa, setNpa] = useState('');
@@ -71,7 +84,9 @@ export function OptimisationCourses({ items, mode, enseignesFavorites, estStanda
       const data = await optimiserListeCoursesLive({ items, npa, mode, enseignesFavorites });
       setResultat({ data, signature, mode });
     } catch {
-      setErreur(t(resultatActuel ? 'courses.optimisation_erreur_ancien_resultat' : 'courses.optimisation_erreur'));
+      setErreur(
+        t(resultatActuel ? 'courses.optimisation_erreur_ancien_resultat' : 'courses.optimisation_erreur'),
+      );
     } finally {
       setChargement(false);
     }
@@ -146,7 +161,14 @@ export function OptimisationCourses({ items, mode, enseignesFavorites, estStanda
       {erreur ? (
         <View
           accessibilityRole="alert"
-          style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, padding: 12, borderRadius: 14, backgroundColor: colors.swipePass }}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'flex-start',
+            gap: 8,
+            padding: 12,
+            borderRadius: 14,
+            backgroundColor: colors.swipePass,
+          }}
         >
           <AlertTriangle size={18} color={colors.chipTextError} accessible={false} />
           <BodySm style={{ flex: 1, color: colors.chipTextError }}>{erreur}</BodySm>
@@ -163,35 +185,110 @@ export function OptimisationCourses({ items, mode, enseignesFavorites, estStanda
       />
 
       <View accessibilityLiveRegion="polite">
-        {resultatActuel ? <ResultatOptimisation resultat={resultatActuel} /> : null}
+        {resultatActuel ? (
+          <ResultatOptimisation
+            key={resultatActuel.collecteLe}
+            resultat={resultatActuel}
+            npa={npa}
+            onPreparer={onPreparerPaniers}
+          />
+        ) : null}
       </View>
     </Card>
   );
 }
 
-function ResultatOptimisation({ resultat }: { resultat: OptimisationCoursesLive }) {
+function ResultatOptimisation({
+  resultat,
+  npa,
+  onPreparer,
+}: {
+  resultat: OptimisationCoursesLive;
+  npa: string;
+  onPreparer: Props['onPreparerPaniers'];
+}) {
   const { colors } = useTheme();
-  const articlesTrouves = resultat.arrets.reduce((total, arret) => total + arret.articles.length, 0);
+  const optionPrincipale: OptionOptimisationCoursesLive = {
+    id: `principal:${resultat.strategie}:${resultat.montantTotal}`,
+    strategie: resultat.strategie,
+    montantTotal: resultat.montantTotal,
+    arrets: resultat.arrets,
+    articlesNonTrouves: resultat.articlesNonTrouves,
+  };
+  const options = [optionPrincipale, ...(resultat.alternatives ?? [])];
+  const [optionId, setOptionId] = useState(optionPrincipale.id);
+  const option = options.find((candidate) => candidate.id === optionId) ?? optionPrincipale;
+  const articlesTrouves = option.arrets.reduce((total, arret) => total + arret.articles.length, 0);
 
   return (
     <View accessibilityRole="summary" style={{ gap: 14 }}>
       <View style={{ gap: 3 }}>
         <Caption>{t('courses.optimisation_total_estime')}</Caption>
-        <PriceLG>{formatPrix(resultat.montantTotal)}</PriceLG>
+        <PriceLG>{formatPrix(option.montantTotal)}</PriceLG>
         <BodySm>
-          {t('courses.optimisation_resume', { magasins: resultat.arrets.length, articles: articlesTrouves })}
+          {t('courses.optimisation_resume', { magasins: option.arrets.length, articles: articlesTrouves })}
         </BodySm>
         {resultat.economieEstimee && resultat.economieEstimee > 0 ? (
-          <Savings>{t('courses.optimisation_economie', { montant: formatPrix(resultat.economieEstimee) })}</Savings>
+          <Savings>
+            {t('courses.optimisation_economie', { montant: formatPrix(resultat.economieEstimee) })}
+          </Savings>
         ) : null}
       </View>
 
-      {resultat.arrets.map((arret) => (
+      {options.length > 1 ? (
+        <View accessibilityRole="radiogroup" style={{ gap: 8 }}>
+          <BodySm style={{ fontWeight: '600' }}>{t('courses.options_panier_titre')}</BodySm>
+          {options.map((candidate, index) => {
+            const selectionnee = candidate.id === option.id;
+            return (
+              <Pressable
+                key={candidate.id}
+                onPress={() => setOptionId(candidate.id)}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: selectionnee }}
+                accessibilityLabel={t('courses.option_panier_label', {
+                  magasins: candidate.arrets.length,
+                  montant: formatPrix(candidate.montantTotal),
+                })}
+                style={{
+                  minHeight: 52,
+                  padding: 12,
+                  borderRadius: 14,
+                  borderWidth: 1,
+                  borderColor: selectionnee ? colors.primary : colors.border,
+                  backgroundColor: selectionnee ? colors.bgSecondary : colors.bgCard,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                }}
+              >
+                <BodySm style={{ flex: 1, fontWeight: selectionnee ? '700' : '500' }}>
+                  {index === 0 ? t('courses.option_recommandee') : t('courses.option_alternative', { index })}
+                </BodySm>
+                <BodySm style={{ fontVariant: ['tabular-nums'] }}>
+                  {formatPrix(candidate.montantTotal)}
+                </BodySm>
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : null}
+
+      {option.arrets.map((arret) => (
         <View
           key={`${arret.enseigne}:${arret.magasin ?? ''}`}
-          style={{ padding: 14, gap: 10, borderRadius: 14, borderCurve: 'continuous', backgroundColor: colors.bgSecondary }}
+          style={{
+            padding: 14,
+            gap: 10,
+            borderRadius: 14,
+            borderCurve: 'continuous',
+            backgroundColor: colors.bgSecondary,
+          }}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <View
+            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}
+          >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9, flex: 1 }}>
               <View
                 style={{
@@ -216,7 +313,12 @@ function ResultatOptimisation({ resultat }: { resultat: OptimisationCoursesLive 
           {arret.articles.map((article, index) => (
             <View
               key={`${article.demande}:${index}`}
-              style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'flex-start',
+                justifyContent: 'space-between',
+                gap: 12,
+              }}
             >
               <View style={{ flex: 1 }}>
                 <BodySm style={{ color: colors.textPrimary }}>{article.produit}</BodySm>
@@ -232,12 +334,12 @@ function ResultatOptimisation({ resultat }: { resultat: OptimisationCoursesLive 
         </View>
       ))}
 
-      {resultat.articlesNonTrouves.length > 0 ? (
+      {option.articlesNonTrouves.length > 0 ? (
         <View style={{ gap: 4, padding: 12, borderRadius: 14, backgroundColor: colors.warningBg }}>
           <BodySm style={{ color: colors.chipTextWarning, fontWeight: '600' }}>
-            {t('courses.optimisation_non_trouves_titre', { count: resultat.articlesNonTrouves.length })}
+            {t('courses.optimisation_non_trouves_titre', { count: option.articlesNonTrouves.length })}
           </BodySm>
-          <Caption style={{ color: colors.chipTextWarning }}>{resultat.articlesNonTrouves.join(', ')}</Caption>
+          <Caption style={{ color: colors.chipTextWarning }}>{option.articlesNonTrouves.join(', ')}</Caption>
         </View>
       ) : null}
 
@@ -248,6 +350,11 @@ function ResultatOptimisation({ resultat }: { resultat: OptimisationCoursesLive 
           date: dates.formatDateHeureCourte(new Date(resultat.collecteLe)),
         })}
       </Caption>
+      <Button
+        label={t('courses.preparer_paniers')}
+        onPress={() => onPreparer(resultat, option, npa)}
+        accessibilityHint={t('courses.preparer_paniers_hint')}
+      />
     </View>
   );
 }

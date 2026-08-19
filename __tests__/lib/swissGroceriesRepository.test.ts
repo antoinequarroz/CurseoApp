@@ -3,6 +3,7 @@ import {
   fetchSwissGroceriesEligibility,
   fetchComparatifPrixLive,
   optimiserListeCoursesLive,
+  rechercherProduitsLive,
   swissGroceriesBuildEnabled,
 } from '@/lib/swissGroceriesRepository';
 import type { ItemCourse } from '@/types';
@@ -43,16 +44,27 @@ describe('swissGroceriesRepository', () => {
       error: null,
       data: {
         byChain: {
-          migros: [{
-            id: 'm-1', name: 'Lait entier', brand: 'M-Classic',
-            size: { value: 1, unit: 'l' }, price: { current: 1.8, currency: 'CHF' },
-            unitPrice: { value: 1.8, per: 'l' },
-          }],
-          coop: [{
-            id: 'c-1', name: 'Lait entier', brand: 'Prix Garantie',
-            size: { value: 1, unit: 'l' }, price: { current: 1.6, currency: 'CHF' },
-            unitPrice: { value: 1.6, per: 'l' }, promotion: { description: '-10%' },
-          }],
+          migros: [
+            {
+              id: 'm-1',
+              name: 'Lait entier',
+              brand: 'M-Classic',
+              size: { value: 1, unit: 'l' },
+              price: { current: 1.8, currency: 'CHF' },
+              unitPrice: { value: 1.8, per: 'l' },
+            },
+          ],
+          coop: [
+            {
+              id: 'c-1',
+              name: 'Lait entier',
+              brand: 'Prix Garantie',
+              size: { value: 1, unit: 'l' },
+              price: { current: 1.6, currency: 'CHF' },
+              unitPrice: { value: 1.6, per: 'l' },
+              promotion: { description: '-10%' },
+            },
+          ],
         },
       },
     });
@@ -60,7 +72,12 @@ describe('swissGroceriesRepository', () => {
     const resultat = await fetchComparatifPrixLive('lait');
 
     expect(mockInvoke).toHaveBeenCalledWith('swissgroceries', {
-      body: { action: 'search', query: 'lait', chains: ['migros', 'coop', 'aldi', 'lidl', 'ottos'], limit: 4 },
+      body: {
+        action: 'search',
+        query: 'lait',
+        chains: ['migros', 'coop', 'aldi', 'lidl', 'ottos'],
+        limit: 4,
+      },
     });
     expect(resultat?.offres.map((offre) => offre.enseigne)).toEqual(['coop', 'migros']);
     expect(resultat?.offres[0]).toMatchObject({
@@ -77,6 +94,39 @@ describe('swissGroceriesRepository', () => {
     await expect(fetchComparatifPrixLive('inconnu')).resolves.toBeNull();
   });
 
+  it('retourne les alternatives de remplacement triées par prix', async () => {
+    mockInvoke.mockResolvedValue({
+      error: null,
+      data: {
+        byChain: {
+          migros: [
+            {
+              id: 'm-1',
+              name: 'Lait entier',
+              brand: 'M-Classic',
+              size: { value: 1, unit: 'l' },
+              price: { current: 1.8, currency: 'CHF' },
+            },
+          ],
+          coop: [
+            {
+              id: 'c-1',
+              name: 'Lait entier',
+              brand: 'Prix Garantie',
+              size: { value: 1, unit: 'l' },
+              price: { current: 1.6, currency: 'CHF' },
+            },
+          ],
+        },
+      },
+    });
+
+    await expect(rechercherProduitsLive('lait')).resolves.toEqual([
+      expect.objectContaining({ id: 'c-1', enseigne: 'coop', prix: 1.6 }),
+      expect.objectContaining({ id: 'm-1', enseigne: 'migros', prix: 1.8 }),
+    ]);
+  });
+
   it('propage une erreur du proxy pour que React Query affiche le repli UI', async () => {
     const error = new Error('gateway indisponible');
     mockInvoke.mockResolvedValue({ error, data: null });
@@ -91,24 +141,36 @@ describe('swissGroceriesRepository', () => {
         primary: {
           strategy: 'absolute_cheapest',
           totalChf: 7.5,
-          stops: [{
-            store: { chain: 'migros', id: 'store-1', name: 'Migros Lausanne' },
-            subtotalChf: 7.5,
-            items: [{
-              requested: { query: 'pommes', quantity: 1 },
-              matched: {
-                chain: 'migros', id: 'p-1', name: 'Pommes Gala', brand: 'TerraSuisse',
-                size: { value: 1, unit: 'kg' }, price: { current: 3.5, currency: 'CHF' },
-              },
-              lineTotal: 3.5,
-            }],
-          }],
+          stops: [
+            {
+              store: { chain: 'migros', id: 'store-1', name: 'Migros Lausanne' },
+              subtotalChf: 7.5,
+              items: [
+                {
+                  requested: { query: 'pommes', quantity: 1 },
+                  matched: {
+                    chain: 'migros',
+                    id: 'p-1',
+                    name: 'Pommes Gala',
+                    brand: 'TerraSuisse',
+                    size: { value: 1, unit: 'kg' },
+                    price: { current: 3.5, currency: 'CHF' },
+                  },
+                  lineTotal: 3.5,
+                },
+              ],
+            },
+          ],
           unmatchedItems: [{ query: 'papier cuisson' }],
         },
-        alternatives: [{
-          strategy: 'single_store', totalChf: 10,
-          stops: [], unmatchedItems: [],
-        }],
+        alternatives: [
+          {
+            strategy: 'single_store',
+            totalChf: 10,
+            stops: [],
+            unmatchedItems: [],
+          },
+        ],
       },
     });
     const items: ItemCourse[] = [
@@ -138,7 +200,14 @@ describe('swissGroceriesRepository', () => {
       source: 'SwissGroceries',
       collecteLe: '2026-08-10T12:34:00.000Z',
       articlesNonTrouves: ['papier cuisson'],
-      arrets: [{ enseigne: 'migros', montant: 7.5 }],
+      arrets: [
+        {
+          enseigne: 'migros',
+          montant: 7.5,
+          articles: [{ produitId: 'p-1', quantite: 1, prixUnitaire: 3.5 }],
+        },
+      ],
+      alternatives: [{ strategie: 'single_store', montantTotal: 10 }],
     });
   });
 

@@ -26,6 +26,7 @@ async function afficher(estStandard = true, onDebloquer = jest.fn()) {
         enseignesFavorites={[]}
         estStandard={estStandard}
         onDebloquer={onDebloquer}
+        onPreparerPaniers={jest.fn()}
       />
     </ThemeProvider>,
   );
@@ -58,10 +59,22 @@ describe('OptimisationCourses', () => {
       source: 'SwissGroceries',
       collecteLe: '2026-08-10T12:34:00.000Z',
       articlesNonTrouves: ['papier cuisson'],
-      arrets: [{
-        enseigne: 'migros', magasin: 'Migros Lausanne', montant: 7.5,
-        articles: [{ demande: 'pommes', produit: 'Pommes Gala', marque: 'TerraSuisse', format: '1 kg', montant: 7.5 }],
-      }],
+      arrets: [
+        {
+          enseigne: 'migros',
+          magasin: 'Migros Lausanne',
+          montant: 7.5,
+          articles: [
+            {
+              demande: 'pommes',
+              produit: 'Pommes Gala',
+              marque: 'TerraSuisse',
+              format: '1 kg',
+              montant: 7.5,
+            },
+          ],
+        },
+      ],
     });
     const { getByText, getAllByText, getByPlaceholderText } = await afficher();
     await fireEvent.changeText(getByPlaceholderText('Ex. 1003'), '1003');
@@ -76,27 +89,37 @@ describe('OptimisationCourses', () => {
   });
 
   it('conserve le résultat horodaté si son actualisation échoue', async () => {
-    optimiserMock.mockResolvedValueOnce({
-      strategie: 'absolute_cheapest',
-      montantTotal: 7.5,
-      economieEstimee: null,
-      source: 'SwissGroceries',
-      collecteLe: '2026-08-10T12:34:00.000Z',
-      articlesNonTrouves: [],
-      arrets: [{
-        enseigne: 'migros', magasin: 'Migros Lausanne', montant: 7.5,
-        articles: [{ demande: 'pommes', produit: 'Pommes Gala', montant: 7.5 }],
-      }],
-    }).mockRejectedValueOnce(new Error('gateway indisponible'));
+    optimiserMock
+      .mockResolvedValueOnce({
+        strategie: 'absolute_cheapest',
+        montantTotal: 7.5,
+        economieEstimee: null,
+        source: 'SwissGroceries',
+        collecteLe: '2026-08-10T12:34:00.000Z',
+        articlesNonTrouves: [],
+        arrets: [
+          {
+            enseigne: 'migros',
+            magasin: 'Migros Lausanne',
+            montant: 7.5,
+            articles: [{ demande: 'pommes', produit: 'Pommes Gala', montant: 7.5 }],
+          },
+        ],
+      })
+      .mockRejectedValueOnce(new Error('gateway indisponible'));
     const { getByText, getByPlaceholderText } = await afficher();
     await fireEvent.changeText(getByPlaceholderText('Ex. 1003'), '1003');
     await fireEvent.press(getByText('Optimiser ma liste'));
     await waitFor(() => expect(getByText('Pommes Gala')).toBeTruthy());
 
     await fireEvent.press(getByText('Optimiser ma liste'));
-    await waitFor(() => expect(getByText(
-      'Impossible d’actualiser les prix. Le résultat précédent reste affiché avec son heure de collecte.',
-    )).toBeTruthy());
+    await waitFor(() =>
+      expect(
+        getByText(
+          'Impossible d’actualiser les prix. Le résultat précédent reste affiché avec son heure de collecte.',
+        ),
+      ).toBeTruthy(),
+    );
     expect(getByText('Pommes Gala')).toBeTruthy();
     expect(getByText('Source : SwissGroceries · relevé le 10 août à 14:34')).toBeTruthy();
   });

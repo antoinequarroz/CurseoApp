@@ -7,7 +7,13 @@ import type { Enseigne, ItemCourse, ModeOptimisation } from '@/types';
 const extra = Constants.expoConfig?.extra ?? {};
 export const swissGroceriesBuildEnabled = extra.swissGroceriesEnabled === true;
 
-export const ENSEIGNES_SWISS_GROCERIES = ['migros', 'coop', 'aldi', 'lidl', 'ottos'] as const satisfies readonly Enseigne[];
+export const ENSEIGNES_SWISS_GROCERIES = [
+  'migros',
+  'coop',
+  'aldi',
+  'lidl',
+  'ottos',
+] as const satisfies readonly Enseigne[];
 export type EnseigneSwissGroceries = (typeof ENSEIGNES_SWISS_GROCERIES)[number];
 
 interface ProduitLive {
@@ -21,7 +27,16 @@ interface ProduitLive {
 }
 
 interface ReponseLive {
-  byChain?: Partial<Record<Enseigne, ProduitLive[]>>;
+  byChain?: Partial<Record<EnseigneSwissGroceries, ProduitLive[]>>;
+}
+
+export interface ProduitRechercheLive {
+  id: string;
+  enseigne: EnseigneSwissGroceries;
+  nom: string;
+  marque?: string;
+  format?: string;
+  prix: number;
 }
 
 const EligibiliteSchema = z.object({ eligible: z.boolean() });
@@ -50,37 +65,46 @@ const LignePlanSchema = z.object({
   lineTotal: z.number(),
 });
 
-const PlanSchema = z.object({
-  strategy: z.enum(['single_store', 'split_cart', 'absolute_cheapest']),
-  totalChf: z.number(),
-  stops: z.array(z.object({
-    store: z.object({
-      chain: z.enum(ENSEIGNES_SWISS_GROCERIES),
-      id: z.string().optional(),
-      name: z.string().optional(),
-    }),
-    items: z.array(LignePlanSchema),
-    subtotalChf: z.number(),
-  })),
-  unmatchedItems: z.array(z.object({ query: z.string() }).passthrough()),
-}).passthrough();
+const PlanSchema = z
+  .object({
+    strategy: z.enum(['single_store', 'split_cart', 'absolute_cheapest']),
+    totalChf: z.number(),
+    stops: z.array(
+      z.object({
+        store: z.object({
+          chain: z.enum(ENSEIGNES_SWISS_GROCERIES),
+          id: z.string().optional(),
+          name: z.string().optional(),
+        }),
+        items: z.array(LignePlanSchema),
+        subtotalChf: z.number(),
+      }),
+    ),
+    unmatchedItems: z.array(z.object({ query: z.string() }).passthrough()),
+  })
+  .passthrough();
 
 const PlanResultatSchema = z.object({
   primary: PlanSchema,
   alternatives: z.array(PlanSchema),
-  meta: z.object({
-    source: z.literal('SwissGroceries'),
-    collectedAt: z.string().datetime(),
-  }).optional(),
+  meta: z
+    .object({
+      source: z.literal('SwissGroceries'),
+      collectedAt: z.string().datetime(),
+    })
+    .optional(),
 });
 
 export type StrategieCoursesLive = 'single_store' | 'split_cart' | 'absolute_cheapest';
 
 export interface LigneCoursesOptimisee {
+  produitId: string;
   demande: string;
   produit: string;
   marque?: string;
   format?: string;
+  quantite: number;
+  prixUnitaire: number;
   montant: number;
   urlProduit?: string;
 }
@@ -100,12 +124,45 @@ export interface OptimisationCoursesLive {
   economieEstimee: number | null;
   source: 'SwissGroceries';
   collecteLe: string;
+  alternatives: OptionOptimisationCoursesLive[];
+}
+
+export interface OptionOptimisationCoursesLive {
+  id: string;
+  strategie: StrategieCoursesLive;
+  montantTotal: number;
+  arrets: ArretCoursesOptimise[];
+  articlesNonTrouves: string[];
 }
 
 function formatProduit(produit: ProduitLive): string {
   const morceaux = [produit.brand];
   if (produit.size) morceaux.push(`${produit.size.value} ${produit.size.unit}`);
   return morceaux.filter(Boolean).join(' · ');
+}
+
+/** Résultats explicites pour remplacer une ligne du brouillon COUR-71. */
+export async function rechercherProduitsLive(nomProduit: string): Promise<ProduitRechercheLive[]> {
+  const { data, error } = await supabase.functions.invoke<ReponseLive>('swissgroceries', {
+    body: { action: 'search', query: nomProduit, chains: ENSEIGNES_SWISS_GROCERIES, limit: 4 },
+  });
+  if (error) throw error;
+  return ENSEIGNES_SWISS_GROCERIES.flatMap((enseigne) =>
+    (data?.byChain?.[enseigne] ?? []).flatMap((produit) =>
+      produit.price?.current > 0
+        ? [
+            {
+              id: produit.id,
+              enseigne,
+              nom: produit.name,
+              marque: produit.brand,
+              format: produit.size ? `${produit.size.value} ${produit.size.unit}` : undefined,
+              prix: produit.price.current,
+            },
+          ]
+        : [],
+    ),
+  ).sort((a, b) => a.prix - b.prix);
 }
 
 /**
@@ -175,9 +232,8 @@ export async function optimiserListeCoursesLive(params: {
   if (itemsActifs.length === 0) throw new Error('Aucun article a optimiser');
 
   const tags = tagsDepuisMode(params.mode);
-  const favorites = params.enseignesFavorites?.filter(
-    (enseigne): enseigne is EnseigneSwissGroceries =>
-      ENSEIGNES_SWISS_GROCERIES.includes(enseigne as EnseigneSwissGroceries),
+  const favorites = params.enseignesFavorites?.filter((enseigne): enseigne is EnseigneSwissGroceries =>
+    ENSEIGNES_SWISS_GROCERIES.includes(enseigne as EnseigneSwissGroceries),
   );
   const chains = favorites?.length ? favorites : [...ENSEIGNES_SWISS_GROCERIES];
 
@@ -210,25 +266,47 @@ export async function optimiserListeCoursesLive(params: {
     ? Math.max(0, referenceUneEnseigne.totalChf - parsed.primary.totalChf)
     : null;
 
-  return {
-    strategie: parsed.primary.strategy,
-    montantTotal: parsed.primary.totalChf,
-    arrets: parsed.primary.stops.map((stop) => ({
+  const versOption = (plan: z.infer<typeof PlanSchema>): OptionOptimisationCoursesLive => ({
+    id: `${plan.strategy}:${plan.stops.map((stop) => stop.store.chain).join('+')}:${plan.totalChf}`,
+    strategie: plan.strategy,
+    montantTotal: plan.totalChf,
+    arrets: plan.stops.map((stop) => ({
       enseigne: stop.store.chain,
       magasin: stop.store.name,
       montant: stop.subtotalChf,
-      articles: stop.items.map((ligne) => ({
-        demande: ligne.requested.query,
-        produit: ligne.matched.name,
-        marque: ligne.matched.brand,
-        format: formatTaille(ligne.matched.size),
-        montant: ligne.lineTotal,
-        urlProduit: ligne.matched.productUrl,
-      })),
+      articles: stop.items.map((ligne) => {
+        const quantite = Math.max(1, ligne.requested.quantity ?? 1);
+        return {
+          produitId: ligne.matched.id,
+          demande: ligne.requested.query,
+          produit: ligne.matched.name,
+          marque: ligne.matched.brand,
+          format: formatTaille(ligne.matched.size),
+          quantite,
+          prixUnitaire: ligne.lineTotal / quantite,
+          montant: ligne.lineTotal,
+          urlProduit: ligne.matched.productUrl,
+        };
+      }),
     })),
-    articlesNonTrouves: parsed.primary.unmatchedItems.map((item) => item.query),
+    articlesNonTrouves: plan.unmatchedItems.map((item) => item.query),
+  });
+  const primaire = versOption(parsed.primary);
+  const alternatives = parsed.alternatives
+    .map(versOption)
+    .filter(
+      (option, index, options) =>
+        option.id !== primaire.id && options.findIndex((candidate) => candidate.id === option.id) === index,
+    );
+
+  return {
+    strategie: primaire.strategie,
+    montantTotal: primaire.montantTotal,
+    arrets: primaire.arrets,
+    articlesNonTrouves: primaire.articlesNonTrouves,
     economieEstimee: economie,
     source: parsed.meta?.source ?? 'SwissGroceries',
     collecteLe: parsed.meta?.collectedAt ?? new Date().toISOString(),
+    alternatives,
   };
 }

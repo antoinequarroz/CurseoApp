@@ -114,10 +114,7 @@ function RootLayout() {
                       name="equipements-cuisine"
                       options={{ presentation: 'modal', headerShown: true, title: t('equipements.titre') }}
                     />
-                    <Stack.Screen
-                      name="economies"
-                      options={{ headerShown: true, title: 'Économies' }}
-                    />
+                    <Stack.Screen name="economies" options={{ headerShown: true, title: 'Économies' }} />
                     <Stack.Screen
                       name="recette/[id]"
                       options={{ presentation: 'modal', headerShown: true, title: 'Recette' }}
@@ -137,6 +134,30 @@ function RootLayout() {
                     <Stack.Screen
                       name="adresses"
                       options={{ presentation: 'modal', headerShown: true, title: 'Adresses de livraison' }}
+                    />
+                    <Stack.Screen
+                      name="panier-en-ligne"
+                      options={{ headerShown: true, title: t('checkout.paniers_titre') }}
+                    />
+                    <Stack.Screen
+                      name="checkout-demo"
+                      options={{ headerShown: true, title: t('checkout.titre') }}
+                    />
+                    <Stack.Screen
+                      name="remplacer-produit"
+                      options={{
+                        presentation: 'modal',
+                        headerShown: true,
+                        title: t('checkout.remplacer_titre'),
+                      }}
+                    />
+                    <Stack.Screen
+                      name="commande-demo"
+                      options={{
+                        headerShown: true,
+                        title: t('checkout.confirmation_header'),
+                        gestureEnabled: false,
+                      }}
                     />
                     <Stack.Screen
                       name="aide"

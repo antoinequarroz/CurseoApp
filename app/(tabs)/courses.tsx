@@ -26,6 +26,8 @@ import { toast } from '@/lib/toast';
 import { analytics } from '@/lib/analytics';
 import { t } from '@/lib/i18n';
 import { useSwissGroceriesEligibility } from '@/hooks/useSwissGroceriesEligibility';
+import { router } from 'expo-router';
+import { usePanierLiveStore } from '@/stores/panierLiveStore';
 import type { ModeOptimisation, NiveauAbonnement } from '@/types';
 
 const MODES: { id: ModeOptimisation; label: string }[] = [
@@ -47,6 +49,7 @@ export default function Courses() {
   const [hydrated, setHydrated] = useState(useCoursesStore.persist.hasHydrated());
   const synchronisation = useCoursesSync();
   const { eligible: swissGroceriesEligible } = useSwissGroceriesEligibility();
+  const creerPanierLive = usePanierLiveStore((state) => state.creerDepuisOptimisation);
 
   useEffect(() => {
     if (hydrated) return;
@@ -207,6 +210,10 @@ export default function Courses() {
             enseignesFavorites={profil?.enseignes_favorites ?? []}
             estStandard={estAuMoins('standard')}
             onDebloquer={() => setPaywallVisible(true)}
+            onPreparerPaniers={(resultat, option, npa) => {
+              creerPanierLive(resultat, option, npa);
+              router.push('/panier-en-ligne');
+            }}
           />
         ) : null}
 

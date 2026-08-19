@@ -1,6 +1,31 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
+  graphql_public: {
+    Tables: {
+      [_ in never]: never;
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json;
+          operationName?: string;
+          query?: string;
+          variables?: Json;
+        };
+        Returns: Json;
+      };
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
+  };
   public: {
     Tables: {
       adresses_livraison: {
@@ -74,34 +99,55 @@ export type Database = {
       };
       commandes: {
         Row: {
+          adresse_snapshot: Json;
+          collecte_le: string | null;
           created_at: string | null;
           economies: number | null;
           id: string;
           liste_id: string | null;
+          livraisons: Json;
           montant_total: number | null;
+          nature: string;
+          paiement_reference: string | null;
           paniers: Json | null;
           profil_id: string | null;
+          source_prix: string | null;
           statut: string | null;
+          strategie: string | null;
         };
         Insert: {
+          adresse_snapshot?: Json;
+          collecte_le?: string | null;
           created_at?: string | null;
           economies?: number | null;
           id?: string;
           liste_id?: string | null;
+          livraisons?: Json;
           montant_total?: number | null;
+          nature?: string;
+          paiement_reference?: string | null;
           paniers?: Json | null;
           profil_id?: string | null;
+          source_prix?: string | null;
           statut?: string | null;
+          strategie?: string | null;
         };
         Update: {
+          adresse_snapshot?: Json;
+          collecte_le?: string | null;
           created_at?: string | null;
           economies?: number | null;
           id?: string;
           liste_id?: string | null;
+          livraisons?: Json;
           montant_total?: number | null;
+          nature?: string;
+          paiement_reference?: string | null;
           paniers?: Json | null;
           profil_id?: string | null;
+          source_prix?: string | null;
           statut?: string | null;
+          strategie?: string | null;
         };
         Relationships: [
           {
@@ -1734,6 +1780,9 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },

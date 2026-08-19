@@ -12,6 +12,7 @@ import { useCoursesStore } from '@/stores/coursesStore';
 import { useGoutsStore } from '@/stores/goutsStore';
 import { usePanierStore } from '@/stores/panierStore';
 import { usePlanningOfflineStore } from '@/stores/planningOfflineStore';
+import { usePanierLiveStore } from '@/stores/panierLiveStore';
 import { queryClient } from '@/lib/queryClient';
 import { queryPersister } from '@/lib/queryPersistence';
 
@@ -22,6 +23,7 @@ export function resetUserStores(): void {
   useGoutsStore.getState().reset();
   usePanierStore.getState().reset();
   usePlanningOfflineStore.getState().reset();
+  usePanierLiveStore.getState().reset();
   queryClient.clear();
   void queryPersister.removeClient();
 }
