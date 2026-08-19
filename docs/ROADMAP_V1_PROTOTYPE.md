@@ -108,3 +108,5 @@ critiques executes sur appareil ou simulateur.
   l'exploitation pendant la recette TestFlight.
 - `COUR-65` - Restauration automatique de chaque sauvegarde chiffree dans une
   cible ephemere et verification de la reprise.
+- `COUR-66` - Reconciliation de l'historique Supabase partage et reprise des
+  deploiements de migrations sans nouvelle build mobile.

@@ -84,6 +84,8 @@ jobs:
         run: bash scripts/verify-membres-foyer-crud.sh
       - name: Verifier la garde serveur du palier Famille sur les membres du foyer (COUR-35)
         run: bash scripts/verify-membres-foyer-garde-palier.sh
+      - name: Verifier la reprise des migrations partagees et leurs acces (COUR-66)
+        run: bash scripts/verify-migrations-partagees.sh
       - name: Verifier le planning date multi-semaines (COUR-26)
         run: bash scripts/verify-repas-planifies.sh
       - name: Verifier les adresses de livraison (COUR-28)
