@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/Badge';
 import { TitreRecetteCard, DescriptionRecetteCard, Caption, Price } from '@/components/ui/Typography';
 import { formatPrix, formatTemps } from '@/lib/format';
 import { t } from '@/lib/i18n';
-import type { Recette } from '@/types';
+import type { EquipementCuisine, Recette } from '@/types';
 import type { AlerteAllergene } from '@/hooks/useRecettes';
 
 const COULEUR_DIFFICULTE: Record<Recette['difficulte'], 'success' | 'warning' | 'error'> = {
@@ -23,11 +23,14 @@ export function RecetteCard({
   recette,
   variant = 'default',
   alerteAllergenes,
+  equipementsManquants,
 }: {
   recette: Recette;
   variant?: 'default' | 'hero' | 'heroCompact';
   /** COUR-22 : allergene de l'utilisateur possiblement present (deduction ambigue) — jamais une exclusion automatique, toujours affiche pour que la recette ne soit jamais percue comme sure a tort. */
   alerteAllergenes?: AlerteAllergene[];
+  /** Préférence de confort uniquement : la recette reste consultable. */
+  equipementsManquants?: EquipementCuisine[];
 }) {
   const { colors, isDark } = useTheme();
   const { isSmall } = useResponsive();
@@ -75,6 +78,14 @@ export function RecetteCard({
         {alerteAllergenes && alerteAllergenes.length > 0 && (
           <Badge
             label={t('recettes.allergene_possible', { allergenes: alerteAllergenes.map((a) => a.libelle).join(', ') })}
+            variant="warning"
+          />
+        )}
+        {equipementsManquants && equipementsManquants.length > 0 && (
+          <Badge
+            label={t('recettes.equipement_manquant', {
+              equipements: equipementsManquants.map((id) => t(`equipements.${id}`)).join(', '),
+            })}
             variant="warning"
           />
         )}

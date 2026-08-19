@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Pressable, Switch, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
-import { Bell, ChevronRight, Crown, HelpCircle, LogOut, MapPin, Palette, Sparkles, ShieldAlert, UserRound, Users } from 'lucide-react-native';
+import { Bell, ChevronRight, CookingPot, Crown, HelpCircle, LogOut, MapPin, Palette, Sparkles, ShieldAlert, UserRound, Users } from 'lucide-react-native';
 import { useTheme, type ApparencePreference } from '@/lib/theme-context';
 import { useProfilStore } from '@/stores/profilStore';
 import { supabase } from '@/lib/supabase';
@@ -113,6 +113,7 @@ export default function Profil() {
     allergies: [],
     objectifs: [],
     enseignes_favorites: [],
+    equipements_cuisine: null,
     abonnement: 'gratuit' as const,
     notifications_activees: true,
     notifications_planning: true,
@@ -252,6 +253,29 @@ export default function Profil() {
         <LigneNotification label={t('profil.notif_promos')} valeur={profilAffiche.notifications_promos} onChange={(v) => mettreAJourPreferences({ notifications_promos: v })} />
         <LigneNotification label={t('profil.notif_bilan')} valeur={profilAffiche.notifications_bilan} onChange={(v) => mettreAJourPreferences({ notifications_bilan: v })} />
       </Card>
+
+      <Pressable
+        onPress={() => router.push('/equipements-cuisine')}
+        accessibilityRole="button"
+        accessibilityLabel={t('equipements.titre')}
+      >
+        <Card style={{ padding: 20, gap: 4, borderRadius: 28, borderTopLeftRadius: 28 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}>
+              <CookingPot size={22} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Heading>{t('equipements.titre')}</Heading>
+              <Caption>
+                {profilAffiche.equipements_cuisine == null
+                  ? t('equipements.non_renseigne')
+                  : t('equipements.resume', { count: profilAffiche.equipements_cuisine.length })}
+              </Caption>
+            </View>
+            <ChevronRight size={20} color={colors.textMuted} />
+          </View>
+        </Card>
+      </Pressable>
 
       <Pressable
         onPress={() => router.push('/gouts')}

@@ -5,6 +5,15 @@
  */
 
 export type Regime = 'vegetarien' | 'vegan' | 'halal' | 'sans_gluten' | 'sans_lactose' | 'sans_noix' | 'poisson';
+export type EquipementCuisine =
+  | 'plaques_cuisson'
+  | 'four'
+  | 'micro_ondes'
+  | 'air_fryer'
+  | 'mixeur'
+  | 'robot_cuisine'
+  | 'grill'
+  | 'cuiseur_vapeur';
 export type Objectif =
   | 'perdre_poids'
   | 'prise_masse'
@@ -53,6 +62,8 @@ export interface Profil {
   allergies: string[];
   objectifs: Objectif[];
   enseignes_favorites: Enseigne[];
+  /** null = pas encore renseigné, [] = aucun équipement sélectionné explicitement. */
+  equipements_cuisine: EquipementCuisine[] | null;
   abonnement: NiveauAbonnement;
   notifications_activees: boolean;
   notifications_planning: boolean;
@@ -121,6 +132,7 @@ export interface Recette {
   ingredients: Ingredient[];
   etapes: string[];
   est_communautaire: boolean;
+  equipements_requis?: EquipementCuisine[];
   /** Provenance éditoriale; les valeurs nutritionnelles/prix restent des estimations tant qu'aucune source certifiée n'est fournie. */
   source?: string;
   droits_image?: string;

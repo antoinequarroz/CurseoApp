@@ -29,9 +29,10 @@ import { useQuery } from '@tanstack/react-query';
 import { RECETTES_MOCK } from '@/lib/mocks/recettes.mock';
 import { fetchRecettesPubliees } from '@/lib/recettesRepository';
 import { filtrerParContraintes, type AlerteAllergene } from '@/lib/compatibiliteRecette';
+import { estCompatibleAvecCuisine, equipementsManquants } from '@/lib/equipementsCuisine';
 import { useSynonymesAllergenes } from './useSynonymesAllergenes';
 import { isSupabaseConfigured } from '@/lib/supabase';
-import type { Recette, Regime } from '@/types';
+import type { EquipementCuisine, Recette, Regime } from '@/types';
 
 export type { AlerteAllergene };
 
@@ -41,6 +42,8 @@ const AUCUNE_RECETTE: Recette[] = [];
 interface FiltresRecettes {
   regime?: Regime[];
   allergies?: string[];
+  equipementsCuisine?: EquipementCuisine[] | null;
+  uniquementCompatibles?: boolean;
 }
 
 export function useRecettes(filtres: FiltresRecettes = {}) {
@@ -58,22 +61,49 @@ export function useRecettes(filtres: FiltresRecettes = {}) {
     [catalogue, filtres.regime, filtres.allergies, synonymes],
   );
 
+  // L'équipement n'est pas une contrainte de sécurité : par défaut les
+  // recettes réalisables passent devant, mais les autres restent visibles
+  // avec un avertissement. Le filtre strict est un choix explicite.
+  const recettesAffichees = useMemo(() => {
+    if (filtres.equipementsCuisine == null) return recettesFiltrees;
+    const compatibles = recettesFiltrees.filter((recette) =>
+      estCompatibleAvecCuisine(recette, filtres.equipementsCuisine),
+    );
+    if (filtres.uniquementCompatibles) return compatibles;
+    const autres = recettesFiltrees.filter((recette) =>
+      !estCompatibleAvecCuisine(recette, filtres.equipementsCuisine),
+    );
+    return [...compatibles, ...autres];
+  }, [recettesFiltrees, filtres.equipementsCuisine, filtres.uniquementCompatibles]);
+
+  const equipementsManquantsParRecette = useMemo(
+    () => Object.fromEntries(
+      recettesFiltrees.map((recette) => [
+        recette.id,
+        equipementsManquants(recette, filtres.equipementsCuisine),
+      ]),
+    ) as Record<string, EquipementCuisine[]>,
+    [recettesFiltrees, filtres.equipementsCuisine],
+  );
+
   // Nombre de pages chargees par combinaison de filtres (pas un simple
   // compteur global) : changer de filtre retombe naturellement sur 1 (cle
   // absente de la map) sans effet ni ref a synchroniser pendant le rendu.
-  const filtresKey = `${filtres.regime?.join(',') ?? ''}|${filtres.allergies?.join(',') ?? ''}`;
+  const filtresKey = `${filtres.regime?.join(',') ?? ''}|${filtres.allergies?.join(',') ?? ''}|${
+    filtres.equipementsCuisine?.join(',') ?? 'non-renseigne'
+  }|${filtres.uniquementCompatibles ? 'strict' : 'souple'}`;
   const [pagesParFiltre, setPagesParFiltre] = useState<Record<string, number>>({});
   const pagesChargees = pagesParFiltre[filtresKey] ?? 1;
 
   const pages = useMemo(() => {
     const resultat: Recette[][] = [];
     for (let i = 0; i < pagesChargees; i++) {
-      resultat.push(recettesFiltrees.slice(i * PAGE_SIZE, (i + 1) * PAGE_SIZE));
+      resultat.push(recettesAffichees.slice(i * PAGE_SIZE, (i + 1) * PAGE_SIZE));
     }
     return resultat;
-  }, [recettesFiltrees, pagesChargees]);
+  }, [recettesAffichees, pagesChargees]);
 
-  const hasNextPage = pagesChargees * PAGE_SIZE < recettesFiltrees.length;
+  const hasNextPage = pagesChargees * PAGE_SIZE < recettesAffichees.length;
 
   return {
     data: { pages },
@@ -84,7 +114,9 @@ export function useRecettes(filtres: FiltresRecettes = {}) {
     // contient aucune recette compatible avec les contraintes du foyer.
     isCatalogueEmpty: source.isSuccess && catalogue.length === 0,
     isFilteredEmpty: source.isSuccess && catalogue.length > 0 && recettesFiltrees.length === 0,
-    isEmpty: source.isSuccess && recettesFiltrees.length === 0,
+    isEquipmentFilteredEmpty:
+      source.isSuccess && recettesFiltrees.length > 0 && recettesAffichees.length === 0,
+    isEmpty: source.isSuccess && recettesAffichees.length === 0,
     isRefetching: source.isRefetching,
     isPaused: source.fetchStatus === 'paused',
     // `data !== undefined` distingue un résultat déjà chargé (même vide)
@@ -97,6 +129,7 @@ export function useRecettes(filtres: FiltresRecettes = {}) {
     // Le planning doit pouvoir reconstruire les favoris persistants meme si
     // leur carte n'appartient pas encore a une page visible du carrousel.
     toutesRecettes: recettesFiltrees,
+    equipementsManquantsParRecette,
     // COUR-22 : par recette.id, allergenes de l'utilisateur matches en
     // 'possible' seulement — jamais utilise pour exclure, seulement pour
     // afficher un avertissement explicite (ne jamais presenter comme sur).

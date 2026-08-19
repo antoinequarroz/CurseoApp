@@ -60,6 +60,7 @@ const profilBase: ProfilType = {
   allergies: [],
   objectifs: [],
   enseignes_favorites: [],
+  equipements_cuisine: null,
   abonnement: 'standard',
   notifications_activees: true,
   notifications_planning: true,
@@ -191,6 +192,13 @@ describe('Profil', () => {
     const { getByLabelText } = await renderAvecProviders();
     await fireEvent.press(getByLabelText('Adresses de livraison'));
     expect(pushSpy).toHaveBeenCalledWith('/adresses');
+  });
+
+  it('navigation : la carte Equipements de cuisine ouvre /equipements-cuisine', async () => {
+    const pushSpy = router.push as jest.Mock;
+    const { getByLabelText } = await renderAvecProviders();
+    await fireEvent.press(getByLabelText('Équipements de cuisine'));
+    expect(pushSpy).toHaveBeenCalledWith('/equipements-cuisine');
   });
 
   it('navigation : la carte Aide & support ouvre /aide', async () => {

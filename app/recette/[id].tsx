@@ -4,7 +4,7 @@ import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, Clock3, Flag, Flame, ShieldCheck, WalletCards } from 'lucide-react-native';
+import { AlertTriangle, ChefHat, Clock3, Flag, Flame, ShieldCheck, WalletCards } from 'lucide-react-native';
 import { useTheme } from '@/lib/theme-context';
 import { RECETTES_MOCK } from '@/lib/mocks/recettes.mock';
 import { fetchRecetteParId } from '@/lib/recettesRepository';
@@ -15,10 +15,13 @@ import { DisplayLG, Heading, Body, BodySm, Price, Data, Caption, Subheading } fr
 import { formatCalories, formatPrix, formatQuantite, formatTemps } from '@/lib/format';
 import { SignalerRecetteModal } from '@/components/recettes/SignalerRecetteModal';
 import { t } from '@/lib/i18n';
+import { equipementsManquants, equipementsRequisDe } from '@/lib/equipementsCuisine';
+import { useProfilStore } from '@/stores/profilStore';
 
 export default function DetailRecette() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colors } = useTheme();
+  const profil = useProfilStore((state) => state.profil);
   const [signalementVisible, setSignalementVisible] = useState(false);
 
   // RECETTES_MOCK reste la source pour les recettes communautaires (COUR-18 :
@@ -36,6 +39,8 @@ export default function DetailRecette() {
   const recette = recetteMock ?? requeteSupabase.data;
   const allergenesConfirmes = recette?.allergenesEffectifs?.filter((allergene) => allergene.certitude === 'confirme') ?? [];
   const allergenesPossibles = recette?.allergenesEffectifs?.filter((allergene) => allergene.certitude === 'possible') ?? [];
+  const equipementsRequis = recette ? equipementsRequisDe(recette) : [];
+  const equipementsAbsents = recette ? equipementsManquants(recette, profil?.equipements_cuisine) : [];
 
   if (!recetteMock && requeteSupabase.isLoading) {
     return (
@@ -107,6 +112,30 @@ export default function DetailRecette() {
             <BodySm>{t('recettes.allergenes_non_garanti')}</BodySm>
           ) : null}
           <Caption>{t('recettes.disclaimer_allergenes')}</Caption>
+        </Card>
+
+        <Card style={{ padding: 18, gap: 10 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <ChefHat size={20} color={equipementsAbsents.length > 0 ? colors.warning : colors.primary} accessible={false} />
+            <Heading>{t('recettes.equipements_titre')}</Heading>
+          </View>
+          {equipementsRequis.length === 0 ? (
+            <BodySm>{t('recettes.equipements_aucun')}</BodySm>
+          ) : (
+            <BodySm>{equipementsRequis.map((id) => t(`equipements.${id}`)).join(' · ')}</BodySm>
+          )}
+          {profil?.equipements_cuisine != null && equipementsRequis.length > 0 ? (
+            equipementsAbsents.length > 0 ? (
+              <Badge
+                label={t('recettes.equipement_manquant', {
+                  equipements: equipementsAbsents.map((id) => t(`equipements.${id}`)).join(', '),
+                })}
+                variant="warning"
+              />
+            ) : (
+              <BodySm style={{ color: colors.primary }}>{t('recettes.equipements_compatibles')}</BodySm>
+            )
+          ) : null}
         </Card>
 
         <Card style={{ padding: 18, gap: 8 }}>

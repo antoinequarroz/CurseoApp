@@ -1,31 +1,6 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json;
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-        };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
   public: {
     Tables: {
       adresses_livraison: {
@@ -151,6 +126,54 @@ export type Database = {
             referencedColumns: ['id'];
           },
         ];
+      };
+      contact_submissions: {
+        Row: {
+          consented_at: string | null;
+          created_at: string;
+          email: string;
+          id: string;
+          internal_note: string | null;
+          ip_hash: string | null;
+          message: string;
+          name: string;
+          reason: string;
+          source: string;
+          status: string;
+          updated_at: string;
+          user_agent: string | null;
+        };
+        Insert: {
+          consented_at?: string | null;
+          created_at?: string;
+          email: string;
+          id?: string;
+          internal_note?: string | null;
+          ip_hash?: string | null;
+          message: string;
+          name: string;
+          reason: string;
+          source?: string;
+          status?: string;
+          updated_at?: string;
+          user_agent?: string | null;
+        };
+        Update: {
+          consented_at?: string | null;
+          created_at?: string;
+          email?: string;
+          id?: string;
+          internal_note?: string | null;
+          ip_hash?: string | null;
+          message?: string;
+          name?: string;
+          reason?: string;
+          source?: string;
+          status?: string;
+          updated_at?: string;
+          user_agent?: string | null;
+        };
+        Relationships: [];
       };
       enseignes: {
         Row: {
@@ -649,6 +672,7 @@ export type Database = {
           deleted_at: string | null;
           enfants_ages: number[];
           enseignes_favorites: string[] | null;
+          equipements_cuisine: string[] | null;
           est_admin: boolean | null;
           id: string;
           nb_enfants: number | null;
@@ -673,6 +697,7 @@ export type Database = {
           deleted_at?: string | null;
           enfants_ages?: number[];
           enseignes_favorites?: string[] | null;
+          equipements_cuisine?: string[] | null;
           est_admin?: boolean | null;
           id: string;
           nb_enfants?: number | null;
@@ -697,6 +722,7 @@ export type Database = {
           deleted_at?: string | null;
           enfants_ages?: number[];
           enseignes_favorites?: string[] | null;
+          equipements_cuisine?: string[] | null;
           est_admin?: boolean | null;
           id?: string;
           nb_enfants?: number | null;
@@ -709,6 +735,27 @@ export type Database = {
           objectifs?: string[] | null;
           prenom?: string | null;
           regime?: string[] | null;
+        };
+        Relationships: [];
+      };
+      public_submission_rate_limits: {
+        Row: {
+          endpoint: string;
+          requests: number;
+          subject_hash: string;
+          window_start: string;
+        };
+        Insert: {
+          endpoint: string;
+          requests?: number;
+          subject_hash: string;
+          window_start?: string;
+        };
+        Update: {
+          endpoint?: string;
+          requests?: number;
+          subject_hash?: string;
+          window_start?: string;
         };
         Relationships: [];
       };
@@ -913,6 +960,7 @@ export type Database = {
           description: string | null;
           difficulte: string | null;
           droits_image: string | null;
+          equipements_requis: string[];
           est_communautaire: boolean | null;
           glucides_g: number | null;
           id: string;
@@ -936,6 +984,7 @@ export type Database = {
           description?: string | null;
           difficulte?: string | null;
           droits_image?: string | null;
+          equipements_requis?: string[];
           est_communautaire?: boolean | null;
           glucides_g?: number | null;
           id?: string;
@@ -959,6 +1008,7 @@ export type Database = {
           description?: string | null;
           difficulte?: string | null;
           droits_image?: string | null;
+          equipements_requis?: string[];
           est_communautaire?: boolean | null;
           glucides_g?: number | null;
           id?: string;
@@ -1262,22 +1312,64 @@ export type Database = {
       };
       waitlist: {
         Row: {
+          consented_at: string | null;
           created_at: string | null;
           email: string;
+          household_size: number | null;
           id: string;
+          interests: string[];
+          ip_hash: string | null;
           source: string | null;
+          updated_at: string;
+          user_agent: string | null;
         };
         Insert: {
+          consented_at?: string | null;
           created_at?: string | null;
           email: string;
+          household_size?: number | null;
           id?: string;
+          interests?: string[];
+          ip_hash?: string | null;
           source?: string | null;
+          updated_at?: string;
+          user_agent?: string | null;
         };
         Update: {
+          consented_at?: string | null;
           created_at?: string | null;
           email?: string;
+          household_size?: number | null;
           id?: string;
+          interests?: string[];
+          ip_hash?: string | null;
           source?: string | null;
+          updated_at?: string;
+          user_agent?: string | null;
+        };
+        Relationships: [];
+      };
+      webhook_evenements_abonnement: {
+        Row: {
+          app_user_id: string;
+          event_timestamp_ms: number;
+          id: string;
+          traite_le: string;
+          type: string;
+        };
+        Insert: {
+          app_user_id: string;
+          event_timestamp_ms: number;
+          id: string;
+          traite_le?: string;
+          type: string;
+        };
+        Update: {
+          app_user_id?: string;
+          event_timestamp_ms?: number;
+          id?: string;
+          traite_le?: string;
+          type?: string;
         };
         Relationships: [];
       };
@@ -1377,7 +1469,9 @@ export type Database = {
           cgvu_version_acceptee: string | null;
           created_at: string | null;
           deleted_at: string | null;
+          enfants_ages: number[] | null;
           enseignes_favorites: string[] | null;
+          equipements_cuisine: string[] | null;
           est_admin: boolean | null;
           id: string | null;
           nb_enfants: number | null;
@@ -1400,7 +1494,9 @@ export type Database = {
           cgvu_version_acceptee?: string | null;
           created_at?: string | null;
           deleted_at?: string | null;
+          enfants_ages?: number[] | null;
           enseignes_favorites?: string[] | null;
+          equipements_cuisine?: string[] | null;
           est_admin?: boolean | null;
           id?: string | null;
           nb_enfants?: number | null;
@@ -1423,7 +1519,9 @@ export type Database = {
           cgvu_version_acceptee?: string | null;
           created_at?: string | null;
           deleted_at?: string | null;
+          enfants_ages?: number[] | null;
           enseignes_favorites?: string[] | null;
+          equipements_cuisine?: string[] | null;
           est_admin?: boolean | null;
           id?: string | null;
           nb_enfants?: number | null;
@@ -1498,6 +1596,10 @@ export type Database = {
       };
     };
     Functions: {
+      deduire_equipements_recette: {
+        Args: { p_recette_id: string };
+        Returns: string[];
+      };
       fn_importer_recettes_csv: {
         Args: { dry_run?: boolean; lignes: Json };
         Returns: Json;
@@ -1632,9 +1734,6 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },

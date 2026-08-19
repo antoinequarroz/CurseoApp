@@ -20,7 +20,7 @@ import { useHaptics } from '@/hooks/useHaptics';
 import { analytics } from '@/lib/analytics';
 import { t } from '@/lib/i18n';
 import { RecetteCard } from './RecetteCard';
-import type { Recette } from '@/types';
+import type { EquipementCuisine, Recette } from '@/types';
 import type { AlerteAllergene } from '@/hooks/useRecettes';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -44,6 +44,7 @@ interface SwipeRecetteProps {
   profilId: string;
   /** COUR-22 : allergenes de l'utilisateur matches en 'possible' seulement (ex. deduction ambigue d'un ingredient) — jamais une exclusion, toujours un signalement explicite. */
   alerteAllergenes?: AlerteAllergene[];
+  equipementsManquants?: EquipementCuisine[];
   onSwiped: (aime: boolean) => void;
   onTapDetail: () => void;
   compact?: boolean;
@@ -54,6 +55,7 @@ export function SwipeRecette({
   recetteSuivante,
   profilId,
   alerteAllergenes,
+  equipementsManquants,
   onSwiped,
   onTapDetail,
   compact = false,
@@ -223,7 +225,12 @@ export function SwipeRecette({
           <Animated.View style={[{ position: 'absolute', top: 24, left: 24, zIndex: 3 }, xOpacity]}>
             <X size={54} color={colors.textPrimary} />
           </Animated.View>
-          <RecetteCard recette={recette} variant={compact ? 'heroCompact' : 'hero'} alerteAllergenes={alerteAllergenes} />
+          <RecetteCard
+            recette={recette}
+            variant={compact ? 'heroCompact' : 'hero'}
+            alerteAllergenes={alerteAllergenes}
+            equipementsManquants={equipementsManquants}
+          />
         </Animated.View>
       </GestureDetector>
 

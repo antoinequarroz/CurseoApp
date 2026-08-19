@@ -2,7 +2,7 @@
 import React, { useMemo, useState } from 'react';
 import { Modal, Pressable, RefreshControl, View } from 'react-native';
 import { router } from 'expo-router';
-import { RefreshCw } from 'lucide-react-native';
+import { Check, RefreshCw } from 'lucide-react-native';
 import { useTheme } from '@/lib/theme-context';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useResponsive } from '@/hooks/useResponsive';
@@ -30,6 +30,7 @@ import { toast } from '@/lib/toast';
 import { analytics } from '@/lib/analytics';
 import { dates } from '@/lib/dates';
 import { proposerPlanning } from '@/lib/generateurPlanning';
+import { estCompatibleAvecCuisine, equipementsManquants } from '@/lib/equipementsCuisine';
 import { t } from '@/lib/i18n';
 import { JOURS_SEMAINE, type JourSemaine, type PlanningHebdomadaire } from '@/types';
 
@@ -121,7 +122,7 @@ export default function Planifier() {
   const swipes = useGoutsStore((s) => s.swipes);
   const enregistrerSwipe = useGoutsStore((s) => s.enregistrerSwipe);
   const [sousOnglet, setSousOnglet] = useState<SousOnglet>('recettes');
-  const [indexCourant, setIndexCourant] = useState(0);
+  const [indicesParCuisine, setIndicesParCuisine] = useState<Record<string, number>>({});
   const [slotChoix, setSlotChoix] = useState<{ jour: JourSemaine; moment: 'midi' | 'soir' } | null>(null);
   const [portionsChoix, setPortionsChoix] = useState<number | null>(null);
   const [modeChoixRecette, setModeChoixRecette] = useState(false);
@@ -137,6 +138,10 @@ export default function Planifier() {
   const [semaineAffichee, setSemaineAffichee] = useState(() => dates.debutSemaine(dates.maintenant()));
   const [selectionSwipeManuelle, setSelectionSwipeManuelle] = useState<SelectionRepas | null>(null);
   const [portionsSwipe, setPortionsSwipe] = useState<number | null>(null);
+  const [uniquementCompatibles, setUniquementCompatibles] = useState(false);
+  const equipementsCuisineKey = profil?.equipements_cuisine?.join('|') ?? 'non-renseigne';
+  const navigationCuisineKey = `${equipementsCuisineKey}|${uniquementCompatibles ? 'strict' : 'souple'}`;
+  const indexCourant = indicesParCuisine[navigationCuisineKey] ?? 0;
 
   const {
     data,
@@ -144,6 +149,7 @@ export default function Planifier() {
     isError,
     isCatalogueEmpty,
     isFilteredEmpty,
+    isEquipmentFilteredEmpty,
     isRefetching,
     hasCachedData,
     refetch,
@@ -151,15 +157,23 @@ export default function Planifier() {
     hasNextPage,
     alertesParRecette,
     allergiesNonReconnues,
+    equipementsManquantsParRecette = {},
     toutesRecettes = [],
   } = useRecettes({
     regime: profil?.regime,
     allergies: profil?.allergies,
+    equipementsCuisine: profil?.equipements_cuisine,
+    uniquementCompatibles,
   });
   const recettes = useMemo(() => data?.pages.flat() ?? [], [data]);
   const recettesAimees = useMemo(
-    () => toutesRecettes.filter((recette) => swipes[recette.id] === true),
-    [toutesRecettes, swipes],
+    () => toutesRecettes
+      .filter((recette) => swipes[recette.id] === true)
+      .sort((a, b) =>
+        Number(estCompatibleAvecCuisine(b, profil?.equipements_cuisine))
+        - Number(estCompatibleAvecCuisine(a, profil?.equipements_cuisine)),
+      ),
+    [toutesRecettes, swipes, profil?.equipements_cuisine],
   );
   const recetteActuelle = recettes[indexCourant];
 
@@ -243,7 +257,10 @@ export default function Planifier() {
 
   const avancerRecette = () => {
     if (indexCourant + 2 >= recettes.length && hasNextPage) void fetchNextPage();
-    setIndexCourant((index) => index + 1);
+    setIndicesParCuisine((actuel) => ({
+      ...actuel,
+      [navigationCuisineKey]: (actuel[navigationCuisineKey] ?? 0) + 1,
+    }));
   };
 
   const toggleMembreChoisi = (membreId: string) => {
@@ -281,6 +298,44 @@ export default function Planifier() {
               <OfflineBannerView visible message={t('planning.hors_ligne_cache')} />
             </View>
           )}
+          {profil?.equipements_cuisine != null ? (
+            <Pressable
+              testID="equipment-compatible-filter"
+              onPress={() => setUniquementCompatibles((actuel) => !actuel)}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: uniquementCompatibles }}
+              accessibilityLabel={t('planning.filtre_equipements')}
+              accessibilityHint={t('planning.filtre_equipements_hint')}
+              style={{
+                minHeight: 48,
+                marginBottom: 12,
+                paddingHorizontal: 14,
+                borderRadius: 16,
+                borderWidth: 1,
+                borderColor: uniquementCompatibles ? colors.primary : colors.border,
+                backgroundColor: uniquementCompatibles ? colors.bgSecondary : colors.bgCard,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 10,
+              }}
+            >
+              <View
+                style={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: 8,
+                  borderWidth: 2,
+                  borderColor: uniquementCompatibles ? colors.primary : colors.textMuted,
+                  backgroundColor: uniquementCompatibles ? colors.primary : 'transparent',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {uniquementCompatibles ? <Check size={15} color="#FFFFFF" strokeWidth={3} /> : null}
+              </View>
+              <BodySm style={{ flex: 1, fontWeight: '600' }}>{t('planning.filtre_equipements')}</BodySm>
+            </Pressable>
+          ) : null}
           {estHorsLigne && !hasCachedData ? (
             <EmptyState
               illustration="recettes"
@@ -314,6 +369,14 @@ export default function Planifier() {
               sousTitre={t('planning.empty_filtres_soustitre')}
               ctaLabel={t('planning.modifier_profil')}
               onCta={() => router.push('/(tabs)/profil')}
+            />
+          ) : isEquipmentFilteredEmpty ? (
+            <EmptyState
+              illustration="recettes"
+              titre={t('planning.empty_equipements_titre')}
+              sousTitre={t('planning.empty_equipements_soustitre')}
+              ctaLabel={t('planning.afficher_toutes_recettes')}
+              onCta={() => setUniquementCompatibles(false)}
             />
           ) : !slotSwipe ? (
             <EmptyState
@@ -355,6 +418,7 @@ export default function Planifier() {
                 recetteSuivante={recettes[indexCourant + 1]}
                 profilId={profil?.id ?? 'demo-user'}
                 alerteAllergenes={alertesParRecette[recetteActuelle.id]}
+                equipementsManquants={equipementsManquantsParRecette[recetteActuelle.id]}
                 onTapDetail={() => router.push(`/recette/${recetteActuelle.id}`)}
                 compact={height < 900}
                 onSwiped={(aime) => {
@@ -731,7 +795,11 @@ export default function Planifier() {
                 accessibilityRole="button"
                 accessibilityLabel={t('planning.assigner_label', { titre: r.titre })}
               >
-                <RecetteCard recette={r} alerteAllergenes={alertesMembresParRecette[r.id]} />
+                <RecetteCard
+                  recette={r}
+                  alerteAllergenes={alertesMembresParRecette[r.id]}
+                  equipementsManquants={equipementsManquants(r, profil?.equipements_cuisine)}
+                />
               </Pressable>
             ))
           ))}

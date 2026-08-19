@@ -185,6 +185,55 @@ describe('useRecettes', () => {
     expect(result.current.isFilteredEmpty).toBe(true);
   });
 
+  it('COUR-70 : classe les recettes compatibles en premier sans masquer les autres', async () => {
+    fetchRecettesPublieesMock.mockResolvedValue([
+      recette({ id: 'four', equipements_requis: ['four'] }),
+      recette({ id: 'plaques', equipements_requis: ['plaques_cuisson'] }),
+    ]);
+
+    const { result } = await renderHook(
+      () => useRecettes({ equipementsCuisine: ['plaques_cuisson'] }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.data.pages.flat().map((r) => r.id)).toEqual(['plaques', 'four']);
+    expect(result.current.toutesRecettes.map((r) => r.id)).toEqual(['four', 'plaques']);
+    expect(result.current.equipementsManquantsParRecette.four).toEqual(['four']);
+  });
+
+  it('COUR-70 : le filtre explicite masque les recettes incompatibles et signale un resultat vide', async () => {
+    fetchRecettesPublieesMock.mockResolvedValue([
+      recette({ id: 'four', equipements_requis: ['four'] }),
+    ]);
+
+    const { result } = await renderHook(
+      () => useRecettes({ equipementsCuisine: [], uniquementCompatibles: true }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.data.pages.flat()).toEqual([]);
+    expect(result.current.isEquipmentFilteredEmpty).toBe(true);
+    expect(result.current.isFilteredEmpty).toBe(false);
+    expect(result.current.toutesRecettes).toHaveLength(1);
+  });
+
+  it('COUR-70 : un profil non renseigne ne declenche aucun filtrage', async () => {
+    fetchRecettesPublieesMock.mockResolvedValue([
+      recette({ id: 'four', equipements_requis: ['four'] }),
+    ]);
+
+    const { result } = await renderHook(
+      () => useRecettes({ equipementsCuisine: null, uniquementCompatibles: true }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.data.pages.flat().map((r) => r.id)).toEqual(['four']);
+    expect(result.current.equipementsManquantsParRecette.four).toEqual([]);
+  });
+
   it('conserve les donnees en cache quand un rafraichissement echoue', async () => {
     fetchRecettesPublieesMock.mockResolvedValueOnce([recette({ id: 'r-cache' })]);
 

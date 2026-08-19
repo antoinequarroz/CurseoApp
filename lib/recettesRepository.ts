@@ -13,7 +13,7 @@
  * jamais proposer une recette incompatible comme sûre.
  */
 import { supabase } from './supabase';
-import type { AllergeneEffectif, Recette, Regime } from '@/types';
+import type { AllergeneEffectif, EquipementCuisine, Recette, Regime } from '@/types';
 
 interface LigneRecetteBrute {
   id: string;
@@ -29,6 +29,7 @@ interface LigneRecetteBrute {
   est_communautaire: boolean;
   source: string | null;
   droits_image: string | null;
+  equipements_requis: string[] | null;
   recette_ingredients: {
     quantite: number;
     unite: string;
@@ -67,10 +68,11 @@ function versRecette(ligne: LigneRecetteBrute, allergenesEffectifs: AllergeneEff
     est_communautaire: ligne.est_communautaire,
     source: ligne.source ?? undefined,
     droits_image: ligne.droits_image ?? undefined,
+    equipements_requis: (ligne.equipements_requis ?? []) as EquipementCuisine[],
   };
 }
 
-const SELECT_RECETTE_COMPLETE = `id, titre, description, image_url, blurhash, temps_preparation, difficulte, cout_estime, calories, portions, est_communautaire, source, droits_image,
+const SELECT_RECETTE_COMPLETE = `id, titre, description, image_url, blurhash, temps_preparation, difficulte, cout_estime, calories, portions, est_communautaire, source, droits_image, equipements_requis,
    recette_ingredients ( quantite, unite, ordre, ingredients ( nom, rayon ) ),
    recette_etapes ( numero, instruction ),
    recette_regimes ( regimes ( code ) ),

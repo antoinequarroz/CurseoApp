@@ -75,14 +75,22 @@ describe('Onboarding', () => {
     const upsert = jest.fn().mockResolvedValue({ error: null });
     (supabase.from as jest.Mock).mockReturnValue({ upsert });
     (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: { user: { id: 'u-1' } } } });
-    useOnboardingStore.getState().setEtape(5);
-    useOnboardingStore.getState().mettreAJourDonnees({ prenom: 'Alex', enfants_ages: [4, 9] });
+    useOnboardingStore.getState().setEtape(6);
+    useOnboardingStore.getState().mettreAJourDonnees({
+      prenom: 'Alex',
+      enfants_ages: [4, 9],
+      equipements_cuisine: ['four', 'mixeur'],
+    });
 
     const { getByText } = await renderAvecProviders();
     await fireEvent.press(getByText('Terminer'));
 
     await waitFor(() => expect(initRevenueCat).toHaveBeenCalledWith('u-1'));
-    expect(upsert).toHaveBeenCalledWith(expect.objectContaining({ id: 'u-1', enfants_ages: [4, 9] }));
+    expect(upsert).toHaveBeenCalledWith(expect.objectContaining({
+      id: 'u-1',
+      enfants_ages: [4, 9],
+      equipements_cuisine: ['four', 'mixeur'],
+    }));
     expect(useProfilStore.getState().profil?.prenom).toBe('Alex');
     expect(router.replace).toHaveBeenCalledWith('/(tabs)');
   });
@@ -94,7 +102,7 @@ describe('Onboarding', () => {
   // observees en production pendant la recette TestFlight du 29.07).
   it('finalisation : sans session, refuse de finaliser et renvoie vers la connexion', async () => {
     (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: null } });
-    useOnboardingStore.getState().setEtape(5);
+    useOnboardingStore.getState().setEtape(6);
 
     const { getByText } = await renderAvecProviders();
     await fireEvent.press(getByText('Terminer'));
@@ -113,7 +121,7 @@ describe('Onboarding', () => {
     (supabase.from as jest.Mock).mockReturnValue({
       upsert: jest.fn().mockResolvedValue({ error: new Error('reseau') }),
     });
-    useOnboardingStore.getState().setEtape(5);
+    useOnboardingStore.getState().setEtape(6);
 
     const { getByText } = await renderAvecProviders();
     await fireEvent.press(getByText('Terminer'));

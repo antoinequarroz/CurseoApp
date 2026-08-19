@@ -30,6 +30,7 @@ import { useWhatsNew } from '@/lib/whatsNew';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { SessionGuard } from '@/components/SessionGuard';
 import { WhatsNewModal } from '@/components/ui/WhatsNewModal';
+import { t } from '@/lib/i18n';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -109,6 +110,10 @@ function RootLayout() {
                   <Stack screenOptions={{ headerShown: false }}>
                     <Stack.Screen name="(auth)" />
                     <Stack.Screen name="(tabs)" />
+                    <Stack.Screen
+                      name="equipements-cuisine"
+                      options={{ presentation: 'modal', headerShown: true, title: t('equipements.titre') }}
+                    />
                     <Stack.Screen
                       name="economies"
                       options={{ headerShown: true, title: 'Économies' }}

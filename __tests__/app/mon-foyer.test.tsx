@@ -25,7 +25,7 @@ async function renderAvecProviders() {
 
 const profilBase: Profil = {
   id: 'u-1', prenom: 'Alex', nb_personnes: 2, nb_enfants: 0, enfants_ages: [], budget_hebdo: 150,
-  regime: [], allergies: [], objectifs: [], enseignes_favorites: [], abonnement: 'gratuit',
+  regime: [], allergies: [], objectifs: [], enseignes_favorites: [], equipements_cuisine: null, abonnement: 'gratuit',
   notifications_activees: true, notifications_planning: true, notifications_budget: true,
   notifications_promos: false, notifications_bilan: true, apparence: 'auto', cgvu_version_acceptee: null,
 };

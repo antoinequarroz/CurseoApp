@@ -15,6 +15,7 @@ function profilTest(abonnement: NiveauAbonnement): Profil {
     allergies: [],
     objectifs: [],
     enseignes_favorites: [],
+    equipements_cuisine: null,
     abonnement,
     notifications_activees: true,
     notifications_planning: true,

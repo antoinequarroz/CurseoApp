@@ -25,6 +25,7 @@ const profil: Profil = {
   allergies: [],
   objectifs: [],
   enseignes_favorites: [],
+  equipements_cuisine: null,
   abonnement: 'standard',
   notifications_activees: true,
   notifications_planning: true,

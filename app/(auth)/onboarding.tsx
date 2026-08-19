@@ -36,6 +36,7 @@ import { analytics } from '@/lib/analytics';
 import { resetUserStores } from '@/lib/resetSession';
 import { KeyboardView } from '@/components/ui/KeyboardView';
 import { RegimeParPersonneTeaser } from '@/components/ui/RegimeParPersonneTeaser';
+import { SelecteurEquipements } from '@/components/profil/SelecteurEquipements';
 import { Button } from '@/components/ui/Button';
 import { Screen } from '@/components/ui/Screen';
 import { DisplayXL, Body, BodySm, Caption, PriceXL } from '@/components/ui/Typography';
@@ -44,7 +45,7 @@ import { t } from '@/lib/i18n';
 import { toast } from '@/lib/toast';
 import type { Enseigne, Objectif, Regime } from '@/types';
 
-const TOTAL_ETAPES = 5;
+const TOTAL_ETAPES = 6;
 const REGIMES: { id: Regime; label: string; Icon: LucideIcon }[] = [
   { id: 'vegetarien', label: t('onboarding.regime_vegetarien'), Icon: Leaf },
   { id: 'vegan', label: t('onboarding.regime_vegan'), Icon: Sprout },
@@ -286,6 +287,7 @@ export default function Onboarding() {
         allergies: donneesPartielles.allergies ?? [],
         objectifs: donneesPartielles.objectifs ?? [],
         enseignes_favorites: donneesPartielles.enseignes_favorites ?? [],
+        equipements_cuisine: donneesPartielles.equipements_cuisine ?? null,
         abonnement: 'gratuit' as const,
         notifications_activees: true,
         notifications_planning: true,
@@ -611,6 +613,18 @@ export default function Onboarding() {
           )}
 
           {etapeActuelle === 5 && (
+            <View style={{ gap: 16 }}>
+              <ChefHat size={24} color={colors.primaryLight} style={{ alignSelf: 'flex-end' }} />
+              <DisplayXL>{t('equipements.onboarding_titre')}</DisplayXL>
+              <Body>{t('equipements.description')}</Body>
+              <SelecteurEquipements
+                valeur={donneesPartielles.equipements_cuisine ?? null}
+                onChange={(equipements_cuisine) => mettreAJourDonnees({ equipements_cuisine })}
+              />
+            </View>
+          )}
+
+          {etapeActuelle === 6 && (
             <View style={{ gap: 16 }}>
               <Target size={24} color={colors.primaryLight} style={{ alignSelf: 'flex-end' }} />
               <DisplayXL>{t('onboarding.objectifs_titre_court')}</DisplayXL>

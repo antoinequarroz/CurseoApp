@@ -39,6 +39,7 @@ const profilBase: Profil = {
   allergies: [],
   objectifs: [],
   enseignes_favorites: [],
+  equipements_cuisine: null,
   abonnement: 'gratuit',
   notifications_activees: true,
   notifications_planning: true,

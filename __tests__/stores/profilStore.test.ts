@@ -12,6 +12,7 @@ const profilTest: Profil = {
   allergies: [],
   objectifs: [],
   enseignes_favorites: ['migros'],
+  equipements_cuisine: null,
   abonnement: 'gratuit',
   notifications_activees: true,
   notifications_planning: true,
