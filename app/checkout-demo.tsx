@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { AlertTriangle, CalendarClock, Check, Clock3, Home, RotateCcw, Truck } from 'lucide-react-native';
+import { AlertTriangle, CalendarClock, Check, Clock3, Home, LifeBuoy, RotateCcw, Truck } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { ScreenScroll } from '@/components/ui/Screen';
 import { Card } from '@/components/ui/Card';
@@ -25,6 +25,7 @@ import { preparerPaiementUniqueDemo } from '@/lib/paiementUniqueDemo';
 import type { EtatOrchestrationEnseigne } from '@/lib/orchestrateurCommandeDemo';
 import { Badge } from '@/components/ui/Badge';
 import { evaluerExpirationCheckout } from '@/lib/expirationCheckout';
+import { creerDiagnosticCheckout, determinerActionRepriseCheckout } from '@/lib/diagnosticCheckout';
 
 function formaterCreneau(debut: string, fin: string): string {
   const dateDebut = new Date(debut);
@@ -44,6 +45,8 @@ export default function CheckoutDemo() {
   const definirAdresse = usePanierLiveStore((state) => state.definirAdresse);
   const definirLivraisons = usePanierLiveStore((state) => state.definirLivraisons);
   const definirPaiementEnCours = usePanierLiveStore((state) => state.definirPaiementEnCours);
+  const demarrerTentativeCheckout = usePanierLiveStore((state) => state.demarrerTentativeCheckout);
+  const terminerTentativeCheckout = usePanierLiveStore((state) => state.terminerTentativeCheckout);
   const { adresses, isLoading, isError, refetch } = useAdresses(profil?.id);
   const preferencesQuery = usePreferencesCourses(profil?.id);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -79,6 +82,13 @@ export default function CheckoutDemo() {
   const sessionExpiree =
     expirationDetectee || evaluerExpirationCheckout(brouillon.creeLe, referenceCreneaux).expiree;
   const repriseNecessaire = etatsOrchestration.some((etat) => etat.statut !== 'pret');
+  const tentativeInterrompue =
+    brouillon.tentativeCheckout?.statut === 'en_cours' && !brouillon.paiementEnCours;
+  const tentativeEnEchec = brouillon.tentativeCheckout?.statut === 'echec';
+  const repriseVisible = repriseNecessaire || tentativeInterrompue || tentativeEnEchec;
+  const actionReprise = tentativeInterrompue
+    ? 'relancer'
+    : determinerActionRepriseCheckout(etatsOrchestration);
 
   const simulerPaiement = async () => {
     if (evaluerExpirationCheckout(brouillon.creeLe).expiree) {
@@ -103,6 +113,7 @@ export default function CheckoutDemo() {
     definirAdresse(adresseSelectionnee.id);
     definirLivraisons(livraisons);
     definirPaiementEnCours(true);
+    demarrerTentativeCheckout();
     setErreur(null);
     setEtatsOrchestration([]);
     try {
@@ -114,6 +125,8 @@ export default function CheckoutDemo() {
       );
       setEtatsOrchestration(orchestration.etats);
       if (orchestration.echecs.length > 0) {
+        const diagnostic = creerDiagnosticCheckout(orchestration.etats);
+        terminerTentativeCheckout('echec', diagnostic.reference);
         setErreur(t('checkout.simulation_marchand_erreur'));
         definirPaiementEnCours(false);
         return;
@@ -127,6 +140,7 @@ export default function CheckoutDemo() {
         confirmations: orchestration.confirmations,
         paiement,
       });
+      terminerTentativeCheckout('terminee');
       router.replace({
         pathname: '/commande-demo',
         params: {
@@ -136,6 +150,8 @@ export default function CheckoutDemo() {
         },
       });
     } catch {
+      const diagnostic = creerDiagnosticCheckout([]);
+      terminerTentativeCheckout('echec', diagnostic.reference);
       setErreur(t('checkout.paiement_demo_erreur'));
       definirPaiementEnCours(false);
     }
@@ -248,7 +264,7 @@ export default function CheckoutDemo() {
         </View>
       ) : null}
 
-      {repriseNecessaire ? (
+      {repriseVisible ? (
         <Card
           accessibilityRole="alert"
           style={{ padding: 16, gap: 12, backgroundColor: colors.warningBg }}
@@ -256,10 +272,28 @@ export default function CheckoutDemo() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <RotateCcw size={20} color={colors.chipTextWarning} accessible={false} />
             <Heading style={{ flex: 1, color: colors.chipTextWarning }}>
-              {t('checkout.reprise_titre')}
+              {t(tentativeInterrompue ? 'checkout.interruption_titre' : 'checkout.reprise_titre')}
             </Heading>
           </View>
-          <BodySm style={{ color: colors.chipTextWarning }}>{t('checkout.reprise_aide')}</BodySm>
+          <BodySm style={{ color: colors.chipTextWarning }}>
+            {t(
+              tentativeInterrompue
+                ? 'checkout.interruption_aide'
+                : actionReprise === 'corriger_panier'
+                  ? 'checkout.reprise_corriger_aide'
+                  : 'checkout.reprise_aide',
+            )}
+          </BodySm>
+          {brouillon.tentativeCheckout?.referenceIncident ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <LifeBuoy size={18} color={colors.chipTextWarning} accessible={false} />
+              <Caption selectable style={{ color: colors.chipTextWarning, fontVariant: ['tabular-nums'] }}>
+                {t('checkout.reference_incident', {
+                  reference: brouillon.tentativeCheckout.referenceIncident,
+                })}
+              </Caption>
+            </View>
+          ) : null}
         </Card>
       ) : null}
 
@@ -382,7 +416,7 @@ export default function CheckoutDemo() {
         <PriceLG>{formatPrix(montantTotal)}</PriceLG>
       </Card>
 
-      {erreur && !repriseNecessaire ? (
+      {erreur && !repriseVisible ? (
         <BodySm accessibilityRole="alert" style={{ color: colors.error }}>
           {erreur}
         </BodySm>
@@ -390,16 +424,31 @@ export default function CheckoutDemo() {
 
       <Button
         label={
-          repriseNecessaire
-            ? t('checkout.relancer_simulation')
+          repriseVisible
+            ? t(
+                actionReprise === 'corriger_panier'
+                  ? 'checkout.revenir_corriger_panier'
+                  : 'checkout.relancer_simulation',
+              )
             : prixAnciens && prixAnciensConfirmes
             ? t('checkout.continuer_prix_anciens')
             : t('checkout.executer_simulation', { montant: formatPrix(montantTotal) })
         }
-        onPress={() => void simulerPaiement()}
+        onPress={() =>
+          actionReprise === 'corriger_panier' && repriseVisible
+            ? router.replace('/panier-en-ligne')
+            : void simulerPaiement()
+        }
         loading={brouillon.paiementEnCours}
-        disabled={!reconciliation.estPret || sessionExpiree}
-        accessibilityHint={t('checkout.executer_simulation_hint')}
+        disabled={
+          sessionExpiree ||
+          (!reconciliation.estPret && !(repriseVisible && actionReprise === 'corriger_panier'))
+        }
+        accessibilityHint={t(
+          actionReprise === 'corriger_panier' && repriseVisible
+            ? 'checkout.revenir_corriger_panier_hint'
+            : 'checkout.executer_simulation_hint',
+        )}
       />
     </ScreenScroll>
   );

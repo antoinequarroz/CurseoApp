@@ -138,4 +138,36 @@ describe('orchestrateurCommandeDemo', () => {
     expect(resultat.paiementPossible).toBe(false);
     expect(resultat.echecs).toEqual([{ enseigne: 'coop', code: 'CONNECTEUR_DEMO_INVALIDE' }]);
   });
+
+  it('ne propage jamais un message fournisseur libre', async () => {
+    const resultat = await orchestrerCommandeDemo(
+      { ...brouillon, paniers: [brouillon.paniers[0]!] },
+      [],
+      PREFERENCES_COURSES_DEFAUT,
+      {
+        creerConnecteur: (enseigne) => ({
+          enseigne,
+          capacites: {
+            mode: 'simulation',
+            catalogue: false,
+            disponibilite: true,
+            panier: true,
+            livraison: true,
+            commande: true,
+            paiement: false,
+            transmissionCommande: false,
+          },
+          synchroniserPanier: async () => {
+            throw new Error('client@example.com jeton-secret');
+          },
+          verifierDisponibilite: async () => undefined,
+          reserverLivraison: async () => undefined,
+          preparerCommande: async () => ({ nature: 'simulation', transmise: false, reference: 'x', montant: 2 }),
+          annulerPanier: async () => undefined,
+        }),
+      },
+    );
+    expect(resultat.echecs).toEqual([{ enseigne: 'coop', code: 'ERREUR_INCONNUE' }]);
+    expect(JSON.stringify(resultat)).not.toContain('client@example.com');
+  });
 });

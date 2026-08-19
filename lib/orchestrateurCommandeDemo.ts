@@ -5,6 +5,7 @@ import { journaliserEtapeCheckout, signalerErreurCheckout } from '@/lib/telemetr
 import type { Enseigne, PreferencesCoursesEnLigne } from '@/types';
 import type { BrouillonPanierLive, LivraisonDemo, PanierLive } from '@/stores/panierLiveStore';
 import { evaluerActivationConnecteur } from '@/lib/politiqueActivationConnecteur';
+import { normaliserCodeErreurCheckout } from '@/lib/diagnosticCheckout';
 
 export type StatutSynchronisationEnseigne =
   | 'pret'
@@ -144,7 +145,9 @@ export async function orchestrerCommandeDemo(
           );
           return { succes: true as const, valeur };
         } catch (error) {
-          dernierCode = error instanceof Error ? error.message : 'ERREUR_INCONNUE';
+          dernierCode = normaliserCodeErreurCheckout(
+            error instanceof Error ? error.message : 'ERREUR_INCONNUE',
+          );
           const temporaire = estErreurTemporaire(dernierCode);
           journaliserEtapeCheckout({
             etape: 'synchronisation_panier',

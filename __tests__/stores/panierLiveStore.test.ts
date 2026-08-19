@@ -163,4 +163,25 @@ describe('panierLiveStore', () => {
       'non_confirmee',
     );
   });
+
+  it('persiste une tentative interrompue puis sa référence d aide', () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-08-19T14:00:00.000Z'));
+    try {
+      usePanierLiveStore.getState().creerDepuisOptimisation(resultat, option, '1003');
+      usePanierLiveStore.getState().demarrerTentativeCheckout();
+      expect(usePanierLiveStore.getState().brouillon!.tentativeCheckout).toMatchObject({
+        id: 'tentative-1787148000000',
+        statut: 'en_cours',
+        demarreeLe: '2026-08-19T14:00:00.000Z',
+      });
+      usePanierLiveStore.getState().terminerTentativeCheckout('echec', 'CHK-260819-ABC123');
+      expect(usePanierLiveStore.getState().brouillon!.tentativeCheckout).toMatchObject({
+        statut: 'echec',
+        referenceIncident: 'CHK-260819-ABC123',
+        termineeLe: '2026-08-19T14:00:00.000Z',
+      });
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 });

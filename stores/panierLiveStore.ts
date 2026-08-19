@@ -71,6 +71,15 @@ export interface BrouillonPanierLive {
   livraisons: LivraisonDemo[];
   paiementEnCours: boolean;
   creeLe: string;
+  tentativeCheckout?: TentativeCheckout;
+}
+
+export interface TentativeCheckout {
+  id: string;
+  statut: 'en_cours' | 'echec' | 'terminee';
+  demarreeLe: string;
+  termineeLe?: string;
+  referenceIncident?: `CHK-${string}`;
 }
 
 function versPaniers(option: OptionOptimisationCoursesLive): PanierLive[] {
@@ -147,6 +156,11 @@ interface PanierLiveState {
   definirAdresse: (adresseId: string) => void;
   definirLivraisons: (livraisons: LivraisonDemo[]) => void;
   definirPaiementEnCours: (enCours: boolean) => void;
+  demarrerTentativeCheckout: () => void;
+  terminerTentativeCheckout: (
+    statut: Exclude<TentativeCheckout['statut'], 'en_cours'>,
+    referenceIncident?: `CHK-${string}`,
+  ) => void;
   reset: () => void;
 }
 
@@ -378,6 +392,36 @@ export const usePanierLiveStore = create<PanierLiveState>()(
               }
             : state,
         ),
+      demarrerTentativeCheckout: () =>
+        set((state) => {
+          if (!state.brouillon) return state;
+          const maintenant = new Date().toISOString();
+          return {
+            brouillon: {
+              ...state.brouillon,
+              tentativeCheckout: {
+                id: `tentative-${Date.now()}`,
+                statut: 'en_cours',
+                demarreeLe: maintenant,
+              },
+            },
+          };
+        }),
+      terminerTentativeCheckout: (statut, referenceIncident) =>
+        set((state) => {
+          if (!state.brouillon?.tentativeCheckout) return state;
+          return {
+            brouillon: {
+              ...state.brouillon,
+              tentativeCheckout: {
+                ...state.brouillon.tentativeCheckout,
+                statut,
+                termineeLe: new Date().toISOString(),
+                referenceIncident,
+              },
+            },
+          };
+        }),
       reset: () => set({ brouillon: null }),
     }),
     {

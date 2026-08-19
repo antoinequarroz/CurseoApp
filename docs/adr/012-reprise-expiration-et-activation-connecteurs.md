@@ -8,6 +8,8 @@ Accepté pour le prototype.
 
 Le checkout conserve une atomicité produit : si une enseigne échoue, toutes les préparations déjà réussies sont annulées. L'utilisateur peut relancer l'ensemble avec les mêmes clés d'idempotence. Le brouillon expire après 30 minutes et doit alors être actualisé.
 
+La dernière tentative est persistée séparément du simple indicateur de chargement. Une tentative `en_cours` retrouvée après un redémarrage est donc traitée comme interrompue. Les erreurs fournisseur sont réduites à une liste fermée de codes avant télémétrie; une référence d'aide locale ne contient aucune donnée du panier.
+
 Les connecteurs sont fermés par défaut. Le simulateur peut être ouvert explicitement uniquement s'il ne sait ni payer ni transmettre. Un futur canary marchand exigera une conformité automatisée et une autorisation fournie par le serveur; l'application cliente ne pourra pas l'activer seule.
 
 ## Conséquences
