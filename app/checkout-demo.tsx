@@ -20,6 +20,10 @@ import { orchestrerCommandeDemo } from '@/lib/orchestrateurCommandeDemo';
 import { evaluerFraicheurPrix } from '@/lib/fiabilitePrix';
 import type { Enseigne } from '@/types';
 import { reconcilierPanier } from '@/lib/reconciliationPanier';
+import { ResumeCheckoutMultiEnseignes } from '@/components/courses/ResumeCheckoutMultiEnseignes';
+import { preparerPaiementUniqueDemo } from '@/lib/paiementUniqueDemo';
+import type { EtatOrchestrationEnseigne } from '@/lib/orchestrateurCommandeDemo';
+import { Badge } from '@/components/ui/Badge';
 
 function formaterCreneau(debut: string, fin: string): string {
   const dateDebut = new Date(debut);
@@ -45,6 +49,7 @@ export default function CheckoutDemo() {
   const [prixAnciensConfirmes, setPrixAnciensConfirmes] = useState(false);
   const [selectionCreneaux, setSelectionCreneaux] = useState<Partial<Record<Enseigne, string>>>({});
   const [referenceCreneaux] = useState(() => new Date());
+  const [etatsOrchestration, setEtatsOrchestration] = useState<EtatOrchestrationEnseigne[]>([]);
 
   if (!profil || !brouillon) {
     return (
@@ -91,22 +96,25 @@ export default function CheckoutDemo() {
     setErreur(null);
     try {
       const preferences = preferencesQuery.data ?? PREFERENCES_COURSES_DEFAUT;
-      const orchestration = orchestrerCommandeDemo(
+      const orchestration = await orchestrerCommandeDemo(
         { ...brouillon, adresseId: adresseSelectionnee.id, livraisons },
         livraisons,
         preferences,
       );
+      setEtatsOrchestration(orchestration.etats);
       if (orchestration.echecs.length > 0) {
         setErreur(t('checkout.simulation_marchand_erreur'));
         definirPaiementEnCours(false);
         return;
       }
+      const paiement = preparerPaiementUniqueDemo(orchestration.confirmations, brouillon.id);
       const confirmation = await enregistrerCommandeDemo({
         profilId: profil.id,
         brouillon: { ...brouillon, adresseId: adresseSelectionnee.id, livraisons },
         adresse: adresseSelectionnee,
         livraisons,
         confirmations: orchestration.confirmations,
+        paiement,
       });
       router.replace({
         pathname: '/commande-demo',
@@ -211,6 +219,23 @@ export default function CheckoutDemo() {
           );
         })}
       </View>
+
+      <ResumeCheckoutMultiEnseignes brouillon={brouillon} livraisons={livraisons} />
+
+      {etatsOrchestration.length > 0 ? (
+        <View accessibilityLiveRegion="polite" style={{ gap: 8 }}>
+          <Heading>{t('checkout.synchronisation_titre')}</Heading>
+          {etatsOrchestration.map((etat) => (
+            <Card key={etat.enseigne} style={{ padding: 14, flexDirection: 'row', gap: 10 }}>
+              <BodySm style={{ flex: 1 }}>{t(`checkout.enseigne_${etat.enseigne}`)}</BodySm>
+              <Badge
+                label={t(`checkout.statut_${etat.statut}`)}
+                variant={etat.statut === 'pret' ? 'success' : 'warning'}
+              />
+            </Card>
+          ))}
+        </View>
+      ) : null}
 
       {preferencesQuery.data ? (
         <Card style={{ padding: 16, gap: 6 }}>

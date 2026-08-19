@@ -100,4 +100,33 @@ describe('commandesDemoRepository', () => {
     expect(firstEq).toHaveBeenCalledWith('profil_id', 'profil-1');
     expect(secondEq).toHaveBeenCalledWith('paiement_reference', 'DEMO-brouillon-123');
   });
+
+  it('enregistre la référence et les allocations du paiement unique simulé', async () => {
+    const maybeSingle = jest.fn().mockResolvedValue({
+      data: { id: 'commande-2', paiement_reference: 'PAY-DEMO-brouillon-123', montant_total: 10.9 },
+      error: null,
+    });
+    const insert = jest.fn(() => ({ select: jest.fn(() => ({ maybeSingle })) }));
+    mockFrom.mockReturnValue({ insert });
+    await enregistrerCommandeDemo({
+      profilId: 'profil-1',
+      brouillon,
+      adresse,
+      livraisons,
+      paiement: {
+        nature: 'simulation',
+        statut: 'simulation_preparee',
+        reference: 'PAY-DEMO-brouillon-123',
+        montantTotal: 10.9,
+        debite: false,
+        allocations: [{ enseigne: 'coop', montant: 10.9, referenceCommande: 'SIM-coop-b' }],
+      },
+    });
+    expect(insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        paiement_reference: 'PAY-DEMO-brouillon-123',
+        paniers: [expect.objectContaining({ enseigne: 'coop', allocation_paiement: 10.9 })],
+      }),
+    );
+  });
 });

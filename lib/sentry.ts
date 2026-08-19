@@ -9,6 +9,7 @@
 import Constants from 'expo-constants';
 import * as Sentry from '@sentry/react-native';
 import type { Breadcrumb, ErrorEvent } from '@sentry/react-native';
+import { enregistrerClientObservabilite } from '@/lib/observabiliteClient';
 
 const extra = Constants.expoConfig?.extra ?? {};
 const dsn = (extra.sentryDsn as string | undefined) ?? '';
@@ -48,5 +49,7 @@ Sentry.init({
   beforeSend: nettoyerEvenementSentry,
   beforeBreadcrumb: nettoyerBreadcrumbSentry,
 });
+
+enregistrerClientObservabilite(Sentry);
 
 export { Sentry };

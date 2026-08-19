@@ -52,7 +52,7 @@ const resultat: OptimisationCoursesLive = {
 describe('parcours checkout de démonstration COUR-84', () => {
   beforeEach(() => usePanierLiveStore.getState().reset());
 
-  it('va de l optimisation à une confirmation multi-étapes non transmise', () => {
+  it('va de l optimisation à une confirmation multi-étapes non transmise', async () => {
     usePanierLiveStore.getState().creerDepuisOptimisation(resultat, option, '1003');
     const initial = usePanierLiveStore.getState().brouillon!;
     const source = trouverLignePanier(initial, initial.paniers[0]!.articles[0]!.id)!;
@@ -80,7 +80,11 @@ describe('parcours checkout de démonstration COUR-84', () => {
     const livraisons = genererLivraisonsDemo(brouillon, {}, 'soir', new Date('2026-08-19T08:00:00.000Z'));
     expect(livraisons[0]?.creneau?.periode).toBe('soir');
 
-    const orchestration = orchestrerCommandeDemo(brouillon, livraisons, PREFERENCES_COURSES_DEFAUT);
+    const orchestration = await orchestrerCommandeDemo(
+      brouillon,
+      livraisons,
+      PREFERENCES_COURSES_DEFAUT,
+    );
     expect(orchestration.echecs).toEqual([]);
     expect(orchestration.confirmations).toEqual([
       expect.objectContaining({ enseigne: 'coop', nature: 'simulation', transmise: false }),

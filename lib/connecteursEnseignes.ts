@@ -42,6 +42,48 @@ export interface CommandeEnseigneConnecteur {
   creerCommande(panierId: string, livraisonId: string): Promise<{ reference: string }>;
 }
 
+export interface ArticlePanierConnecteur {
+  produitId: string;
+  quantite: number;
+  prixUnitaire: number;
+  disponibilite?: 'resultat_catalogue' | 'non_confirmee';
+}
+
+export interface PanierSynchroniseConnecteur {
+  panierId: string;
+  articlesTraites: number;
+  articlesTotal: number;
+}
+
+export interface CommandePrepareeConnecteur {
+  nature: 'simulation' | 'marchand';
+  transmise: boolean;
+  reference: string;
+  montant: number;
+}
+
+/**
+ * Contrat cible des adaptateurs Migros/Coop officiels. Le prototype utilise
+ * exactement cette frontière avec un connecteur simulé; SwissGroceries n'en
+ * est jamais une implémentation car il ne sait ni créer ni commander un panier.
+ */
+export interface ConnecteurMarchand {
+  readonly enseigne: Enseigne;
+  readonly capacites: CapacitesConnecteurEnseigne;
+  synchroniserPanier(params: {
+    cleIdempotence: string;
+    articles: readonly ArticlePanierConnecteur[];
+  }): Promise<PanierSynchroniseConnecteur>;
+  verifierDisponibilite(panierId: string, modeSubstitution: string): Promise<void>;
+  reserverLivraison(panierId: string, livraisonId: string | undefined): Promise<void>;
+  preparerCommande(params: {
+    panierId: string;
+    cleIdempotence: string;
+    fraisLivraison: number;
+  }): Promise<CommandePrepareeConnecteur>;
+  annulerPanier(panierId: string): Promise<void>;
+}
+
 export const CAPACITES_SWISSGROCERIES: CapacitesConnecteurEnseigne = {
   mode: 'catalogue',
   catalogue: true,

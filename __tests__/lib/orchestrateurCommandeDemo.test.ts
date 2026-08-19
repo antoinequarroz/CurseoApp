@@ -30,8 +30,8 @@ const brouillon: BrouillonPanierLive = {
 };
 
 describe('orchestrateurCommandeDemo', () => {
-  it('simule indépendamment chaque enseigne', () => {
-    const resultat = orchestrerCommandeDemo(
+  it('simule indépendamment chaque enseigne', async () => {
+    const resultat = await orchestrerCommandeDemo(
       brouillon,
       [
         { enseigne: 'coop', id: 'lc', libelle: 'Standard', prix: 1 },
@@ -42,9 +42,11 @@ describe('orchestrateurCommandeDemo', () => {
     expect(resultat.echecs).toEqual([]);
     expect(resultat.confirmations).toHaveLength(2);
     expect(resultat.confirmations.every((confirmation) => confirmation.transmise === false)).toBe(true);
+    expect(resultat.paiementPossible).toBe(true);
+    expect(resultat.etats.map((etat) => etat.statut)).toEqual(['pret', 'pret']);
   });
 
-  it('isole l’échec de substitution d’une enseigne', () => {
+  it('annule les paniers déjà prêts si une enseigne échoue', async () => {
     const avecIndisponible = {
       ...brouillon,
       paniers: [
@@ -55,11 +57,55 @@ describe('orchestrateurCommandeDemo', () => {
         brouillon.paniers[1]!,
       ],
     };
-    const resultat = orchestrerCommandeDemo(avecIndisponible, [], {
+    const resultat = await orchestrerCommandeDemo(avecIndisponible, [], {
       ...PREFERENCES_COURSES_DEFAUT,
       substitutionMode: 'jamais',
     });
-    expect(resultat.confirmations).toHaveLength(1);
+    expect(resultat.confirmations).toHaveLength(0);
     expect(resultat.echecs).toEqual([{ enseigne: 'coop', code: 'SUBSTITUTION_NON_RESOLUE' }]);
+    expect(resultat.annulations).toEqual(['migros']);
+    expect(resultat.paiementPossible).toBe(false);
+  });
+
+  it('réessaie une erreur temporaire puis réussit sans doubler le panier', async () => {
+    let tentatives = 0;
+    const resultat = await orchestrerCommandeDemo(
+      { ...brouillon, paniers: [brouillon.paniers[0]!] },
+      [],
+      PREFERENCES_COURSES_DEFAUT,
+      {
+        maxTentatives: 2,
+        creerConnecteur: (enseigne) => ({
+          enseigne,
+          capacites: {
+            mode: 'simulation',
+            catalogue: false,
+            disponibilite: true,
+            panier: true,
+            livraison: true,
+            commande: true,
+            paiement: false,
+            transmissionCommande: false,
+          },
+          synchroniserPanier: async () => {
+            tentatives += 1;
+            if (tentatives === 1) throw new Error('ERREUR_TEMPORAIRE');
+            return { panierId: 'p', articlesTraites: 1, articlesTotal: 1 };
+          },
+          verifierDisponibilite: async () => undefined,
+          reserverLivraison: async () => undefined,
+          preparerCommande: async () => ({
+            nature: 'simulation',
+            transmise: false,
+            reference: 'SIM-coop-reprise',
+            montant: 2,
+          }),
+          annulerPanier: async () => undefined,
+        }),
+      },
+    );
+    expect(tentatives).toBe(2);
+    expect(resultat.paiementPossible).toBe(true);
+    expect(resultat.etats[0]?.tentative).toBe(2);
   });
 });

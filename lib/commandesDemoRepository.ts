@@ -3,6 +3,7 @@ import type { AdresseLivraison, Enseigne } from '@/types';
 import type { BrouillonPanierLive, LivraisonDemo } from '@/stores/panierLiveStore';
 import { sousTotalPanier, totalLivraisons, totalProduits } from '@/stores/panierLiveStore';
 import type { ResultatCommandeSimulee } from '@/lib/simulateurConnecteurMarchand';
+import type { PaiementUniqueDemo } from '@/lib/paiementUniqueDemo';
 import { z } from 'zod';
 
 export interface ConfirmationCommandeDemo {
@@ -121,8 +122,10 @@ export async function enregistrerCommandeDemo(params: {
   adresse: AdresseLivraison;
   livraisons: LivraisonDemo[];
   confirmations?: ResultatCommandeSimulee[];
+  paiement?: PaiementUniqueDemo;
 }): Promise<ConfirmationCommandeDemo> {
-  const reference = `DEMO-${params.brouillon.id.replace(/[^a-zA-Z0-9-]/g, '')}`;
+  const reference =
+    params.paiement?.reference ?? `DEMO-${params.brouillon.id.replace(/[^a-zA-Z0-9-]/g, '')}`;
   const montantProduits = totalProduits(params.brouillon);
   const fraisLivraison = totalLivraisons({ ...params.brouillon, livraisons: params.livraisons });
   const montantTotal = Math.round((montantProduits + fraisLivraison) * 100) / 100;
@@ -134,6 +137,9 @@ export async function enregistrerCommandeDemo(params: {
       (confirmation) => confirmation.enseigne === panier.enseigne,
     )?.reference,
     transmise: false,
+    allocation_paiement: params.paiement?.allocations.find(
+      (allocation) => allocation.enseigne === panier.enseigne,
+    )?.montant,
   }));
 
   const payload = {
