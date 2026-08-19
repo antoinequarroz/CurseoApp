@@ -108,4 +108,34 @@ describe('orchestrateurCommandeDemo', () => {
     expect(resultat.paiementPossible).toBe(true);
     expect(resultat.etats[0]?.tentative).toBe(2);
   });
+
+  it('refuse un connecteur marchand même si ses capacités sont complètes', async () => {
+    const resultat = await orchestrerCommandeDemo(
+      { ...brouillon, paniers: [brouillon.paniers[0]!] },
+      [],
+      PREFERENCES_COURSES_DEFAUT,
+      {
+        creerConnecteur: (enseigne) => ({
+          enseigne,
+          capacites: {
+            mode: 'marchand',
+            catalogue: true,
+            disponibilite: true,
+            panier: true,
+            livraison: true,
+            commande: true,
+            paiement: true,
+            transmissionCommande: true,
+          },
+          synchroniserPanier: async () => ({ panierId: 'interdit', articlesTraites: 1, articlesTotal: 1 }),
+          verifierDisponibilite: async () => undefined,
+          reserverLivraison: async () => undefined,
+          preparerCommande: async () => ({ nature: 'marchand', transmise: true, reference: 'x', montant: 2 }),
+          annulerPanier: async () => undefined,
+        }),
+      },
+    );
+    expect(resultat.paiementPossible).toBe(false);
+    expect(resultat.echecs).toEqual([{ enseigne: 'coop', code: 'CONNECTEUR_DEMO_INVALIDE' }]);
+  });
 });

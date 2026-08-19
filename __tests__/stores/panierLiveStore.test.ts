@@ -149,6 +149,7 @@ describe('panierLiveStore', () => {
     expect(remplacee.disponibilite).toBe('resultat_catalogue');
     expect(remplacee.selectionAutomatique).toBe(true);
     expect(remplacee.remplacementDe?.produit).toBe('Pommes Gala');
+    expect(usePanierLiveStore.getState().brouillon!.creeLe).toBe('2026-08-19T11:00:00.000Z');
   });
 
   it('bloque la disponibilité quand aucun équivalent fiable n existe', () => {

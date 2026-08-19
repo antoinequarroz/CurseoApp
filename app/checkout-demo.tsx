@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { AlertTriangle, CalendarClock, Check, Home, Truck } from 'lucide-react-native';
+import { AlertTriangle, CalendarClock, Check, Clock3, Home, RotateCcw, Truck } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { ScreenScroll } from '@/components/ui/Screen';
 import { Card } from '@/components/ui/Card';
@@ -24,6 +24,7 @@ import { ResumeCheckoutMultiEnseignes } from '@/components/courses/ResumeCheckou
 import { preparerPaiementUniqueDemo } from '@/lib/paiementUniqueDemo';
 import type { EtatOrchestrationEnseigne } from '@/lib/orchestrateurCommandeDemo';
 import { Badge } from '@/components/ui/Badge';
+import { evaluerExpirationCheckout } from '@/lib/expirationCheckout';
 
 function formaterCreneau(debut: string, fin: string): string {
   const dateDebut = new Date(debut);
@@ -50,6 +51,7 @@ export default function CheckoutDemo() {
   const [selectionCreneaux, setSelectionCreneaux] = useState<Partial<Record<Enseigne, string>>>({});
   const [referenceCreneaux] = useState(() => new Date());
   const [etatsOrchestration, setEtatsOrchestration] = useState<EtatOrchestrationEnseigne[]>([]);
+  const [expirationDetectee, setExpirationDetectee] = useState(false);
 
   if (!profil || !brouillon) {
     return (
@@ -74,8 +76,16 @@ export default function CheckoutDemo() {
   const montantTotal = totalProduits(brouillon) + fraisLivraison;
   const prixAnciens = evaluerFraicheurPrix(brouillon.collecteLe).statut === 'ancien';
   const reconciliation = reconcilierPanier(brouillon);
+  const sessionExpiree =
+    expirationDetectee || evaluerExpirationCheckout(brouillon.creeLe, referenceCreneaux).expiree;
+  const repriseNecessaire = etatsOrchestration.some((etat) => etat.statut !== 'pret');
 
   const simulerPaiement = async () => {
+    if (evaluerExpirationCheckout(brouillon.creeLe).expiree) {
+      setExpirationDetectee(true);
+      setErreur(null);
+      return;
+    }
     if (!reconciliation.estPret) {
       setErreur(t('checkout.reconciliation_bloque_checkout'));
       return;
@@ -94,6 +104,7 @@ export default function CheckoutDemo() {
     definirLivraisons(livraisons);
     definirPaiementEnCours(true);
     setErreur(null);
+    setEtatsOrchestration([]);
     try {
       const preferences = preferencesQuery.data ?? PREFERENCES_COURSES_DEFAUT;
       const orchestration = await orchestrerCommandeDemo(
@@ -237,6 +248,43 @@ export default function CheckoutDemo() {
         </View>
       ) : null}
 
+      {repriseNecessaire ? (
+        <Card
+          accessibilityRole="alert"
+          style={{ padding: 16, gap: 12, backgroundColor: colors.warningBg }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <RotateCcw size={20} color={colors.chipTextWarning} accessible={false} />
+            <Heading style={{ flex: 1, color: colors.chipTextWarning }}>
+              {t('checkout.reprise_titre')}
+            </Heading>
+          </View>
+          <BodySm style={{ color: colors.chipTextWarning }}>{t('checkout.reprise_aide')}</BodySm>
+        </Card>
+      ) : null}
+
+      {sessionExpiree ? (
+        <Card
+          accessibilityRole="alert"
+          style={{ padding: 16, gap: 12, backgroundColor: colors.warningBg }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <Clock3 size={20} color={colors.chipTextWarning} accessible={false} />
+            <Heading style={{ flex: 1, color: colors.chipTextWarning }}>
+              {t('checkout.session_expiree_titre')}
+            </Heading>
+          </View>
+          <BodySm style={{ color: colors.chipTextWarning }}>
+            {t('checkout.session_expiree_aide')}
+          </BodySm>
+          <Button
+            variant="secondary"
+            label={t('checkout.actualiser_paniers')}
+            onPress={() => router.replace('/panier-en-ligne')}
+          />
+        </Card>
+      ) : null}
+
       {preferencesQuery.data ? (
         <Card style={{ padding: 16, gap: 6 }}>
           <Heading>{t('checkout.preferences_resume')}</Heading>
@@ -334,7 +382,7 @@ export default function CheckoutDemo() {
         <PriceLG>{formatPrix(montantTotal)}</PriceLG>
       </Card>
 
-      {erreur ? (
+      {erreur && !repriseNecessaire ? (
         <BodySm accessibilityRole="alert" style={{ color: colors.error }}>
           {erreur}
         </BodySm>
@@ -342,13 +390,15 @@ export default function CheckoutDemo() {
 
       <Button
         label={
-          prixAnciens && prixAnciensConfirmes
+          repriseNecessaire
+            ? t('checkout.relancer_simulation')
+            : prixAnciens && prixAnciensConfirmes
             ? t('checkout.continuer_prix_anciens')
             : t('checkout.executer_simulation', { montant: formatPrix(montantTotal) })
         }
         onPress={() => void simulerPaiement()}
         loading={brouillon.paiementEnCours}
-        disabled={!reconciliation.estPret}
+        disabled={!reconciliation.estPret || sessionExpiree}
         accessibilityHint={t('checkout.executer_simulation_hint')}
       />
     </ScreenScroll>

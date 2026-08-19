@@ -4,6 +4,7 @@ import type { ResultatCommandeSimulee } from '@/lib/simulateurConnecteurMarchand
 import { journaliserEtapeCheckout, signalerErreurCheckout } from '@/lib/telemetrieCheckout';
 import type { Enseigne, PreferencesCoursesEnLigne } from '@/types';
 import type { BrouillonPanierLive, LivraisonDemo, PanierLive } from '@/stores/panierLiveStore';
+import { evaluerActivationConnecteur } from '@/lib/politiqueActivationConnecteur';
 
 export type StatutSynchronisationEnseigne =
   | 'pret'
@@ -53,11 +54,12 @@ async function executerPanier(
     throw new Error('ENSEIGNE_NON_AUTORISEE');
   }
   const connecteur = creerConnecteur(panier.enseigne, tentative);
-  if (
-    connecteur.capacites.mode !== 'simulation' ||
-    connecteur.capacites.paiement ||
-    connecteur.capacites.transmissionCommande
-  ) {
+  const activation = evaluerActivationConnecteur({
+    mode: 'simulation',
+    capacites: connecteur.capacites,
+    coupeCircuitDesactive: true,
+  });
+  if (!activation.autorise) {
     throw new Error('CONNECTEUR_DEMO_INVALIDE');
   }
   journaliserEtapeCheckout({

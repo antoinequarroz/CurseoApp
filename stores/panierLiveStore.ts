@@ -282,6 +282,8 @@ export const usePanierLiveStore = create<PanierLiveState>()(
             brouillon: {
               ...state.brouillon,
               collecteLe,
+              // Une actualisation réussie démarre une nouvelle fenêtre de checkout.
+              creeLe: collecteLe,
               paniers: state.brouillon.paniers.map((panier) => ({
                 ...panier,
                 articles: panier.articles.map((article) => {
