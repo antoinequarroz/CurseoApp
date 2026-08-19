@@ -37,8 +37,11 @@ export async function verifierConformiteConnecteurMarchand(
     connecteur.capacites.commande;
   controles.push({ code: 'CAPACITES_DECLAREES', ok: capacitesOk });
 
+  const environnementSansTransmission = ['simulation', 'sandbox'].includes(
+    connecteur.capacites.mode,
+  );
   const simulationSure =
-    connecteur.capacites.mode !== 'simulation' ||
+    !environnementSansTransmission ||
     (!connecteur.capacites.paiement && !connecteur.capacites.transmissionCommande);
   controles.push({ code: 'SIMULATION_SANS_TRANSMISSION', ok: simulationSure });
 
@@ -70,7 +73,7 @@ export async function verifierConformiteConnecteurMarchand(
       code: 'RESULTAT_COHERENT',
       ok:
         resultat.reference.length > 0 &&
-        (connecteur.capacites.mode !== 'simulation' ||
+        (!environnementSansTransmission ||
           (resultat.nature === 'simulation' && !resultat.transmise)),
     });
   } catch (error) {

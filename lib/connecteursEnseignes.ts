@@ -6,7 +6,7 @@
 import type { AdresseLivraison, Enseigne } from '@/types';
 
 export interface CapacitesConnecteurEnseigne {
-  mode: 'catalogue' | 'simulation' | 'marchand';
+  mode: 'catalogue' | 'simulation' | 'sandbox' | 'marchand';
   catalogue: boolean;
   disponibilite: boolean;
   panier: boolean;
@@ -99,6 +99,17 @@ export const CAPACITES_SIMULATEUR_CHECKOUT: CapacitesConnecteurEnseigne = {
   mode: 'simulation',
   catalogue: false,
   disponibilite: false,
+  panier: true,
+  livraison: true,
+  commande: true,
+  paiement: false,
+  transmissionCommande: false,
+};
+
+export const CAPACITES_SANDBOX_PARTENAIRE: CapacitesConnecteurEnseigne = {
+  mode: 'sandbox',
+  catalogue: false,
+  disponibilite: true,
   panier: true,
   livraison: true,
   commande: true,

@@ -1,4 +1,8 @@
-import { CAPACITES_SIMULATEUR_CHECKOUT, CAPACITES_SWISSGROCERIES } from '@/lib/connecteursEnseignes';
+import {
+  CAPACITES_SANDBOX_PARTENAIRE,
+  CAPACITES_SIMULATEUR_CHECKOUT,
+  CAPACITES_SWISSGROCERIES,
+} from '@/lib/connecteursEnseignes';
 
 describe('contrats connecteurs enseignes', () => {
   it('ne pretend jamais que SwissGroceries peut commander', () => {
@@ -19,6 +23,17 @@ describe('contrats connecteurs enseignes', () => {
       mode: 'simulation',
       catalogue: false,
       disponibilite: false,
+      panier: true,
+      livraison: true,
+      commande: true,
+      paiement: false,
+      transmissionCommande: false,
+    });
+  });
+
+  it('isole la sandbox partenaire du paiement et de la transmission', () => {
+    expect(CAPACITES_SANDBOX_PARTENAIRE).toMatchObject({
+      mode: 'sandbox',
       panier: true,
       livraison: true,
       commande: true,

@@ -1,5 +1,5 @@
 import { evaluerActivationConnecteur } from '@/lib/politiqueActivationConnecteur';
-import { CAPACITES_SIMULATEUR_CHECKOUT } from '@/lib/connecteursEnseignes';
+import { CAPACITES_SANDBOX_PARTENAIRE, CAPACITES_SIMULATEUR_CHECKOUT } from '@/lib/connecteursEnseignes';
 
 const capacitesMarchand = {
   ...CAPACITES_SIMULATEUR_CHECKOUT,
@@ -28,6 +28,13 @@ describe('politiqueActivationConnecteur', () => {
       evaluerActivationConnecteur({
         mode: 'simulation',
         capacites: capacitesMarchand,
+        coupeCircuitDesactive: true,
+      }).autorise,
+    ).toBe(false);
+    expect(
+      evaluerActivationConnecteur({
+        mode: 'simulation',
+        capacites: CAPACITES_SANDBOX_PARTENAIRE,
         coupeCircuitDesactive: true,
       }).autorise,
     ).toBe(false);
