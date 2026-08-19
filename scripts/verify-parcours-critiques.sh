@@ -166,12 +166,14 @@ else
 fi
 
 echo "--- INTERDIT : lire le journal d'evenements d'abonnement (reserve service_role) ---"
-N=$(curl -sf "$API_URL/rest/v1/webhook_evenements_abonnement?select=id" -H "apikey: $ANON_KEY" -H "Authorization: Bearer $TOKEN_B" | compter)
-if [ "$N" != "0" ]; then
-  echo "ECHEC : le journal du webhook est lisible par un utilisateur authentifie ($N ligne(s))"
+JOURNAL_HTTP=$(curl -s -o /tmp/parcours-journal-webhook.json -w "%{http_code}" \
+  "$API_URL/rest/v1/webhook_evenements_abonnement?select=id" \
+  -H "apikey: $ANON_KEY" -H "Authorization: Bearer $TOKEN_B")
+if [[ "$JOURNAL_HTTP" != "401" && "$JOURNAL_HTTP" != "403" ]]; then
+  echo "ECHEC : le journal du webhook n'est pas explicitement refuse (HTTP=$JOURNAL_HTTP)"
   FAILED=1
 else
-  echo "OK : journal du webhook invisible pour un utilisateur authentifie"
+  echo "OK : journal du webhook explicitement refuse a l'utilisateur authentifie"
 fi
 
 echo ""
